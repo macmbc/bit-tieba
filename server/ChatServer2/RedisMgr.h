@@ -6,6 +6,9 @@
 #include <mutex>
 #include "Singleton.h"
 #include <cstring>
+#include <thread>
+#include <condition_variable>
+#include <chrono>
 class RedisConPool {
 public:
 	RedisConPool(size_t poolSize, const char* host, int port, const char* pwd)
