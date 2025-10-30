@@ -22,7 +22,10 @@ add_executable(chatserver2 ${CHAT_SERVER2_SOURCES})
 set_target_properties(chatserver2 PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
-target_include_directories(chatserver2 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(chatserver2 PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  /usr/local/include
+)
 target_link_libraries(chatserver2 PRIVATE llfc_common)
 
 if(APPLE)

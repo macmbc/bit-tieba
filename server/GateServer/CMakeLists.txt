@@ -18,7 +18,10 @@ add_executable(gateserver ${GATE_SERVER_SOURCES})
 set_target_properties(gateserver PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
-target_include_directories(gateserver PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(gateserver PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  /usr/local/include
+)
 target_link_libraries(gateserver PRIVATE llfc_common)
 
 if(APPLE)

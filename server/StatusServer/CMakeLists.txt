@@ -16,7 +16,10 @@ add_executable(statusserver ${STATUS_SERVER_SOURCES})
 set_target_properties(statusserver PROPERTIES
   RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
-target_include_directories(statusserver PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(statusserver PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  /usr/local/include
+)
 target_link_libraries(statusserver PRIVATE llfc_common)
 
 if(APPLE)
