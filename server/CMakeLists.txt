@@ -156,6 +156,13 @@ target_link_libraries(llfc_common INTERFACE
   OpenSSL::Crypto
 )
 
+target_include_directories(llfc_common INTERFACE
+  ${Boost_INCLUDE_DIRS}
+  ${HIREDIS_INCLUDE_DIR}
+  /usr/local/include
+  ${MYSQLCPPCONN_INCLUDE_DIR}
+)
+
 # ---- rpath for macOS ----
 if(APPLE)
   set(_extra_rpaths "@executable_path/../lib")
