@@ -285,19 +285,19 @@ LogicSystem::LogicSystem() {
 		});
 }
 
-void LogicSystem::RegGet(std::string url, HttpHandler handler) {
-	_get_handlers.insert(make_pair(url, handler));
+void LogicSystem::RegGet(const std::string& url, HttpHandler handler) {
+	_get_handlers.insert(std::make_pair(url, std::move(handler)));
 }
 
-void LogicSystem::RegPost(std::string url, HttpHandler handler) {
-	_post_handlers.insert(make_pair(url, handler));
+void LogicSystem::RegPost(const std::string& url, HttpHandler handler) {
+	_post_handlers.insert(std::make_pair(url, std::move(handler)));
 }
 
 LogicSystem::~LogicSystem() {
 
 }
 
-bool LogicSystem::HandleGet(std::string path, std::shared_ptr<HttpConnection> con) {
+bool LogicSystem::HandleGet(const std::string& path, std::shared_ptr<HttpConnection> con) {
 	if (_get_handlers.find(path) == _get_handlers.end()) {
 		return false;
 	}
@@ -306,7 +306,7 @@ bool LogicSystem::HandleGet(std::string path, std::shared_ptr<HttpConnection> co
 	return true;
 }
 
-bool LogicSystem::HandlePost(std::string path, std::shared_ptr<HttpConnection> con) {
+bool LogicSystem::HandlePost(const std::string& path, std::shared_ptr<HttpConnection> con) {
 	if (_post_handlers.find(path) == _post_handlers.end()) {
 		return false;
 	}

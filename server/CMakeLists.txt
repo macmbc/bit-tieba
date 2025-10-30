@@ -131,6 +131,7 @@ target_compile_features(llfc_common INTERFACE cxx_std_17)
 target_include_directories(llfc_common INTERFACE
   ${Boost_INCLUDE_DIRS}
   ${HIREDIS_INCLUDE_DIR}
+  /usr/local/include
 )
 
 if(MYSQL_PACKAGE_FOUND)
