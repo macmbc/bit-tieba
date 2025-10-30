@@ -29,13 +29,14 @@ endif()
 
 # ---- dependencies ----
 find_package(Threads REQUIRED)
-find_package(Boost CONFIG REQUIRED COMPONENTS system filesystem)
-find_package(JsonCpp CONFIG REQUIRED)
-find_package(gRPC CONFIG REQUIRED)
+find_package(Boost 1.70 REQUIRED COMPONENTS system filesystem)
+find_package(JsonCpp CONFIG REQUIRED NAMES jsoncpp JsonCpp)
 if(NOT TARGET protobuf::libprotobuf)
   find_package(Protobuf CONFIG REQUIRED)
 endif()
 find_package(OpenSSL REQUIRED)
+find_package(gRPC CONFIG REQUIRED)
+
 
 # hiredis（Homebrew 无官方Config，手动找）
 find_path(HIREDIS_INCLUDE_DIR hiredis.h
