@@ -24,6 +24,13 @@ target_include_directories(gateserver PRIVATE
 )
 target_link_libraries(gateserver PRIVATE llfc_common)
 
+target_include_directories(llfc_common INTERFACE
+  ${Boost_INCLUDE_DIRS}
+  ${HIREDIS_INCLUDE_DIR}
+  /usr/local/include
+  ${MYSQLCPPCONN_INCLUDE_DIR}
+)
+
 if(APPLE)
   add_custom_command(TARGET gateserver POST_BUILD
     COMMAND install_name_tool -change libssl.3.dylib "@rpath/libssl.3.dylib" $<TARGET_FILE:gateserver>
