@@ -11,6 +11,9 @@
 #include <memory>
 #include <queue>
 #include <mutex>
+#include <condition_variable>
+#include <atomic>
+#include <chrono>
 class SqlConnection {
 public:
 	SqlConnection(sql::Connection* con, int64_t lasttime):_con(con), _last_oper_time(lasttime){}
@@ -248,5 +251,4 @@ public:
 private:
 	std::unique_ptr<MySqlPool> pool_;
 };
-
 

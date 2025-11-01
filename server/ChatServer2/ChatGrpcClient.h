@@ -11,6 +11,9 @@
 #include <json/json.h>
 #include <json/value.h>
 #include <json/reader.h>
+#include <mutex>
+#include <condition_variable>
+#include <atomic>
 
 using grpc::Channel;
 using grpc::Status;
@@ -88,7 +91,7 @@ public:
 	}
 
 private:
-	atomic<bool> b_stop_;
+	std::atomic<bool> b_stop_;
 	size_t poolSize_;
 	std::string host_;
 	std::string port_;
@@ -114,6 +117,5 @@ private:
 	ChatGrpcClient();
 	unordered_map<std::string, std::unique_ptr<ChatConPool>> _pools;	
 };
-
 
 
