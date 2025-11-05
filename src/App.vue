@@ -1,8 +1,13 @@
 <template>
-  <div class="app-container">
-    <Sidebar class="sidebar" />
-    <div class="main-content">
-      <router-view />
+  <div>
+    <!-- 如果用户未登录，显示登录/注册页面 -->
+    <router-view v-if="!userStore.isLoggedIn" />
+    <!-- 如果用户已登录，显示主布局 -->
+    <div class="app-container">
+      <Sidebar class="sidebar" />
+      <div class="main-content">
+        <router-view />
+      </div>
     </div>
   </div>
 </template>

@@ -3,11 +3,15 @@ import { getUnreadCount } from '@/api/forumApi'
 
 const autoLogin = import.meta.env.VITE_AUTO_LOGIN === 'true'
 const testUserId = import.meta.env.VITE_TEST_USER_ID || undefined
+const testUserName = import.meta.env.VITE_TEST_USER_NAME || undefined
+const testToken = import.meta.env.VITE_TEST_TOKEN || undefined
 
 export const useUserStore = defineStore('user', {
   state: () => ({
     isLoggedIn: autoLogin,
     userId: autoLogin ? testUserId : undefined,
+    userName: autoLogin ? testUserName : undefined,
+    token: autoLogin ? testToken : undefined,
   }),
   actions: {
     login(userId: string) {

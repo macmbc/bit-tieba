@@ -1,7 +1,7 @@
 <template>
   <div class="tieba">
     <!-- 标题 -->
-    <h1>我的关注吧</h1>
+    <h1>我关注的吧</h1>
 
     <!-- 关注的吧列表 -->
     <section class="section">
