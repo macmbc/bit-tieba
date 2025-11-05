@@ -1,4 +1,4 @@
-# Logs
+# Logs and temp files
 logs
 *.log
 npm-debug.log*
@@ -6,25 +6,62 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+*.tmp
 
-node_modules
-.DS_Store
+# Node.js dependencies and build outputs
+node_modules/
 dist
 dist-ssr
 coverage
+*.tsbuildinfo
 *.local
 
 /cypress/videos/
 /cypress/screenshots/
 
-# Editor directories and files
+# macOS & system files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Editor and IDE settings
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
+.vs/
+.vs2017/
+*.iml
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
 
-*.tsbuildinfo
+# Build artifacts (C/C++/CMake)
+*.o
+*.obj
+*.exe
+*.out
+*.app
+*.dll
+*.pdb
+*.so
+*.dylib
+*.a
+*.lib
+*.dSYM/
+*.bak
+*.swp
+
+CMakeCache.txt
+CMakeFiles/
+CMakeTmp/
+Makefile
+cmake_install.cmake
+
+/build/
+build/
+bin/
+out/
+debug/
+release/
