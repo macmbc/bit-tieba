@@ -458,6 +458,88 @@ function dispatchFrame(id: number, payload: string) {
 5. **异常处理**：处理 `TokenInvalid`、`UidInvalid`、`ID_NOTIFY_OFF_LINE_REQ` 等，及时回到登录态。
 6. **心跳策略**：建议 10s 左右发送一次；若多次心跳失败则断线重连。
 
+### 4.9 典型业务流程（前端落地指引）
+
+结合 `LogicSystem.cpp` / `MysqlDao.cpp` / `ChatServiceImpl.cpp` 的实现，以下列出好友与私聊相关的关键时序，便于前端按约定接入。
+
+#### 4.9.1 用户搜索
+1. 发送 `ID_SEARCH_USER_REQ`，`uid` 字段若为纯数字则按 UID 查询，否则按用户名查询。
+2. 服务端优先从 Redis (`ubaseinfo_<uid>` / `nameinfo_<name>`) 读取缓存，缺失时回源 MySQL。
+3. 返回 `ID_SEARCH_USER_RSP`：
+   - `error=0` 时包含 `uid/name/nick/email/sex/icon/desc`；
+   - `error=1011` 表示未命中，前端需提示“未找到用户”并清空展示。
+
+#### 4.9.2 发起好友申请
+1. 发送 `ID_ADD_FRIEND_REQ`：
+   ```json
+   {"uid":1054,"applyname":"sqy","bakname":"老同学","touid":1055}
+   ```
+   - `applyname`：申请人展示名称；
+   - `bakname`：申请人在对方通讯录中的备注（可为空字符串）；
+   - `touid`：被申请人 UID。
+2. 服务端流程：
+   - `MysqlMgr::AddFriendApply` 向 `friend_apply` 写入/覆盖记录，`status` 默认为 0（待处理）。
+   - 根据 Redis `uip_<touid>` 判断对方是否在线：
+     - 本节点 → 直接推送 `ID_NOTIFY_ADD_FRIEND_REQ`；
+     - 其他节点 → 通过 gRPC `NotifyAddFriend` 转发后推送。
+3. 前端处理建议：
+   - 收到 `ID_ADD_FRIEND_RSP` 且 `error=0` 后，将按钮置为“已发送申请”状态；
+   - 被申请人监听 `ID_NOTIFY_ADD_FRIEND_REQ`，把申请写入待处理列表并触发提醒。
+
+#### 4.9.3 审批好友申请
+1. 审批方（被申请人）发送 `ID_AUTH_FRIEND_REQ`：
+   ```json
+   {"fromuid":1055,"touid":1054,"back":"同学"}
+   ```
+   - `back` 字段会写入 `friend.back`，用于备注展示。
+2. 服务端执行：
+   - `MysqlMgr::AuthFriendApply` 将 `friend_apply.status` 置为 1（已通过）。
+   - `MysqlMgr::AddFriend` 在事务内向 `friend` 表插入两条记录，形成双向关系。
+   - 根据在线节点推送：
+     - 审批方本地收到 `ID_AUTH_FRIEND_RSP`，其中包含对方资料；
+     - 申请方收到 `ID_NOTIFY_AUTH_FRIEND_REQ`。
+3. 前端处理：
+   - 审批方在 `ID_AUTH_FRIEND_RSP` `error=0` 时，把对方加入好友列表，并从申请列表移除；
+   - 申请方收到推送后同步刷新好友列表，关闭“待审批”提示；
+   - 若响应 `error=1011`，意味着拉取对方资料失败，可重新触发 `ID_SEARCH_USER_REQ` 获取信息后刷新 UI。
+
+#### 4.9.4 文本聊天
+1. 发送 `ID_TEXT_CHAT_MSG_REQ`，`text_array` 为要发送的消息集合，每条消息务必包含唯一 `msgid` 以便 ACK 对应：
+   ```json
+   {
+     "fromuid":1054,
+     "touid":1055,
+     "text_array":[
+       {"msgid":"uuid-1","content":"你好"},
+       {"msgid":"uuid-2","content":"在吗？"}
+     ]
+   }
+   ```
+2. 服务端立即返回 `ID_TEXT_CHAT_MSG_RSP`（成功即 `error=0` 且回显同一批 `text_array`）。前端可在收到该响应后将消息状态从“发送中”更新为“已送达”。
+3. 推送逻辑：
+   - 若接收方在线且在同一 ChatServer 节点 → 直接通过 session 推送 `ID_NOTIFY_TEXT_CHAT_MSG_REQ`；
+   - 若在其他节点 → 通过 gRPC `NotifyTextChatMsg` 转发后推送；
+   - 若 `uip_<touid>` 不存在（离线），当前实现不会做离线存储，ACK 仍是成功。前端可根据在线状态提示“对方当前不在线”或自行实现本地重发策略。
+
+#### 4.9.5 心跳与异地登录
+1. 客户端需定期（推荐 10s）发送 `ID_HEART_BEAT_REQ`（`{"fromuid":uid}`）。`CSession::IsHeartbeatExpired` 以 20 秒为阈值判断是否超时。
+2. 超时或网络异常时，服务端会调用 `CSession::DealExceptionSession`，清除 `usession_<uid>` / `uip_<uid>` 并发送 `ID_NOTIFY_OFF_LINE_REQ`。
+3. 当同一账户在其它设备成功登录：
+   - 新连接在 `LoginHandler` 阶段会获取分布式锁，并尝试踢掉旧 session；
+   - 旧端收到 `ID_NOTIFY_OFF_LINE_REQ` 后应立即断开并跳转登录页；
+   - 新端登录响应中会携带最新的 `friend_list`、`apply_list`，前端需据此重建状态。
+
+#### 4.9.6 相关持久化表 & Redis 键
+| 存储 | 说明 | 相关代码 |
+|------|------|----------|
+| MySQL `friend_apply` (`status` 0=待处理, 1=已通过) | 记录好友申请 | `MysqlDao::AddFriendApply`、`MysqlDao::AuthFriendApply`、`MysqlDao::GetApplyList` |
+| MySQL `friend` (`back` 备注) | 存储双向好友关系 | `MysqlDao::AddFriend`、`MysqlDao::GetFriendList` |
+| Redis `ubaseinfo_<uid>` / `nameinfo_<name>` | 缓存用户档案 | `LogicSystem::GetBaseInfo`、`GetUserByName` |
+| Redis `uip_<uid>` / `usession_<uid>` | 记录在线节点、session id | `LoginHandler`、`DealExceptionSession` |
+| Redis `code_<email>` | 邮件验证码 | `/get_varifycode` → `VarifyServer` |
+
+前端如果需要刷新好友或申请列表，可复用 `MSG_CHAT_LOGIN_RSP` 初始化数据，并结合上述推送消息增量更新。
+
 ---
 
 ## 5. StatusServer 接口说明（gRPC）
