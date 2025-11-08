@@ -126,6 +126,28 @@ const error = ref({
 
 // 加载数据
 onMounted(async () => {
+  
+  // 使用真实的登录用户信息
+  const authStore = useAuthStore()
+  
+  if (!authStore.isLoggedIn) {
+    error.value.profile = '请先登录以查看个人资料'
+    loading.value.profile = false
+    loading.value.posts = false
+    loading.value.forums = false
+    loading.value.messages = false
+    return
+  }
+
+  // 从 authStore 获取真实用户信息
+  userInfo.value = {
+    username: authStore.user?.email?.split('@')[0] || '用户', // 用邮箱前缀作为用户名
+    bio: '这个人很懒，什么都没写~',
+    createdAt: Date.now(), // 或者从后端获取
+    avatar: '', // 如果有头像URL
+  }
+  loading.value.profile = false
+
   if (!userStore.isLoggedIn) {
     error.value.profile = '请先登录以查看个人资料'
     loading.value.profile = false
@@ -135,25 +157,25 @@ onMounted(async () => {
     return
   }
 
-  try {
-    const [info, userPosts, forums, userMessages] = await Promise.all([
-      getUserInfo(userStore.userId!).catch(() => ({}) as UserInfo),
+  try {//userInfo给注释掉,就不用mock数据了。不过还需要后端支持
+    const [ userPosts, forums, userMessages] = await Promise.all([
+      //getUserInfo(userStore.userId!).catch(() => ({}) as UserInfo),
       getUserPosts(userStore.userId!).catch(() => [] as Post[]),
       getFollowedForums(userStore.userId!).catch(() => [] as Forum[]),
       getMessages(userStore.userId!).catch(() => [] as Message[]),
     ])
-    userInfo.value = info
+    //userInfo.value = info
     posts.value = userPosts
     followedForums.value = forums
     messages.value = userMessages
-  } catch (err) {
+  } catch (err) {/*
     error.value.profile =
       error.value.posts =
       error.value.forums =
       error.value.messages =
-        (err as Error).message
+        (err as Error).message*/
   } finally {
-    loading.value.profile = false
+    //loading.value.profile = false
     loading.value.posts = false
     loading.value.forums = false
     loading.value.messages = false
