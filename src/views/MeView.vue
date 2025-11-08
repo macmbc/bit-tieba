@@ -15,6 +15,7 @@
           <p>注册时间: {{ formatTime(userInfo.createdAt) }}</p>
         </div>
         <router-link to="/settings" class="edit-btn">编辑资料</router-link>
+        <button @click="handleLogout" class="logout-btn">退出登录</button>
       </div>
     </section>
 
@@ -87,6 +88,8 @@
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'  
+import { useAuthStore } from '@/stores/authStore'
 import { useUserStore, useMessageStore } from '@/stores/user'
 import {
   getUserInfo,
@@ -99,12 +102,15 @@ import type { UserInfo, Post, Forum, Message } from '@/types'
 import defaultAvatar from '@/assets/default.png'
 import { formatTime } from '@/utils/format'
 
+const router = useRouter() 
+const authStore = useAuthStore()  
 const userStore = useUserStore()
 const messageStore = useMessageStore()
 const userInfo = ref<UserInfo>({ username: '', bio: '', createdAt: 0 })
 const posts = ref<Post[]>([])
 const followedForums = ref<Forum[]>([])
 const messages = ref<Message[]>([])
+
 const loading = ref({
   profile: true,
   posts: true,
@@ -187,9 +193,31 @@ const markAsRead = async (messageId: number) => {
     msg.isRead = false // 出错回滚
   }
 }
+
+// 在最后添加退出登录函数
+const handleLogout = () => {
+  if (confirm('确定要退出登录吗？')) {
+    authStore.logout()
+    router.push('/login')
+  }
+}
 </script>
 
 <style scoped>
+.logout-btn {
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.logout-btn:hover {
+  background: #dd3333;
+}
 .me {
   max-width: 1200px;
   margin: 0 auto;
