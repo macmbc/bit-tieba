@@ -8,7 +8,7 @@
       <div v-if="loading.profile" class="loading">加载中...</div>
       <div v-else-if="error.profile" class="error">{{ error.profile }}</div>
       <div v-else class="profile-content">
-        <img :src="userInfo.avatar || defaultAvatar" alt="头像" class="avatar" />
+        <img :src="userInfo.avatar || defaultUserAvatar" alt="头像" class="avatar" />
         <div class="info">
           <h3>{{ userInfo.username || '未设置用户名' }}</h3>
           <p>{{ userInfo.bio || '暂无简介' }}</p>
@@ -96,7 +96,7 @@ import {
   markMessageAsRead,
 } from '@/api/forumApi'
 import type { UserInfo, Post, Forum, Message } from '@/types'
-import defaultAvatar from '@/assets/default.png'
+import defaultUserAvatar from '@/assets/img/defaultUserAvatar.png'
 import { formatTime } from '@/utils/format'
 
 const userStore = useUserStore()

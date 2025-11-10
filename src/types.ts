@@ -4,6 +4,9 @@ export interface Forum {
   name: string
   description: string
   postCount: number
+  avatar?: string
+  ownerId?: number
+  ownerName?: string
 }
 
 export interface Post {
@@ -14,19 +17,29 @@ export interface Post {
   content: string
   replyCount: number
   author: string
-  authorId: string
+  authorId: number
+  authorAvatar?: string
   createdAt: number
   likeCount: number
   collectCount: number
   isLiked: boolean
   isCollected: boolean
+  lastRepliedAt: number
+  isFeatured: boolean
+}
+
+export interface CreatePost {
+  forumId: number
+  title: string
+  content: string
+  authorId: number
 }
 
 export interface Reply {
   id: number
   postId: number
   author: string
-  authorId: string
+  authorId: number
   content: string
   floor?: number
   createdAt: number
@@ -35,14 +48,6 @@ export interface Reply {
   parentId?: number // 父回复 ID（null 表示一级回复）
   children?: Reply[]
   replyCount?: number
-}
-
-export interface User {
-  id: string // 用户唯一ID（一般为UUID或数据库主键）
-  username: string // 用户名（唯一）
-  avatar?: string // 头像URL（可选）
-  bio?: string // 简介或签名（可选）
-  createdAt: number
 }
 
 export interface Message {
@@ -57,8 +62,12 @@ export interface Message {
 }
 
 export interface UserInfo {
+  id: number
   username: string
-  bio: string
+  email: string
+  desc: string
+  sex: number
+  nickname: string
   avatar?: string
   createdAt: number
 }

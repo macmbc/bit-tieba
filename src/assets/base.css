@@ -55,7 +55,7 @@
 *::after {
   box-sizing: border-box;
   margin: 0;
-  font-weight: normal;
+  /* font-weight: normal; */
 }
 
 body {
@@ -67,6 +67,7 @@ body {
     background-color 0.5s;
   line-height: 1.6;
   font-family:
+    'Font Awesome 7 Free'
     Inter,
     -apple-system,
     BlinkMacSystemFont,

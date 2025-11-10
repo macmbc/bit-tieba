@@ -13,6 +13,7 @@ const mockData = {
     { id: 2, name: '前端开发吧', description: '前端技术分享', postCount: 300 },
     { id: 3, name: 'JavaScript 吧', description: 'JS 语言深度探讨', postCount: 200 },
   ] as Forum[],
+
   hotPosts: [
     {
       id: 1,
@@ -22,7 +23,14 @@ const mockData = {
       content: 'Composition API 真好用！',
       replyCount: 10,
       author: '用户123',
-      createdAt: Date.now() - 3600 * 1000,
+      authorId: 123,
+      createdAt: Date.now() - 3600 * 1000 * 10, // 10小时前
+      lastRepliedAt: Date.now() - 3600 * 1000 * 2, // 2小时前
+      likeCount: 25,
+      collectCount: 8,
+      isLiked: true,
+      isCollected: false,
+      isFeatured: true,
     },
     {
       id: 2,
@@ -32,9 +40,16 @@ const mockData = {
       content: '分享前端优化技巧...',
       replyCount: 5,
       author: '用户456',
-      createdAt: Date.now() - 7200 * 1000,
+      authorId: 456,
+      createdAt: Date.now() - 7200 * 1000, // 2小时前
+      lastRepliedAt: Date.now() - 3600 * 1000, // 1小时前
+      likeCount: 15,
+      collectCount: 4,
+      isLiked: false,
+      isCollected: true,
     },
   ] as Post[],
+
   followedPosts: [
     {
       id: 3,
@@ -44,13 +59,22 @@ const mockData = {
       content: '一个真实的 Vue 项目案例...',
       replyCount: 8,
       author: '用户123',
-      createdAt: Date.now() - 86400 * 1000,
+      authorId:123,
+      createdAt: Date.now() - 86400 * 1000, // 1天前
+      lastRepliedAt: Date.now() - 3600 * 1000 * 0.5, // 0.5小时前
+      likeCount: 10,
+      collectCount: 3,
+      isLiked: false,
+      isCollected: false,
+      isFeatured: false,
     },
   ] as Post[],
+
   followedForums: [
     { id: 1, name: 'Vue.js 吧', description: '探讨 Vue.js 开发经验', postCount: 150 },
     { id: 2, name: '前端开发吧', description: '前端技术分享', postCount: 300 },
   ] as Forum[],
+
   messages: [
     {
       id: 1,
@@ -113,12 +137,17 @@ const mockData = {
       link: '/forum/1/post/1',
     },
   ] as Message[],
+
   userInfo: {
+    id:6,
     username: '用户123',
-    bio: '前端爱好者，喜欢Vue和TypeScript',
+    email: "321123@qq.com",
+    desc: '前端爱好者，喜欢Vue和TypeScript',
+    nickname:'好姐妹小木曾雪菜',
     avatar: '/uploads/avatars/neuro.jpg',
     createdAt: Date.now() - 30 * 86400 * 1000,
   } as UserInfo,
+
   userPosts: [
     {
       id: 1,
@@ -128,7 +157,13 @@ const mockData = {
       content: 'Composition API 真好用！',
       replyCount: 10,
       author: '用户123',
+      authorId: 123,
       createdAt: Date.now() - 3600 * 1000,
+      lastRepliedAt: Date.now() - 1800 * 1000,
+      likeCount: 25,
+      collectCount: 8,
+      isLiked: true,
+      isCollected: false,
     },
     {
       id: 3,
@@ -138,7 +173,13 @@ const mockData = {
       content: '一个真实的 Vue 项目案例...',
       replyCount: 8,
       author: '用户123',
+      authorId: 'u123',
       createdAt: Date.now() - 86400 * 1000,
+      lastRepliedAt: Date.now() - 7200 * 1000,
+      likeCount: 10,
+      collectCount: 3,
+      isLiked: false,
+      isCollected: false,
     },
   ] as Post[],
 }
@@ -266,7 +307,11 @@ export const getForum = async (forumId: number): Promise<Forum> => {
 }
 
 // 新增：获取贴吧帖子
-export const getForumPosts = async (forumId: number, page: number): Promise<Post[]> => {
+export const getForumPosts = async (
+  forumId: number,
+  page: number,
+  sort: 'newest' | 'reply' = 'reply',
+): Promise<Post[]> => {
   // 真实 API 示例
   // const response = await api.get(`/forums/${forumId}/posts?page=${page}&limit=${limit}`);
   // return response.data;
@@ -275,6 +320,13 @@ export const getForumPosts = async (forumId: number, page: number): Promise<Post
       const posts = [...mockData.hotPosts, ...mockData.followedPosts].filter(
         (p) => p.forumId === forumId,
       )
+      if (sort === 'newest') {
+        // 按发布时间倒序
+        posts.sort((a, b) => b.createdAt - a.createdAt)
+      } else if (sort === 'reply') {
+        // 按最后回复时间倒序（如果没有则使用发布时间）
+        posts.sort((a, b) => (b.lastRepliedAt || b.createdAt) - (a.lastRepliedAt || a.createdAt))
+      }
       const start = (page - 1) * REPLY_CONSTANTS.POST_LIST_PAGE_SIZE
       const end = start + REPLY_CONSTANTS.POST_LIST_PAGE_SIZE
       resolve(posts.slice(start, end))
@@ -332,7 +384,7 @@ export const getReplies = async (
           id: 1,
           postId,
           author: '用户A',
-          authorId: '1',
+          authorId: 1,
           content: '楼主说得对',
           floor: 1,
           createdAt: Date.now() - 3600000,
@@ -343,7 +395,7 @@ export const getReplies = async (
           id: 4,
           postId,
           author: '用户D',
-          authorId: '4',
+          authorId: 4,
           content: '支持',
           floor: 2,
           createdAt: Date.now() - 7200000,
@@ -355,7 +407,7 @@ export const getReplies = async (
           id: 2,
           postId,
           author: '用户B',
-          authorId: '2',
+          authorId: 2,
           content: '@用户A 确实',
           createdAt: Date.now() - 1800000,
           likeCount: 2,
@@ -366,7 +418,7 @@ export const getReplies = async (
           id: 3,
           postId,
           author: '用户C',
-          authorId: '3',
+          authorId: 3,
           content: '@用户B 同意',
           createdAt: Date.now() - 900000,
           likeCount: 1,
@@ -377,7 +429,7 @@ export const getReplies = async (
           id: 5,
           postId,
           author: '用户A',
-          authorId: '1',
+          authorId: 1,
           content: '@用户B 谢谢',
           createdAt: Date.now() - 600000,
           likeCount: 0,
@@ -388,7 +440,7 @@ export const getReplies = async (
           id: 6,
           postId,
           author: '用户E',
-          authorId: '5',
+          authorId: 5,
           content: '再补充一点',
           createdAt: Date.now() - 300000,
           likeCount: 3,
@@ -400,7 +452,7 @@ export const getReplies = async (
           id: 7,
           postId,
           author: '用户F',
-          authorId: '6',
+          authorId: 6,
           content: '我也觉得',
           createdAt: Date.now() - 500000,
           likeCount: 1,
@@ -488,6 +540,37 @@ export const createReply = async (
         parentId,
       }
       resolve(newReply)
+    }, 500)
+  })
+}
+
+export const createPostApi = async (forumId: number, post: { title: string; content: string }) => {
+  // 模拟 API 调用
+  // const response = await fetch(`/api/forums/${forumId}/posts`, {
+  //   method: 'POST',
+  //   headers: { 'Content-Type': 'application/json' },
+  //   body: JSON.stringify(post),
+  // })
+  // if (!response.ok) throw new Error('创建帖子失败')
+  // return response.json()
+
+  // 模拟返回数据
+  return new Promise<Post>((resolve) => {
+    setTimeout(() => {
+      resolve({
+        id: Math.random(), // 模拟帖子 ID
+        title: post.title,
+        forumId: forumId,
+        forumName:
+        content: post.content,
+        author: '当前用户', // 应从用户状态获取
+        authorAvatar: '', // 应从用户状态获取
+        replyCount: 0,
+        likeCount: 0,
+        isLiked: false,
+        isFeatured: false,
+        lastRepliedAt: Date.now(),
+      })
     }, 500)
   })
 }
