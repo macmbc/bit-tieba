@@ -4,17 +4,18 @@
 
 ### 1.1 登录注册界面
 
-- [ ] **1. 登录页面 UI**：包括用户名输入框、密码输入框、登录按钮、跳转注册链接  
-- [ ] **2. 注册页面 UI**：包括用户名、邮箱、密码、确认密码输入框、注册按钮、邀请码（默认为10086）  
-- [ ] **3. 输入验证**：检查字段是否为空、密码是否合法、两次密码是否一致、邀请码是否正确  
-- [ ] **4. 前端错误提示**：在输入错误或接口返回错误时，显示错误信息  
-- [ ] **5. 加载状态显示**：登录/注册中按钮禁用、显示加载动画  
-- [ ] **6. 登录成功跳转**：登录成功后跳转到首页或用户主页  
-- [ ] **7. 注册成功跳转**：注册成功后跳转到登录页并显示成功提示  
-- [ ] **8. Token 存储（暂定）**：登录成功后保存后端返回的 token  
-- [ ] **9. 自动登录/保持登录状态**：页面刷新时读取 token 并自动登录  
-- [ ] **10. 退出登录**：点击退出按钮后清除 token 并跳转登录页  
+- [x] **1. 登录页面 UI**：包括用户名输入框、密码输入框、登录按钮、跳转注册链接  
+- [x] **2. 注册页面 UI**：包括用户名、邮箱、密码、确认密码输入框、注册按钮、邀请码（默认为10086）  
+- [x] **3. 输入验证**：检查字段是否为空、密码是否合法、两次密码是否一致、邀请码是否正确  
+- [x] **4. 前端错误提示**：在输入错误或接口返回错误时，显示错误信息  
+- [x] **5. 加载状态显示**：登录/注册中按钮禁用、显示加载动画  
+- [x] **6. 登录成功跳转**：登录成功后跳转到首页或用户主页  
+- [x] **7. 注册成功跳转**：注册成功后跳转到登录页并显示成功提示  
+- [x] **8. Token 存储（暂定）**：登录成功后保存后端返回的 token  
+- [x] **9. 自动登录/保持登录状态**：页面刷新时读取 token 并自动登录  
+- [x] **10. 退出登录**：点击退出按钮后清除 token 并跳转登录页  
 - [ ] **11. 修改(忘记)密码**：通过发送邮箱到验证码进行密码的重置
+- [ ] **12. 建立TCP连接**：通过socket建立长连接
 
 ### 1.2 首页界面
 
@@ -51,13 +52,13 @@
 
 ### 1.5 “我的”界面
 
-- [ ] **1. 个人资料**：显示用户头像、昵称、性别、签名、UID
+- [x] **1. 个人资料**：显示用户头像、昵称、性别、签名、UID
 - [ ] **2. 内容管理**：展示我发布的帖子和我的回复
 - [ ] **3. 我的收藏**：展示我收藏的帖子
 - [ ] **4. 我的关注和粉丝**：展示我关注的人和关注我的人（可取关和回关）
 - [ ] **5. 个人资料编辑**：修改昵称、头像、签名、性别等
 - [ ] **6. 隐私设置**：是否展示关注、粉丝、动态
-- [ ] **7. 退出登录**
+- [x] **7. 退出登录**
 
 ### 1.6 贴吧主页面
 
@@ -70,7 +71,7 @@
 - [ ] **7. 发帖入口**：已登录用户可点击“发帖”按钮进入发帖页面 `/post/create`  
 - [ ] **8. 搜索功能**：支持搜索贴吧内的帖子标题
 - [ ] **9. 排序筛选功能**：支持按时间、热度、回复数进行排序  
-  - [ ] **10. 吧务管理入口（仅限吧主）**：支持删除帖子、置顶帖子等管理操作  
+- [ ] **10. 吧务管理入口（仅限吧主）**：支持删除帖子、置顶帖子等管理操作  
 
 - [ ] **11. 精华帖模块（可选）**：展示被设为精华的帖子  
 - [ ] **12. 用户交互功能**：支持点赞、收藏帖子  
@@ -116,64 +117,68 @@
 
 ### 2.1 用户验证
 
-| 接口              | 方法 | 请求体                                                       | 响应体                                                       | 说明                                |
-| ----------------- | ---- | ------------------------------------------------------------ | ------------------------------------------------------------ | ----------------------------------- |
-| `/get_varifycode` | POST | `{"email": "user@example.com"}`                              | `{"error": 0, "email": "user@example.com"}`                  | 生成并发送验证码，存入 Redis        |
-| `/user_register`  | POST | `{"email": "", "user": "", "passwd": "", "confirm": "", "icon": "", "varifycode": "", "invite_code": "10086"}` | `{"error": 0, "uid": 1059, "user": "", "email": ""}`         | 注册用户，校验验证码和邀请码        |
-| `/user_login`     | POST | `{"email": "", "passwd": ""}`                                | `{"error": 0, "email": "", "uid": 1054, "token": "...", "host": "127.0.0.1", "port": "8090"}` | 登录，分配 ChatServer 节点          |
-| `/reset_pwd`      | POST | `{"email": "", "user": "", "passwd": "", "varifycode": ""}`  | `{"error": 0, "email": "", "user": ""}`                      | 重置修改密码                        |
-| `/update_profile` | POST | `{"uid": 1054, "nickname": "", "icon": "", "sex": 0, "desc": ""}` | `{"error": 0}`                                               | 更新用户资料，需验证 token          |
-| `/logout`         | POST | `{"uid": 1054, "token": "..."}`                              | `{"error": 0}`                                               | 退出登录，清除 Redis `utoken_<uid>` |
-| `/get_profile`    | GET  | `?uid=1054`                                                  | `{"error": 0, "uid": 1054, "name": "", "nick": "", "icon": "", "sex": 0, "desc": ""}` | 获取用户资料                        |
+| 接口              | 方法 | 请求体                                                       | 响应体                                                       | 说明                         |
+| ----------------- | ---- | ------------------------------------------------------------ | ------------------------------------------------------------ | ---------------------------- |
+| `/get_varifycode` | POST | `{"email": "user@example.com"}`                              | `{"error": 0, "email": "user@example.com"}`                  | 生成并发送验证码，存入 Redis |
+| `/user_register`  | POST | `{"email": "", "user": "", "passwd": "", "confirm": "", "icon": "", "varifycode": ""}` | `{"error": 0, "uid": 1059, "user": "", "email": ""}`         | 注册用户，校验验证码和邀请码 |
+| `/user_login`     | POST | `{"email": "", "passwd": ""}`                                | `{"error": 0, "email": "", "uid": 1054, "token": "...", "host": "127.0.0.1", "port": "8090"}` | 登录，分配 ChatServer 节点   |
+| `/reset_pwd`      | POST | `{"email": "", "user": "", "passwd": "", "varifycode": ""}`  | `{"error": 0, "email": "", "user": ""}`                      | 重置修改密码                 |
+| `/logout`         | POST | `{"uid": 1054, "token": "..."}`                              | `{"error": 0}`                                               | 断开tcp连接                  |
 
 ### 2.2 贴吧管理
 
-| 接口               | 方法 | 请求体/参数                    | 响应体                                                       | 说明                   |
-| ------------------ | ---- | ------------------------------ | ------------------------------------------------------------ | ---------------------- |
-| `/forums`          | GET  | `?page=1&limit=20`             | `{"error": 0, "forums": [{ "forum_id": 1, "name": "", "avatar": "", "description": "", "follower_count": 100, "post_count": 50 }]}` | 获取贴吧列表（分页）   |
-| `/forum/:forum_id` | GET  |                                | `{"error": 0, "forum": { "forum_id": 1, "name": "", "avatar": "", "description": "", "follower_count": 100, "post_count": 50, "is_followed": true }}` | 获取贴吧详情           |
-| `/follow_forum`    | POST | `{"uid": 1054, "forum_id": 1}` | `{"error": 0}`                                               | 关注贴吧，需验证 token |
-| `/unfollow_forum`  | POST | `{"uid": 1054, "forum_id": 1}` | `{"error": 0}`                                               | 取消关注贴吧           |
-| `/followed_forums` | GET  | `?uid=1054&page=1&limit=20`    | `{"error": 0, "forums": [{ "forum_id": 1, ... }]}`           | 获取用户关注的贴吧列表 |
+| 接口                  | 方法 | 请求体/参数                                       | 响应体                                                       | 说明                                |
+| --------------------- | ---- | ------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------- |
+| `/update_forum`       | POST | `{"desc":"eee","icon":"","new_owner_id":""}`      | `{"error":0}`                                                | 修改吧信息                          |
+| `/forums`             | GET  | `?page=1&limit=20`                                | `{"error": 0, "forums": [{ "forum_id": 1, "name": "", "avatar": "", "description": "", "follower_count": 100, "post_count": 50 ...}]}` | 获取热门贴吧列表（Forum的数组）     |
+| `/forum/:forum_id`    | GET  |                                                   | `{"error": 0, "forum": { "forum_id": 1, "name": "", "avatar": "", "description": "", "follower_count": 100, "post_count": 50, "is_followed": true }，“posts”：[...]}` | 获取具体贴吧内容（Post的数组）      |
+| `/set_followed_forum` | POST | `{"uid": 1054, "forum_id": 1,"is_followed":true}` | `{"error": 0}`                                               | 关注/取关贴吧                       |
+| `/followed_forums`    | GET  | `?uid=1054&page=1&limit=20`                       | `{"error": 0, "forums": [{ "forum_id": 1, ... }]}`           | 获取用户关注的贴吧列表(Forum的数组) |
+| `/create_forum`       | POST | `{"uid":1022,"name":"abc","desc":"hhh",icon:"",}` | `{"error": 0}`                                               | 创建吧                              |
 
 ### 2.3 帖子管理
 
-| 接口                | 方法   | 请求体/参数                                                  | 响应体                                                       |                    说明                    |
-| ------------------- | ------ | ------------------------------------------------------------ | ------------------------------------------------------------ | :----------------------------------------: |
-| `/posts`            | GET    | `?forum_id=1&page=1&limit=20&sort=time`                      | `{"error": 0, "posts": [{ "post_id": 456, "title": "", "uid": 1054, "author": "", "created_at": "", "reply_count": 10, "like_count": 5, "is_top": false, "is_essence": false, "content_preview": "" }]}` | 获取帖子列表（支持排序：time, hot, reply） |
-| `/post/:post_id`    | GET    | -                                                            | `{"error": 0, "post": { "post_id": 456, "title": "", "content": "", "uid": 1054, "author": "", "created_at": "", "forum_id": 1, "like_count": 5, "is_liked": false, "is_collected": false }}` |                获取帖子详情                |
-| `/post`             | POST   | `{"uid": 1054, "forum_id": 1, "title": "", "content": "", }` | `{"error": 0, "post_id": 456}`                               |           创建帖子，需验证 token           |
-| `/post/:post_id`    | PUT    | `{"uid": 1054, "title": "", "content": ""}`                  | `{"error": 0}`                                               |            编辑帖子（仅限作者）            |
-| `/post/:post_id`    | DELETE | `{"uid": 1054}`                                              | `{"error": 0}`                                               |           删除帖子（作者或吧主）           |
-| `/like_post`        | POST   | `{"uid": 1054, "post_id": 456}`                              | `{"error": 0}`                                               |                  点赞帖子                  |
-| `/unlike_post`      | POST   | `{"uid": 1054, "post_id": 456}`                              | `{"error": 0}`                                               |                  取消点赞                  |
-| `/collect_post`     | POST   | `{"uid": 1054, "post_id": 456}`                              | `{"error": 0}`                                               |                  收藏帖子                  |
-| `/uncollect_post`   | POST   | `{"uid": 1054, "post_id": 456}`                              | `{"error": 0}`                                               |                  取消收藏                  |
-| `/set_top_post`     | POST   | `{"uid": 1054, "post_id": 456, "is_top": true}`              | `{"error": 0}`                                               |         设置/取消置顶（吧主权限）          |
-| `/set_essence_post` | POST   | `{"uid": 1054, "post_id": 456, "is_essence": true}`          | `{"error": 0}`                                               |         设置/取消精华（吧主权限）          |
+| 接口                  | 方法   | 请求体/参数                                                  | 响应体                                                       |             说明             |
+| --------------------- | ------ | ------------------------------------------------------------ | ------------------------------------------------------------ | :--------------------------: |
+| `/posts`              | GET    | `?forum_id=1&page=1&limit=20`                                | `{"error": 0, "posts": [Post[]]}`                            | 获取热门帖子列表(Post的数组) |
+| `/post/:post_id`      | GET    |                                                              | `{"error": 0, "post": { "post_id": 456, "title": "", "content": "", "uid": 1054, "author": "", "created_at": "", "forum_id": 1, "like_count": 5, "is_liked": false, "is_collected": false },"replys":[...]}` |     获取帖子(Reply数组)      |
+| `/create_post`        | POST   | `{"uid": 1054, "forum_id": 1, "title": "", "content": "", }` | `{"error": 0}`                                               |           创建帖子           |
+| `/post/:post_id`      | DELETE |                                                              | `{"error": 0}`                                               |    删除帖子（作者或吧主）    |
+| `/set_liked_post`     | POST   | `{"uid": 1054, "post_id": 456,"is_liked":true}`              | `{"error": 0}`                                               |        点赞/取消帖子         |
+| `/set_collected_post` | POST   | `{"uid": 1054, "post_id": 456,"is_collected":true}`          | `{"error": 0}`                                               |        收藏/取消帖子         |
+| `/set_featured_post`  | POST   | `{"uid": 1054, "post_id": 456, "is_featured": true}`         | `{"error": 0}`                                               |  设置/取消精华（吧主权限）   |
 
 ### 2.4 回复管理
 
-| 接口                     | 方法   | 请求体/参数                                                  | 响应体                                                       | 说明                              |
-| ------------------------ | ------ | ------------------------------------------------------------ | ------------------------------------------------------------ | --------------------------------- |
-| `/post/:post_id/replies` | GET    | `?page=1&limit=20&sort=time`                                 | `{"error": 0, "replies": [{ "reply_id": 789, "post_id": 456, "uid": 1054, "content": "", "parent_reply_id": 0, "created_at": "", "floor": 1, "like_count": 2, "is_liked": false, "sub_replies": [...] }]}` | 获取回复列表（支持楼中楼）        |
-| `/reply`                 | POST   | `{"uid": 1054, "post_id": 456, "content": "", "parent_reply_id": 0, "at_uids": [1055]}` | `{"error": 0, "reply_id": 789}`                              | 创建回复，`at_uids` 表示 @ 的用户 |
-| `/reply/:reply_id`       | DELETE | `{"uid": 1054}`                                              | `{"error": 0}`                                               | 删除回复（作者或吧主）            |
-| `/like_reply`            | POST   | `{"uid": 1054, "reply_id": 789}`                             | `{"error": 0}`                                               | 点赞回复                          |
-| `/unlike_reply`          | POST   | `{"uid": 1054, "reply_id": 789}`                             | `{"error": 0}`                                               | 取消点赞                          |
+| 接口                       | 方法   | 请求体/参数                                                  | 响应体                                 | 说明                           |
+| -------------------------- | ------ | ------------------------------------------------------------ | -------------------------------------- | ------------------------------ |
+| `/post/:post_id/:reply_id` | GET    | `?page=1&limit=20`                                           | `{"error": 0,"reply":{}，replies":[]}` | 获取某一楼层下的子回复         |
+| `/create_reply`            | POST   | `{"uid": 1054, "post_id": 456, "content": "", "parent_id": 0}` | `{"error": 0}`                         | 创建回复                       |
+| `/reply/:reply_id`         | DELETE | `{"uid": 1054}`                                              | `{"error": 0}`                         | 删除回复（回复的人和帖子楼主） |
+| `/set_liked_reply`         | POST   | `{"uid": 1054, "reply_id": 789,"is_liked":true}`             | `{"error": 0}`                         | 点赞/取消回复                  |
 
-### 2.5 搜索功能
+### 2.5 搜索功能（暂定）
 
 | 接口      | 方法 | 请求体/参数                                         | 响应体                                                       | 说明                                                      |
 | --------- | ---- | --------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------- |
 | `/search` | GET  | `?keyword=xxx&type=post&forum_id=1&page=1&limit=20` | `{"error": 0, "results": [{ "post_id": 456, ... } or { "forum_id": 1, ... } or { "uid": 1054, ... }]}` | 搜索帖子、贴吧或用户，`type` 可选 `post`、`forum`、`user` |
 
-### 2.6 用户内容管理
+### 2.6 用户管理
 
-| 接口            | 方法 | 请求体/参数               | 响应体                                              | 说明               |
-| --------------- | ---- | ------------------------- | --------------------------------------------------- | ------------------ |
-| /my/posts       | GET  | ?uid=1054&page=1&limit=20 | {"error": 0, "posts": [{ "post_id": 456, ... }]}    | 获取用户发布的帖子 |
-| /my/replies     | GET  | ?uid=1054&page=1&limit=20 | {"error": 0, "replies": [{ "reply_id": 789, ... }]} | 获取用户回复       |
-| /my/collections | GET  | ?uid=1054&page=1&limit=20 | {"error": 0, "posts": [{ "post_id": 456, ... }]}    | 获取用户收藏的帖子 |
-| /my/followers   | GET  | ?uid=1054&page=1&limit=20 | {"error": 0, "users": [{ "uid": 1055, ... }]}       | 获取粉丝列表       |
-| /my/following   | GET  | ?uid=1054&page=1&limit=20 | {"error": 0, "users": [{ "uid": 1055, ... }]}       | 获取关注列表       |
+| 接口                 | 方法 | 请求体/参数                                           | 响应体                                                       | 说明                           |
+| -------------------- | ---- | ----------------------------------------------------- | ------------------------------------------------------------ | ------------------------------ |
+| `/users/get_profile` | GET  | `?uid=1054`                                           | `{"error": 0, "uid": 1054, "username": "", , "icon": "", "sex": 0, "desc": ""}` | 获取用户资料                   |
+| `/users/posts`       | GET  | `?uid=1054&page=1&limit=20`                           | `{"error": 0, "posts": [{ "post_id": 456, ... }]}`           | 获取用户发布的帖子             |
+| `/users/followers`   | GET  | `?uid=1054&page=1&limit=20`                           | `{"error": 0, "users": [{ "uid": 1055, ... }]}`              | 获取粉丝列表                   |
+| `/users/following`   | GET  | `?uid=1054&page=1&limit=20`                           | `{"error": 0, "users": [{ "uid": 1055, ... }]}`              | 获取关注列表                   |
+| `/user/set_followed` | POST | `{"uid":1054,"followed_uid":1055,"is_followed":true}` | `{"error":0}`                                                | 关注取关某人(不能自己关注自己) |
+
+### 2.7 个人主页
+
+| 接口                 | 方法 | 请求体/参数                                                  | 响应体                                                | 说明               |
+| -------------------- | ---- | ------------------------------------------------------------ | ----------------------------------------------------- | ------------------ |
+| `/my/replies`        | GET  | `?uid=1054&page=1&limit=20`                                  | `{"error": 0, "replies": [{ "reply_id": 789, ... }]}` | 获取我的回复       |
+| `/my/collections`    | GET  | `?uid=1054&page=1&limit=20`                                  | `{"error": 0, "posts": [{ "post_id": 456, ... }]}`    | 获取我的收藏的帖子 |
+| `/my/update_profile` | POST | `{"uid": 1054, "username": "", "icon": "", "sex": 0, "desc": ""}` | `{"error": 0}`                                        | 更新我的资料       |
+
+### 2.8 私信功能
