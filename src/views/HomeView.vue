@@ -33,7 +33,7 @@ onMounted(async () => {
     const [forums, posts, followed] = await Promise.all([
       getHotForums(),
       getHotPosts(),
-      isLoggedIn.value ? getFollowedPosts(userStore.userId) : Promise.resolve([]),
+      isLoggedIn.value ? getFollowedPosts(userStore.userInfo?.id) : Promise.resolve([]),
     ])
     hotForums.value = forums
     hotPosts.value = posts

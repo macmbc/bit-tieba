@@ -171,8 +171,8 @@ onMounted(async () => {
     await loadPosts(true)
 
     // 检查关注状态
-    if (userStore.isLoggedIn && userStore.userId) {
-      const followedForums = await getFollowedForums(userStore.userId)
+    if (userStore.isLoggedIn && userStore.userInfo?.id!) {
+      const followedForums = await getFollowedForums(userStore.userInfo?.id!)
       isFollowed.value = followedForums.some((f) => f.id === forumId.value)
     }
   } catch (err) {
@@ -227,17 +227,17 @@ const loadMorePosts = async () => {
 
 // 切换关注状态
 const toggleFollow = async () => {
-  if (!userStore.isLoggedIn || !userStore.userId) {
+  if (!userStore.isLoggedIn || !userStore.userInfo?.id!) {
     error.value.forum = '请先登录以关注贴吧'
     return
   }
   following.value = true
   try {
     if (isFollowed.value) {
-      await unfollowForumApi(userStore.userId, forumId.value)
+      await unfollowForumApi(userStore.userInfo?.id!, forumId.value)
       isFollowed.value = false
     } else {
-      await followForumApi(userStore.userId, forumId.value)
+      await followForumApi(userStore.userInfo?.id!, forumId.value)
       isFollowed.value = true
     }
   } catch (err) {

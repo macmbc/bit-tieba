@@ -179,7 +179,7 @@ const loadInitialData = async () => {
     loading.value.replies = true
 
     const [postData, replyData] = await Promise.all([
-      getPost(forumId.value, postId.value, userStore.userId),
+      getPost(forumId.value, postId.value, userStore.userInfo?.id),
       getReplies(postId.value, 1),
     ])
 
@@ -265,7 +265,7 @@ const handleReplySubmit = async (payload: { content: string; parentId?: number }
   replying.value = true
   try {
     const newReply = await createReply(
-      userStore.userId!,
+      userStore.userInfo?.id!,
       postId.value,
       payload.content,
       payload.parentId,
@@ -333,11 +333,11 @@ const toggleLike = async () => {
   liking.value = true
   try {
     if (mainPost.value.isLiked) {
-      await unlikePost(userStore.userId!, postId.value)
+      await unlikePost(userStore.userInfo?.id!, postId.value)
       mainPost.value.isLiked = false
       mainPost.value.likeCount -= 1
     } else {
-      await likePost(userStore.userId!, postId.value)
+      await likePost(userStore.userInfo?.id!, postId.value)
       mainPost.value.isLiked = true
       mainPost.value.likeCount += 1
     }
@@ -351,11 +351,11 @@ const toggleCollect = async () => {
   collecting.value = true
   try {
     if (mainPost.value.isCollected) {
-      await uncollectPost(userStore.userId!, postId.value)
+      await uncollectPost(userStore.userInfo?.id!, postId.value)
       mainPost.value.isCollected = false
       mainPost.value.collectCount -= 1
     } else {
-      await collectPost(userStore.userId!, postId.value)
+      await collectPost(userStore.userInfo?.id!, postId.value)
       mainPost.value.isCollected = true
       mainPost.value.collectCount += 1
     }

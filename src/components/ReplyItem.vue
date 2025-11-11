@@ -41,9 +41,7 @@
           @like="handleChildLike"
           @load-more-sub="$emit('load-more-sub', reply.id)"
         />
-        <div class="show-all" @click="handleShowAll">
-          查看全部 {{ reply.replyCount }} 条回复
-        </div>
+        <div class="show-all" @click="handleShowAll">查看全部 {{ reply.replyCount }} 条回复</div>
       </template>
 
       <!-- 展开状态：显示全部（仍支持分页加载） -->
@@ -53,7 +51,6 @@
           :key="sub.id"
           :reply="sub"
           :post-id="postId"
-
           :loading="false"
           @reply="$emit('reply', $event)"
           @like="handleChildLike"
@@ -114,9 +111,9 @@ const handleLike = async (replyId: number) => {
   liking.value[replyId] = true
   try {
     if (newIsLiked) {
-      await likeReply(userStore.userId!, replyId)
+      await likeReply(userStore.userInfo?.id ?? 0, replyId)
     } else {
-      await unlikeReply(userStore.userId!, replyId)
+      await unlikeReply(userStore.userInfo?.id ?? 0, replyId)
     }
   } catch (err) {
     // 失败回滚
@@ -148,10 +145,7 @@ const handleShowAll = () => {
   expanded.value = true
 
   // 如果子回复还没加载完，就通知父组件去加载更多
-  if (
-    !props.reply.children ||
-    props.reply.children.length < props.reply.replyCount!
-  ) {
+  if (!props.reply.children || props.reply.children.length < props.reply.replyCount!) {
     emit('load-more-sub', props.reply.id)
   }
 }
@@ -282,10 +276,10 @@ const handleShowAll = () => {
 }
 
 /* 每条子回复 */
-.sub-replies >>> .reply-wrapper {
+.sub-replies :deep(.reply-wrapper) {
   margin-bottom: 8px;
 }
-.sub-replies >>> .reply-main {
+.sub-replies :deep(.reply-main) {
   background: #f5f5f5;
   padding: 8px 12px;
   border-radius: 0 4px 4px 0;
@@ -346,7 +340,7 @@ const handleShowAll = () => {
   .action-btn.like.active {
     background: #ff4757;
   }
-  .sub-replies >>> .reply-main {
+  .sub-replies :deep(.reply-main) {
     background: #333;
   }
   .show-all {

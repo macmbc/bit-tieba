@@ -1,6 +1,6 @@
 // src/api/forumApi.ts
 import axios from 'axios'
-import type { Forum, Post, Message, UserInfo, Reply } from '@/types'
+import type { Forum, Post, Message, UserInfo, Reply, CreatePost } from '@/types'
 import { REPLY_CONSTANTS } from '@/constants/forum'
 
 const api = axios.create({
@@ -59,7 +59,7 @@ const mockData = {
       content: '一个真实的 Vue 项目案例...',
       replyCount: 8,
       author: '用户123',
-      authorId:123,
+      authorId: 123,
       createdAt: Date.now() - 86400 * 1000, // 1天前
       lastRepliedAt: Date.now() - 3600 * 1000 * 0.5, // 0.5小时前
       likeCount: 10,
@@ -139,11 +139,11 @@ const mockData = {
   ] as Message[],
 
   userInfo: {
-    id:6,
+    id: 6,
     username: '用户123',
-    email: "321123@qq.com",
+    email: '321123@qq.com',
     desc: '前端爱好者，喜欢Vue和TypeScript',
-    nickname:'好姐妹小木曾雪菜',
+    sex: 1,
     avatar: '/uploads/avatars/neuro.jpg',
     createdAt: Date.now() - 30 * 86400 * 1000,
   } as UserInfo,
@@ -196,19 +196,19 @@ export const getHotPosts = async (): Promise<Post[]> => {
   })
 }
 
-export const getFollowedPosts = async (userId?: string): Promise<Post[]> => {
+export const getFollowedPosts = async (userId?: number): Promise<Post[]> => {
   return new Promise((resolve) => {
     setTimeout(() => resolve(userId ? mockData.followedPosts : []), 500)
   })
 }
 
-export const getFollowedForums = async (userId?: string): Promise<Forum[]> => {
+export const getFollowedForums = async (userId?: number): Promise<Forum[]> => {
   return new Promise((resolve) => {
     setTimeout(() => resolve(userId ? mockData.followedForums : []), 500)
   })
 }
 
-export const unfollowForumApi = async (userId: string, forumId: number): Promise<void> => {
+export const unfollowForumApi = async (userId: number, forumId: number): Promise<void> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       mockData.followedForums = mockData.followedForums.filter((f) => f.id !== forumId)
@@ -218,7 +218,7 @@ export const unfollowForumApi = async (userId: string, forumId: number): Promise
 }
 
 // 新增：获取消息列表
-export const getMessages = async (userId?: string): Promise<Message[]> => {
+export const getMessages = async (userId?: number): Promise<Message[]> => {
   // 真实 API 示例
   // const response = await api.get(`/messages?userId=${userId}`);
   // return response.data;
@@ -228,7 +228,7 @@ export const getMessages = async (userId?: string): Promise<Message[]> => {
 }
 
 // 新增：标记消息为已读
-export const markMessageAsRead = async (userId: string, messageId: number): Promise<void> => {
+export const markMessageAsRead = async (userId: number, messageId: number): Promise<void> => {
   // 真实 API 示例
   // await api.post('/messages/read', { userId, messageId });
   return new Promise((resolve) => {
@@ -242,7 +242,7 @@ export const markMessageAsRead = async (userId: string, messageId: number): Prom
 }
 
 // 新增：获取未读消息数
-export const getUnreadCount = async (userId?: string): Promise<number> => {
+export const getUnreadCount = async (userId?: number): Promise<number> => {
   // 真实 API 示例
   // const response = await api.get(`/messages/unread?userId=${userId}`);
   // return response.data.count;
@@ -255,7 +255,7 @@ export const getUnreadCount = async (userId?: string): Promise<number> => {
 }
 
 export const markAllMessagesAsRead = async (
-  userId: string,
+  userId: number,
   type?: Message['type'],
 ): Promise<void> => {
   // 真实 API 示例
@@ -270,17 +270,17 @@ export const markAllMessagesAsRead = async (
   })
 }
 
-export const getUserInfo = async (userId: string): Promise<UserInfo> => {
-  // 真实 API 示例
-  // const response = await api.get(`/users/${userId}`);
-  // return response.data;
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(mockData.userInfo), 500)
-  })
-}
+// export const getUserInfo = async (userId: number): Promise<UserInfo> => {
+//   // 真实 API 示例
+//   // const response = await api.get(`/users/${userId}`);
+//   // return response.data;
+//   return new Promise((resolve) => {
+//     setTimeout(() => resolve(mockData.userInfo), 500)
+//   })
+// }
 
 // 新增：获取用户帖子
-export const getUserPosts = async (userId: string): Promise<Post[]> => {
+export const getUserPosts = async (userId: number): Promise<Post[]> => {
   // 真实 API 示例
   // const response = await api.get(`/users/${userId}/posts`);
   // return response.data;
@@ -335,7 +335,7 @@ export const getForumPosts = async (
 }
 
 // 新增：关注贴吧
-export const followForumApi = async (userId: string, forumId: number): Promise<void> => {
+export const followForumApi = async (userId: number, forumId: number): Promise<void> => {
   // 真实 API 示例
   // await api.post(`/users/${userId}/follow-forum`, { forumId });
   return new Promise((resolve) => {
@@ -349,14 +349,14 @@ export const followForumApi = async (userId: string, forumId: number): Promise<v
   })
 }
 
-export const getPost = async (forumId: number, postId: number, userId?: string): Promise<Post> => {
+export const getPost = async (forumId: number, postId: number, userId?: number): Promise<Post> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       const post = mockData.hotPosts.find((p) => p.id === postId && p.forumId === forumId)
       if (post) {
         resolve({
           ...post,
-          authorId: 'user123',
+          authorId: 124,
           likeCount: 15,
           collectCount: 8,
           isLiked: userId ? Math.random() > 0.7 : false,
@@ -519,7 +519,7 @@ export const getReplies = async (
 
 // 新增：发表回复
 export const createReply = async (
-  userId: string,
+  userId: number,
   postId: number,
   content: string,
   parentId?: number,
@@ -544,53 +544,58 @@ export const createReply = async (
   })
 }
 
-export const createPostApi = async (forumId: number, post: { title: string; content: string }) => {
-  // 模拟 API 调用
-  // const response = await fetch(`/api/forums/${forumId}/posts`, {
+export const createPostApi = async (post: CreatePost): Promise<Post> => {
+  // const response = await fetch(`/api/forums/${post.forumId}/posts`, {
   //   method: 'POST',
   //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(post),
+  //   body: JSON.stringify({
+  //     title: post.title,
+  //     content: post.content,
+  //     authorId: post.authorId, // 传递 authorId
+  //   }),
   // })
   // if (!response.ok) throw new Error('创建帖子失败')
-  // return response.json()
+  // return response.json() as Promise<Post> // 返回完整的 Post 对象
+  await new Promise((resolve) => setTimeout(resolve, 500))
+  // 模拟帖子 ID、自增逻辑和时间戳
+  const mockPost: Post = {
+    id: Math.floor(Math.random() * 100000),
+    forumId: post.forumId,
+    forumName: 'Vue.js 吧',
+    title: post.title,
+    content: post.content,
+    replyCount: 0,
+    authorId: post.authorId,
+    author: '测试用户', // 可自定义
+    createdAt: Date.now(),
+    likeCount: 0,
+    collectCount: 0,
+    isLiked: false,
+    isCollected: false,
+    lastRepliedAt: Date.now(),
+    isFeatured: false,
+  }
 
-  // 模拟返回数据
-  return new Promise<Post>((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id: Math.random(), // 模拟帖子 ID
-        title: post.title,
-        forumId: forumId,
-        forumName:
-        content: post.content,
-        author: '当前用户', // 应从用户状态获取
-        authorAvatar: '', // 应从用户状态获取
-        replyCount: 0,
-        likeCount: 0,
-        isLiked: false,
-        isFeatured: false,
-        lastRepliedAt: Date.now(),
-      })
-    }, 500)
-  })
+  console.log('模拟创建帖子成功：', mockPost)
+  return mockPost
 }
 
 // 点赞/取消点赞
-export const likePost = async (userId: string, postId: number): Promise<void> => {
+export const likePost = async (userId: number, postId: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, 300))
 }
-export const unlikePost = async (userId: string, postId: number): Promise<void> => {
+export const unlikePost = async (userId: number, postId: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, 300))
 }
-export const collectPost = async (userId: string, postId: number): Promise<void> => {
+export const collectPost = async (userId: number, postId: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, 300))
 }
-export const uncollectPost = async (userId: string, postId: number): Promise<void> => {
+export const uncollectPost = async (userId: number, postId: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, 300))
 }
-export const likeReply = async (userId: string, replyId: number): Promise<void> => {
+export const likeReply = async (userId: number, replyId: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, 300))
 }
-export const unlikeReply = async (userId: string, replyId: number): Promise<void> => {
+export const unlikeReply = async (userId: number, replyId: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, 300))
 }

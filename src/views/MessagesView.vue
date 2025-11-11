@@ -92,7 +92,7 @@ onMounted(async () => {
 
   try {
     loading.value = true
-    messages.value = await getMessages(userStore.userId)
+    messages.value = await getMessages(userStore.userInfo?.id ?? 0)
   } catch (err) {
     error.value = (err as Error).message
   } finally {
@@ -127,8 +127,8 @@ const markAsRead = async (messageId: number) => {
   if (!msg) return
   msg.isRead = true // 乐观更新
   try {
-    await markMessageAsRead(userStore.userId!, messageId)
-    await messageStore.refreshUnreadCount(userStore.userId!)
+    await markMessageAsRead(userStore.userInfo?.id ?? 0!, messageId)
+    await messageStore.refreshUnreadCount(userStore.userInfo?.id ?? 0!)
   } catch {
     msg.isRead = false // 出错回滚
   }
@@ -136,7 +136,7 @@ const markAsRead = async (messageId: number) => {
 
 // 批量标记为已读
 const markAllAsRead = async () => {
-  if (!userStore.isLoggedIn || !userStore.userId) return
+  if ((!userStore.isLoggedIn || !userStore.userInfo?.id) ?? 0) return
   markingAll.value = true
   await nextTick()
   // 乐观更新：先标记筛选出的未读消息为已读
@@ -149,12 +149,12 @@ const markAllAsRead = async () => {
     )
     // 调用 API
     await markAllMessagesAsRead(
-      userStore.userId!,
+      userStore.userInfo?.id ?? 0!,
       filter.value === 'all' ? undefined : filter.value,
     )
 
     // 更新未读消息数
-    await messageStore.refreshUnreadCount(userStore.userId!)
+    await messageStore.refreshUnreadCount(userStore.userInfo?.id ?? 0!)
   } catch (err) {
     error.value = `批量标记已读失败：${(err as Error).message}`
     messages.value = originalMessages // 出错回滚

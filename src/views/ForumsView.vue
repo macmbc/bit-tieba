@@ -50,7 +50,7 @@ onMounted(async () => {
 
   try {
     loading.value = true
-    followedForums.value = await getFollowedForums(userStore.userId)
+    followedForums.value = await getFollowedForums(userStore.userInfo?.id)
   } catch (err) {
     error.value = (err as Error).message
   } finally {
@@ -60,11 +60,11 @@ onMounted(async () => {
 
 // 取消关注
 const unfollowForum = async (forumId: number) => {
-  if (!userStore.isLoggedIn || !userStore.userId) return
+  if (!userStore.isLoggedIn || !userStore.userInfo) return
 
   try {
     unfollowing.value[forumId] = true
-    await unfollowForumApi(userStore.userId, forumId)
+    await unfollowForumApi(userStore.userInfo.id, forumId)
     followedForums.value = followedForums.value.filter((f) => f.id !== forumId)
   } catch (err) {
     error.value = `取消关注失败：${(err as Error).message}`

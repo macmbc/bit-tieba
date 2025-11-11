@@ -5,8 +5,9 @@ export interface Forum {
   description: string
   postCount: number
   avatar?: string
-  ownerId?: number
+  ownerId?: number //吧主
   ownerName?: string
+  isFollowed: true
 }
 
 export interface Post {
@@ -35,19 +36,40 @@ export interface CreatePost {
   authorId: number
 }
 
-export interface Reply {
-  id: number
+// parentId为0时floor有意义，不为0时floor项不存在
+export type Reply =
+  | {
+      id: number
+      postId: number
+      author: string
+      authorId: number
+      content: string
+      parentId: 0 // 一级回复
+      floor: number // 有意义
+      createdAt: number
+      likeCount: number
+      isLiked: boolean
+      replyCount?: number
+      children?: Reply[] // 子回复
+    }
+  | {
+      id: number
+      postId: number
+      author: string
+      authorId: number
+      content: string
+      parentId: number // 二级回复
+      floor?: never // 禁止使用 floor
+      createdAt: number
+      likeCount: number
+      isLiked: boolean
+    }
+
+export interface CreateReply {
   postId: number
-  author: string
   authorId: number
   content: string
-  floor?: number
-  createdAt: number
-  likeCount: number
-  isLiked: boolean
-  parentId?: number // 父回复 ID（null 表示一级回复）
-  children?: Reply[]
-  replyCount?: number
+  parentId: number
 }
 
 export interface Message {
@@ -67,7 +89,6 @@ export interface UserInfo {
   email: string
   desc: string
   sex: number
-  nickname: string
   avatar?: string
-  createdAt: number
+  role: string | null //吧主与否
 }

@@ -11,10 +11,10 @@
         <img :src="userInfo.avatar || defaultUserAvatar" alt="头像" class="avatar" />
         <div class="info">
           <h3>{{ userInfo.username || '未设置用户名' }}</h3>
-          <p>{{ userInfo.bio || '暂无简介' }}</p>
-          <p>注册时间: {{ formatTime(userInfo.createdAt) }}</p>
+          <p>{{ userInfo.desc || '暂无简介' }}</p>
         </div>
         <router-link to="/settings" class="edit-btn">编辑资料</router-link>
+        <button @click="handleLogout" class="logout-btn">退出登录</button>
       </div>
     </section>
 
@@ -87,24 +87,23 @@
 
 <script lang="ts" setup>
 import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
 import { useUserStore, useMessageStore } from '@/stores/user'
-import {
-  getUserInfo,
-  getUserPosts,
-  getFollowedForums,
-  getMessages,
-  markMessageAsRead,
-} from '@/api/forumApi'
+import { getUserPosts, getFollowedForums, getMessages, markMessageAsRead } from '@/api/forumApi'
 import type { UserInfo, Post, Forum, Message } from '@/types'
 import defaultUserAvatar from '@/assets/img/defaultUserAvatar.png'
 import { formatTime } from '@/utils/format'
 
+const router = useRouter()
+const authStore = useAuthStore()
 const userStore = useUserStore()
 const messageStore = useMessageStore()
-const userInfo = ref<UserInfo>({ username: '', bio: '', createdAt: 0 })
+const userInfo = ref<UserInfo>({ id: 0, username: '', email: '', desc: '', sex: 0 })
 const posts = ref<Post[]>([])
 const followedForums = ref<Forum[]>([])
 const messages = ref<Message[]>([])
+
 const loading = ref({
   profile: true,
   posts: true,
@@ -120,6 +119,26 @@ const error = ref({
 
 // 加载数据
 onMounted(async () => {
+  // 使用真实的登录用户信息
+  const authStore = useAuthStore()
+
+  if (!authStore.isLoggedIn) {
+    error.value.profile = '请先登录以查看个人资料'
+    loading.value.profile = false
+    loading.value.posts = false
+    loading.value.forums = false
+    loading.value.messages = false
+    return
+  }
+
+  // 从 authStore 获取真实用户信息
+  userInfo.value = {
+    username: authStore.user?.email?.split('@')[0] || '用户', // 用邮箱前缀作为用户名
+    desc: '这个人很懒，什么都没写~',
+    avatar: '', // 如果有头像URL
+  }
+  loading.value.profile = false
+
   if (!userStore.isLoggedIn) {
     error.value.profile = '请先登录以查看个人资料'
     loading.value.profile = false
@@ -130,24 +149,19 @@ onMounted(async () => {
   }
 
   try {
-    const [info, userPosts, forums, userMessages] = await Promise.all([
-      getUserInfo(userStore.userId!).catch(() => ({}) as UserInfo),
-      getUserPosts(userStore.userId!).catch(() => [] as Post[]),
-      getFollowedForums(userStore.userId!).catch(() => [] as Forum[]),
-      getMessages(userStore.userId!).catch(() => [] as Message[]),
+    //userInfo给注释掉,就不用mock数据了。不过还需要后端支持
+    const [userPosts, forums, userMessages] = await Promise.all([
+      //getUserInfo(userStore.userInfo?.id!).catch(() => ({}) as UserInfo),
+      getUserPosts(userStore.userInfo?.id!).catch(() => [] as Post[]),
+      getFollowedForums(userStore.userInfo?.id!).catch(() => [] as Forum[]),
+      getMessages(userStore.userInfo?.id!).catch(() => [] as Message[]),
     ])
-    userInfo.value = info
+    //userInfo.value = info
     posts.value = userPosts
     followedForums.value = forums
     messages.value = userMessages
-  } catch (err) {
-    error.value.profile =
-      error.value.posts =
-      error.value.forums =
-      error.value.messages =
-        (err as Error).message
   } finally {
-    loading.value.profile = false
+    //loading.value.profile = false
     loading.value.posts = false
     loading.value.forums = false
     loading.value.messages = false
@@ -181,15 +195,37 @@ const markAsRead = async (messageId: number) => {
   if (!msg) return
   msg.isRead = true // 乐观更新
   try {
-    await markMessageAsRead(userStore.userId!, messageId)
-    await messageStore.refreshUnreadCount(userStore.userId!)
+    await markMessageAsRead(userStore.userInfo?.id!, messageId)
+    await messageStore.refreshUnreadCount(userStore.userInfo?.id!)
   } catch {
     msg.isRead = false // 出错回滚
+  }
+}
+
+// 在最后添加退出登录函数
+const handleLogout = () => {
+  if (confirm('确定要退出登录吗？')) {
+    authStore.logout()
+    router.push('/login')
   }
 }
 </script>
 
 <style scoped>
+.logout-btn {
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.logout-btn:hover {
+  background: #dd3333;
+}
 .me {
   max-width: 1200px;
   margin: 0 auto;

@@ -39,7 +39,7 @@
 import { ref } from 'vue'
 import { createPostApi } from '@/api/forumApi' // 假设有此 API
 import type { CreatePost } from '@/types'
-import { useUserStore } from '@/stores/user';
+import { useUserStore } from '@/stores/user'
 
 const props = defineProps<{
   show: boolean
@@ -51,17 +51,24 @@ const emit = defineEmits<{
   (e: 'postCreated'): void
 }>()
 
+const userStore = useUserStore()
+
 const post = ref<CreatePost>({
   forumId: props.forumId, // 初始化 forumId
   title: '',
   content: '',
-  authorId: useUserStore.userId, // 初始化 authorId
+  authorId: userStore.userInfo?.id ?? 0, // 初始化 authorId
 })
 const submitting = ref(false)
 const error = ref('')
 
 const closeDialog = () => {
-  post.value = { title: '', content: '' } // 重置表单
+  post.value = {
+    forumId: props.forumId,
+    title: '',
+    content: '',
+    authorId: userStore.userInfo?.id ?? 0,
+  } // 重置表单
   error.value = ''
   emit('close')
 }
@@ -74,10 +81,7 @@ const submitPost = async () => {
 
   submitting.value = true
   try {
-    await createPostApi(props.forumId, {
-      title: post.value.title,
-      content: post.value.content,
-    })
+    await createPostApi(post.value)
     emit('postCreated') // 通知父组件帖子创建成功
     closeDialog()
   } catch (err) {
@@ -174,12 +178,12 @@ const submitPost = async () => {
   cursor: pointer;
 }
 
-.form-actions button[type="submit"] {
+.form-actions button[type='submit'] {
   background: #4c91d9;
   color: white;
 }
 
-.form-actions button[type="button"] {
+.form-actions button[type='button'] {
   background: #ccc;
   color: #333;
 }
@@ -212,10 +216,10 @@ const submitPost = async () => {
   .close-btn {
     color: #aaa;
   }
-  .form-actions button[type="submit"] {
+  .form-actions button[type='submit'] {
     background: #6ab0ff;
   }
-  .form-actions button[type="button"] {
+  .form-actions button[type='button'] {
     background: #666;
     color: #ddd;
   }
