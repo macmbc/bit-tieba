@@ -1,0 +1,398 @@
+syntax = "proto3";
+
+package message;
+
+service VarifyService {
+  rpc GetVarifyCode (GetVarifyReq) returns (GetVarifyRsp) {}
+}
+
+message GetVarifyReq {
+  string email = 1;
+}
+
+message GetVarifyRsp {
+  int32 error = 1;
+  string email = 2;
+  string code = 3;
+}
+
+message GetChatServerReq {
+  int32 uid = 1;
+}
+
+message GetChatServerRsp {
+  int32 error = 1;
+  string host = 2;
+  string port = 3;
+  string token = 4;
+}
+
+message LoginReq{
+	int32 uid = 1;
+	string token= 2;
+}
+
+message LoginRsp {
+	int32 error = 1;
+	int32 uid = 2;
+	string token = 3;
+}
+
+service StatusService {
+	rpc GetChatServer (GetChatServerReq) returns (GetChatServerRsp) {}
+	rpc Login(LoginReq) returns(LoginRsp);
+}
+
+message AddFriendReq {
+	int32  applyuid = 1;
+	string name = 2;
+	string desc = 3;
+	string icon = 4;
+	string nick = 5;
+	int32  sex = 6;
+	int32  touid = 7;
+}
+
+message AddFriendRsp {
+	int32 error = 1;
+	int32 applyuid = 2;
+	int32 touid = 3;
+}
+
+message RplyFriendReq {
+	int32 rplyuid = 1;
+	bool  agree = 2;
+	int32 touid = 3;
+}
+
+message RplyFriendRsp {
+	int32 error = 1;
+	int32 rplyuid = 2;
+	int32 touid = 3;
+}
+
+message SendChatMsgReq{
+		int32 fromuid = 1;
+		int32 touid = 2;
+		string message = 3;
+}
+
+message SendChatMsgRsp{
+		int32 error = 1;
+		int32 fromuid = 2;
+		int32 touid = 3;
+}
+
+message AuthFriendReq{
+	int32 fromuid = 1;
+	int32 touid = 2;
+}
+
+message AuthFriendRsp{
+	int32 error = 1;
+	int32 fromuid = 2;
+	int32 touid = 3;
+}
+
+message TextChatMsgReq {
+	int32 fromuid = 1;
+    int32 touid = 2;
+	repeated TextChatData textmsgs = 3;
+}
+
+message TextChatData{
+	string msgid = 1;
+	string msgcontent = 2;
+}
+
+message TextChatMsgRsp {
+	int32 error = 1;
+	int32 fromuid = 2;
+	int32 touid = 3; 
+	repeated TextChatData textmsgs = 4;
+}
+
+message KickUserReq{
+	int32 uid = 1;
+}
+
+message KickUserRsp{
+	int32 error = 1;
+	int32 uid = 2;
+}
+
+service ChatService {
+	rpc NotifyAddFriend(AddFriendReq) returns (AddFriendRsp) {}
+	rpc RplyAddFriend(RplyFriendReq) returns (RplyFriendRsp) {}
+	rpc SendChatMsg(SendChatMsgReq) returns (SendChatMsgRsp) {}
+	rpc NotifyAuthFriend(AuthFriendReq) returns (AuthFriendRsp) {}
+	rpc NotifyTextChatMsg(TextChatMsgReq) returns (TextChatMsgRsp){}
+	rpc NotifyKickUser(KickUserReq) returns (KickUserRsp){}
+}
+
+// ========== 贴吧相关消息 ==========
+
+// 创建贴吧请求/响应
+message CreateTiebaReq {
+	int32 uid = 1;
+	string tieba_name = 2;
+	string tieba_desc = 3;
+	string tieba_icon = 4;
+}
+
+message CreateTiebaRsp {
+	int32 error = 1;
+	int32 tieba_id = 2;
+	string tieba_name = 3;
+}
+
+// 搜索贴吧请求/响应
+message SearchTiebaReq {
+	string keyword = 1;
+	int32 offset = 2;
+	int32 limit = 3;
+}
+
+message TiebaInfo {
+	int32 tieba_id = 1;
+	string tieba_name = 2;
+	string tieba_desc = 3;
+	string tieba_icon = 4;
+	int32 owner_uid = 5;
+	int32 member_count = 6;
+	int32 post_count = 7;
+	string create_time = 8;
+}
+
+message SearchTiebaRsp {
+	int32 error = 1;
+	repeated TiebaInfo tieba_list = 2;
+	int32 total = 3;
+}
+
+// 获取贴吧信息请求/响应
+message GetTiebaInfoReq {
+	int32 tieba_id = 1;
+	string tieba_name = 2;
+}
+
+message GetTiebaInfoRsp {
+	int32 error = 1;
+	TiebaInfo tieba_info = 2;
+	bool is_member = 3;
+	int32 member_role = 4;  // 0-非成员, 1-普通成员, 2-小吧主, 3-吧主
+}
+
+// 加入贴吧请求/响应
+message JoinTiebaReq {
+	int32 uid = 1;
+	int32 tieba_id = 2;
+}
+
+message JoinTiebaRsp {
+	int32 error = 1;
+	int32 tieba_id = 2;
+}
+
+// 退出贴吧请求/响应
+message LeaveTiebaReq {
+	int32 uid = 1;
+	int32 tieba_id = 2;
+}
+
+message LeaveTiebaRsp {
+	int32 error = 1;
+	int32 tieba_id = 2;
+}
+
+// 发帖请求/响应
+message CreatePostReq {
+	int32 uid = 1;
+	int32 tieba_id = 2;
+	string title = 3;
+	string content = 4;
+}
+
+message CreatePostRsp {
+	int32 error = 1;
+	int32 post_id = 2;
+	int32 tieba_id = 3;
+}
+
+// 回复请求/响应
+message CreateReplyReq {
+	int32 uid = 1;
+	int32 post_id = 2;
+	string content = 3;
+	int32 reply_to_uid = 4;      // 回复目标用户ID
+	int32 reply_to_reply_id = 5;  // 回复目标回复ID
+}
+
+message CreateReplyRsp {
+	int32 error = 1;
+	int32 reply_id = 2;
+	int32 post_id = 3;
+}
+
+// 帖子信息
+message PostInfo {
+	int32 post_id = 1;
+	int32 tieba_id = 2;
+	int32 uid = 3;
+	string user_name = 4;
+	string user_icon = 5;
+	string title = 6;
+	string content = 7;
+	int32 reply_count = 8;
+	int32 like_count = 9;
+	bool is_top = 10;
+	bool is_essence = 11;
+	string create_time = 12;
+	bool is_liked = 13;  // 当前用户是否点赞
+}
+
+// 回复信息
+message ReplyInfo {
+	int32 reply_id = 1;
+	int32 post_id = 2;
+	int32 uid = 3;
+	string user_name = 4;
+	string user_icon = 5;
+	string content = 6;
+	int32 reply_to_uid = 7;
+	string reply_to_user_name = 8;
+	int32 reply_to_reply_id = 9;
+	int32 like_count = 10;
+	string create_time = 11;
+	bool is_liked = 12;  // 当前用户是否点赞
+}
+
+// 获取帖子列表请求/响应
+message GetPostListReq {
+	int32 uid = 1;
+	int32 tieba_id = 2;
+	int32 offset = 3;
+	int32 limit = 4;
+	int32 sort_type = 5;  // 0-按时间, 1-按热度, 2-只看置顶
+}
+
+message GetPostListRsp {
+	int32 error = 1;
+	repeated PostInfo post_list = 2;
+	int32 total = 3;
+}
+
+// 获取回复列表请求/响应
+message GetReplyListReq {
+	int32 uid = 1;
+	int32 post_id = 2;
+	int32 offset = 3;
+	int32 limit = 4;
+}
+
+message GetReplyListRsp {
+	int32 error = 1;
+	repeated ReplyInfo reply_list = 2;
+	int32 total = 3;
+	PostInfo post_info = 4;  // 帖子信息
+}
+
+// 删除帖子请求/响应
+message DeletePostReq {
+	int32 uid = 1;
+	int32 post_id = 2;
+	int32 tieba_id = 3;
+}
+
+message DeletePostRsp {
+	int32 error = 1;
+	int32 post_id = 2;
+}
+
+// 删除回复请求/响应
+message DeleteReplyReq {
+	int32 uid = 1;
+	int32 reply_id = 2;
+	int32 post_id = 3;
+}
+
+message DeleteReplyRsp {
+	int32 error = 1;
+	int32 reply_id = 2;
+}
+
+// 点赞请求/响应
+message LikeReq {
+	int32 uid = 1;
+	int32 target_type = 2;  // 1-帖子, 2-回复
+	int32 target_id = 3;
+	bool is_like = 4;  // true-点赞, false-取消点赞
+}
+
+message LikeRsp {
+	int32 error = 1;
+	int32 target_type = 2;
+	int32 target_id = 3;
+	bool is_like = 4;
+	int32 like_count = 5;
+}
+
+// 置顶请求/响应
+message SetTopReq {
+	int32 uid = 1;
+	int32 post_id = 2;
+	int32 tieba_id = 3;
+	bool is_top = 4;
+}
+
+message SetTopRsp {
+	int32 error = 1;
+	int32 post_id = 2;
+	bool is_top = 3;
+}
+
+// 加精请求/响应
+message SetEssenceReq {
+	int32 uid = 1;
+	int32 post_id = 2;
+	int32 tieba_id = 3;
+	bool is_essence = 4;
+}
+
+message SetEssenceRsp {
+	int32 error = 1;
+	int32 post_id = 2;
+	bool is_essence = 3;
+}
+
+// 获取我的贴吧列表请求/响应
+message GetMyTiebaListReq {
+	int32 uid = 1;
+}
+
+message GetMyTiebaListRsp {
+	int32 error = 1;
+	repeated TiebaInfo tieba_list = 2;
+}
+
+// 获取贴吧成员列表请求/响应
+message GetTiebaMemberListReq {
+	int32 uid = 1;
+	int32 tieba_id = 2;
+	int32 offset = 3;
+	int32 limit = 4;
+}
+
+message TiebaMemberInfo {
+	int32 uid = 1;
+	string user_name = 2;
+	string user_icon = 3;
+	int32 role = 4;  // 0-普通成员, 1-小吧主, 2-吧主
+	string join_time = 5;
+}
+
+message GetTiebaMemberListRsp {
+	int32 error = 1;
+	repeated TiebaMemberInfo member_list = 2;
+	int32 total = 3;
+}
