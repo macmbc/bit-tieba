@@ -53,6 +53,7 @@ bool MysqlMgr::ListFollowedForums(int uid, int page, int limit, std::vector<Foru
 MysqlMgr::MysqlMgr() {
 	_forum_dao = std::make_unique<ForumDao>(_dao.GetPool());
 	_post_dao = std::make_unique<PostDao>(_dao.GetPool());
+	_reply_dao = std::make_unique<ReplyDao>(_dao.GetPool());
 }
 
 bool MysqlMgr::ListPosts(int forum_id, int page, int limit, const std::string& sort, std::vector<PostSummary>& posts) {
@@ -109,4 +110,37 @@ bool MysqlMgr::SetTop(int post_id, bool is_top) {
 
 bool MysqlMgr::SetEssence(int post_id, bool is_essence) {
 	return _post_dao->SetEssence(post_id, is_essence);
+}
+
+bool MysqlMgr::ListTopReplies(int post_id, int page, int limit, const std::string& sort, std::vector<ReplyInfo>& replies) {
+	return _reply_dao->ListTopReplies(post_id, page, limit, sort, replies);
+}
+
+bool MysqlMgr::ListChildrenReplies(int post_id, const std::vector<long long>& root_ids, std::unordered_map<long long, std::vector<ReplyInfo>>& children) {
+	return _reply_dao->ListChildren(post_id, root_ids, children);
+}
+
+bool MysqlMgr::CreateReply(int uid, int post_id, const std::string& content, long long parent_reply_id,
+	long long& reply_id, long long& root_reply_id, int& floor) {
+	return _reply_dao->CreateReply(uid, post_id, content, parent_reply_id, reply_id, root_reply_id, floor);
+}
+
+bool MysqlMgr::GetReplyOwner(long long reply_id, int& owner_uid, int& post_id, long long& parent_reply_id, long long& root_reply_id) {
+	return _reply_dao->GetReplyOwner(reply_id, owner_uid, post_id, parent_reply_id, root_reply_id);
+}
+
+bool MysqlMgr::DeleteReply(long long reply_id, int post_id) {
+	return _reply_dao->DeleteReply(reply_id, post_id);
+}
+
+int MysqlMgr::LikeReply(int uid, long long reply_id) {
+	return _reply_dao->LikeReply(uid, reply_id);
+}
+
+int MysqlMgr::UnlikeReply(int uid, long long reply_id) {
+	return _reply_dao->UnlikeReply(uid, reply_id);
+}
+
+bool MysqlMgr::BatchReplyLiked(int uid, const std::vector<long long>& reply_ids, std::unordered_set<long long>& liked_set) {
+	return _reply_dao->BatchLiked(uid, reply_ids, liked_set);
 }

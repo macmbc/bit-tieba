@@ -51,7 +51,10 @@ enum ErrorCodes {
     AlreadyLiked = 1018,   // 已点赞
     NotLiked = 1019,       // 未点赞
     AlreadyCollected = 1020,// 已收藏
-    NotCollected = 1021    // 未收藏
+    NotCollected = 1021,   // 未收藏
+    ReplyNotFound = 1022,  // 回复不存在
+    AlreadyLikedReply = 1023, // 回复已点赞
+    NotLikedReply = 1024   // 回复未点赞
 };
 
 // Defer 辅助类
