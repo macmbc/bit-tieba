@@ -501,6 +501,22 @@ bool PostDao::SetTop(int post_id, bool is_top) {
 		_pool->returnConnection(std::move(con));
 		});
 	try {
+		// 先查询当前状态，已是目标状态则直接成功
+		std::unique_ptr<sql::PreparedStatement> pstmt_check(con->_con->prepareStatement(
+			"SELECT status, is_top FROM post WHERE post_id = ?"));
+		pstmt_check->setInt(1, post_id);
+		std::unique_ptr<sql::ResultSet> res(pstmt_check->executeQuery());
+		if (!res->next()) {
+			return false;
+		}
+		if (res->getInt("status") != 1) {
+			return false;
+		}
+		int cur_top = res->getInt("is_top");
+		if ((cur_top != 0) == is_top) {
+			return true;
+		}
+
 		con->_con->setAutoCommit(true);
 		std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement(
 			"UPDATE post SET is_top = ? WHERE post_id = ? AND status = 1"));
@@ -523,6 +539,22 @@ bool PostDao::SetEssence(int post_id, bool is_essence) {
 		_pool->returnConnection(std::move(con));
 		});
 	try {
+		// 先查询当前状态，已是目标状态则直接成功
+		std::unique_ptr<sql::PreparedStatement> pstmt_check(con->_con->prepareStatement(
+			"SELECT status, is_essence FROM post WHERE post_id = ?"));
+		pstmt_check->setInt(1, post_id);
+		std::unique_ptr<sql::ResultSet> res(pstmt_check->executeQuery());
+		if (!res->next()) {
+			return false;
+		}
+		if (res->getInt("status") != 1) {
+			return false;
+		}
+		int cur = res->getInt("is_essence");
+		if ((cur != 0) == is_essence) {
+			return true;
+		}
+
 		con->_con->setAutoCommit(true);
 		std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement(
 			"UPDATE post SET is_essence = ? WHERE post_id = ? AND status = 1"));
