@@ -154,6 +154,7 @@ bool PostDao::CreatePost(int uid, int forum_id, const std::string& title, const 
 		});
 
 	try {
+		bool orig_ac = con->_con->getAutoCommit();
 		con->_con->setAutoCommit(false);
 		std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement(
 			"INSERT INTO post(forum_id, uid, title, content) VALUES(?, ?, ?, ?)"));
@@ -177,11 +178,12 @@ bool PostDao::CreatePost(int uid, int forum_id, const std::string& title, const 
 		pstmt_forum->executeUpdate();
 
 		con->_con->commit();
+		con->_con->setAutoCommit(orig_ac);
 		return true;
 	}
 	catch (sql::SQLException& e) {
 		std::cerr << "SQLException CreatePost: " << e.what() << std::endl;
-		try { con->_con->rollback(); } catch (...) {}
+		try { con->_con->rollback(); con->_con->setAutoCommit(true); } catch (...) {}
 		return false;
 	}
 }
@@ -219,6 +221,7 @@ bool PostDao::DeletePost(int post_id, int forum_id) {
 		_pool->returnConnection(std::move(con));
 		});
 	try {
+		bool orig_ac = con->_con->getAutoCommit();
 		con->_con->setAutoCommit(false);
 		std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement(
 			"UPDATE post SET status = 0 WHERE post_id = ? AND status = 1"));
@@ -226,6 +229,7 @@ bool PostDao::DeletePost(int post_id, int forum_id) {
 		auto count = pstmt->executeUpdate();
 		if (count == 0) {
 			con->_con->rollback();
+			con->_con->setAutoCommit(orig_ac);
 			return false;
 		}
 
@@ -235,11 +239,12 @@ bool PostDao::DeletePost(int post_id, int forum_id) {
 		pstmt_forum->executeUpdate();
 
 		con->_con->commit();
+		con->_con->setAutoCommit(orig_ac);
 		return true;
 	}
 	catch (sql::SQLException& e) {
 		std::cerr << "SQLException DeletePost: " << e.what() << std::endl;
-		try { con->_con->rollback(); } catch (...) {}
+		try { con->_con->rollback(); con->_con->setAutoCommit(true); } catch (...) {}
 		return false;
 	}
 }
@@ -270,6 +275,7 @@ int PostDao::LikePost(int uid, int post_id) {
 			return 1;
 		}
 
+		bool orig_ac = con->_con->getAutoCommit();
 		con->_con->setAutoCommit(false);
 		std::unique_ptr<sql::PreparedStatement> pstmt_insert(con->_con->prepareStatement(
 			"INSERT INTO post_like(post_id, uid) VALUES(?, ?)"));
@@ -283,11 +289,12 @@ int PostDao::LikePost(int uid, int post_id) {
 		pstmt_up->executeUpdate();
 
 		con->_con->commit();
+		con->_con->setAutoCommit(orig_ac);
 		return 0;
 	}
 	catch (sql::SQLException& e) {
 		std::cerr << "SQLException LikePost: " << e.what() << std::endl;
-		try { con->_con->rollback(); } catch (...) {}
+		try { con->_con->rollback(); con->_con->setAutoCommit(true); } catch (...) {}
 		return -1;
 	}
 }
@@ -318,6 +325,7 @@ int PostDao::UnlikePost(int uid, int post_id) {
 			return 1;
 		}
 
+		bool orig_ac = con->_con->getAutoCommit();
 		con->_con->setAutoCommit(false);
 		std::unique_ptr<sql::PreparedStatement> pstmt_del(con->_con->prepareStatement(
 			"DELETE FROM post_like WHERE post_id = ? AND uid = ?"));
@@ -330,11 +338,12 @@ int PostDao::UnlikePost(int uid, int post_id) {
 		pstmt_up->setInt(1, post_id);
 		pstmt_up->executeUpdate();
 		con->_con->commit();
+		con->_con->setAutoCommit(orig_ac);
 		return 0;
 	}
 	catch (sql::SQLException& e) {
 		std::cerr << "SQLException UnlikePost: " << e.what() << std::endl;
-		try { con->_con->rollback(); } catch (...) {}
+		try { con->_con->rollback(); con->_con->setAutoCommit(true); } catch (...) {}
 		return -1;
 	}
 }
@@ -365,6 +374,7 @@ int PostDao::CollectPost(int uid, int post_id) {
 			return 1;
 		}
 
+		bool orig_ac = con->_con->getAutoCommit();
 		con->_con->setAutoCommit(false);
 		std::unique_ptr<sql::PreparedStatement> pstmt_insert(con->_con->prepareStatement(
 			"INSERT INTO post_collect(post_id, uid) VALUES(?, ?)"));
@@ -377,11 +387,12 @@ int PostDao::CollectPost(int uid, int post_id) {
 		pstmt_up->setInt(1, post_id);
 		pstmt_up->executeUpdate();
 		con->_con->commit();
+		con->_con->setAutoCommit(orig_ac);
 		return 0;
 	}
 	catch (sql::SQLException& e) {
 		std::cerr << "SQLException CollectPost: " << e.what() << std::endl;
-		try { con->_con->rollback(); } catch (...) {}
+		try { con->_con->rollback(); con->_con->setAutoCommit(true); } catch (...) {}
 		return -1;
 	}
 }
@@ -412,6 +423,7 @@ int PostDao::UncollectPost(int uid, int post_id) {
 			return 1;
 		}
 
+		bool orig_ac = con->_con->getAutoCommit();
 		con->_con->setAutoCommit(false);
 		std::unique_ptr<sql::PreparedStatement> pstmt_del(con->_con->prepareStatement(
 			"DELETE FROM post_collect WHERE post_id = ? AND uid = ?"));
@@ -424,11 +436,12 @@ int PostDao::UncollectPost(int uid, int post_id) {
 		pstmt_up->setInt(1, post_id);
 		pstmt_up->executeUpdate();
 		con->_con->commit();
+		con->_con->setAutoCommit(orig_ac);
 		return 0;
 	}
 	catch (sql::SQLException& e) {
 		std::cerr << "SQLException UncollectPost: " << e.what() << std::endl;
-		try { con->_con->rollback(); } catch (...) {}
+		try { con->_con->rollback(); con->_con->setAutoCommit(true); } catch (...) {}
 		return -1;
 	}
 }
@@ -488,6 +501,7 @@ bool PostDao::SetTop(int post_id, bool is_top) {
 		_pool->returnConnection(std::move(con));
 		});
 	try {
+		con->_con->setAutoCommit(true);
 		std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement(
 			"UPDATE post SET is_top = ? WHERE post_id = ? AND status = 1"));
 		pstmt->setInt(1, is_top ? 1 : 0);
@@ -509,6 +523,7 @@ bool PostDao::SetEssence(int post_id, bool is_essence) {
 		_pool->returnConnection(std::move(con));
 		});
 	try {
+		con->_con->setAutoCommit(true);
 		std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement(
 			"UPDATE post SET is_essence = ? WHERE post_id = ? AND status = 1"));
 		pstmt->setInt(1, is_essence ? 1 : 0);
