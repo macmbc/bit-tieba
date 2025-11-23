@@ -1,6 +1,8 @@
 #pragma once
 #include "const.h"
 #include "MysqlDao.h"
+#include <vector>
+#include <unordered_set>
 
 struct ReplyInfo {
 	long long reply_id;
