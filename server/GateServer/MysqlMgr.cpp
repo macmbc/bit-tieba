@@ -52,5 +52,61 @@ bool MysqlMgr::ListFollowedForums(int uid, int page, int limit, std::vector<Foru
 
 MysqlMgr::MysqlMgr() {
 	_forum_dao = std::make_unique<ForumDao>(_dao.GetPool());
+	_post_dao = std::make_unique<PostDao>(_dao.GetPool());
 }
 
+bool MysqlMgr::ListPosts(int forum_id, int page, int limit, const std::string& sort, std::vector<PostSummary>& posts) {
+	return _post_dao->ListPosts(forum_id, page, limit, sort, posts);
+}
+
+bool MysqlMgr::GetPostDetail(int post_id, PostDetail& detail) {
+	return _post_dao->GetPostDetail(post_id, detail);
+}
+
+bool MysqlMgr::GetPostOwner(int post_id, int& owner_uid, int& forum_id) {
+	return _post_dao->GetPostOwner(post_id, owner_uid, forum_id);
+}
+
+bool MysqlMgr::CreatePost(int uid, int forum_id, const std::string& title, const std::string& content, int& post_id) {
+	return _post_dao->CreatePost(uid, forum_id, title, content, post_id);
+}
+
+bool MysqlMgr::UpdatePost(int post_id, int uid, const std::string& title, const std::string& content) {
+	return _post_dao->UpdatePost(post_id, uid, title, content);
+}
+
+bool MysqlMgr::DeletePost(int post_id, int forum_id) {
+	return _post_dao->DeletePost(post_id, forum_id);
+}
+
+int MysqlMgr::LikePost(int uid, int post_id) {
+	return _post_dao->LikePost(uid, post_id);
+}
+
+int MysqlMgr::UnlikePost(int uid, int post_id) {
+	return _post_dao->UnlikePost(uid, post_id);
+}
+
+int MysqlMgr::CollectPost(int uid, int post_id) {
+	return _post_dao->CollectPost(uid, post_id);
+}
+
+int MysqlMgr::UncollectPost(int uid, int post_id) {
+	return _post_dao->UncollectPost(uid, post_id);
+}
+
+bool MysqlMgr::IsLiked(int uid, int post_id, bool& liked) {
+	return _post_dao->IsLiked(uid, post_id, liked);
+}
+
+bool MysqlMgr::IsCollected(int uid, int post_id, bool& collected) {
+	return _post_dao->IsCollected(uid, post_id, collected);
+}
+
+bool MysqlMgr::SetTop(int post_id, bool is_top) {
+	return _post_dao->SetTop(post_id, is_top);
+}
+
+bool MysqlMgr::SetEssence(int post_id, bool is_essence) {
+	return _post_dao->SetEssence(post_id, is_essence);
+}

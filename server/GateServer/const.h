@@ -46,6 +46,12 @@ enum ErrorCodes {
     AlreadyFollowed = 1013,// 已关注
     NotFollowed = 1014,    // 未关注
     DbError = 1015,        // 数据库错误
+    PostNotFound = 1016,   // 帖子不存在
+    NoPermission = 1017,   // 无权限
+    AlreadyLiked = 1018,   // 已点赞
+    NotLiked = 1019,       // 未点赞
+    AlreadyCollected = 1020,// 已收藏
+    NotCollected = 1021    // 未收藏
 };
 
 // Defer 辅助类
@@ -65,4 +71,3 @@ private:
 
 #define CODEPREFIX  "code_"
 #define USERTOKENPREFIX "utoken_"
-

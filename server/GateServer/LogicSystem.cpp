@@ -581,6 +581,627 @@ LogicSystem::LogicSystem() {
 		beast::ostream(connection->_response.body()) << jsonstr;
 		return true;
 		});
+
+	// 帖子列表
+	RegGet("/posts", [](std::shared_ptr<HttpConnection> connection) {
+		connection->_response.set(http::field::content_type, "text/json");
+		Json::Value root;
+		int forum_id = 0;
+		int page = 1;
+		int limit = 20;
+		std::string sort = "time";
+		try {
+			if (connection->_get_params.find("forum_id") != connection->_get_params.end()) {
+				forum_id = std::stoi(connection->_get_params["forum_id"]);
+			}
+			if (connection->_get_params.find("page") != connection->_get_params.end()) {
+				page = std::stoi(connection->_get_params["page"]);
+			}
+			if (connection->_get_params.find("limit") != connection->_get_params.end()) {
+				limit = std::stoi(connection->_get_params["limit"]);
+			}
+			if (connection->_get_params.find("sort") != connection->_get_params.end()) {
+				sort = connection->_get_params["sort"];
+			}
+		}
+		catch (...) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		if (forum_id <= 0) {
+			root["error"] = ErrorCodes::ForumNotFound;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		ForumInfo f;
+		if (!MysqlMgr::GetInstance()->GetForum(forum_id, f)) {
+			root["error"] = ErrorCodes::ForumNotFound;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		if (page <= 0) page = 1;
+		if (limit <= 0) limit = 20;
+
+		std::vector<PostSummary> posts;
+		bool ok = MysqlMgr::GetInstance()->ListPosts(forum_id, page, limit, sort, posts);
+		if (!ok) {
+			root["error"] = ErrorCodes::DbError;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		root["error"] = ErrorCodes::Success;
+		for (auto& p : posts) {
+			Json::Value item;
+			item["post_id"] = p.post_id;
+			item["forum_id"] = p.forum_id;
+			item["uid"] = p.uid;
+			item["author"] = p.author;
+			item["title"] = p.title;
+			item["created_at"] = p.created_at;
+			item["reply_count"] = p.reply_cnt;
+			item["like_count"] = p.like_cnt;
+			item["is_top"] = p.is_top;
+			item["is_essence"] = p.is_essence;
+			item["content_preview"] = p.content_preview;
+			root["posts"].append(item);
+		}
+		std::string jsonstr = root.toStyledString();
+		beast::ostream(connection->_response.body()) << jsonstr;
+		return true;
+		});
+
+	// 帖子详情
+	RegGet("/post/detail", [](std::shared_ptr<HttpConnection> connection) {
+		connection->_response.set(http::field::content_type, "text/json");
+		Json::Value root;
+		int post_id = 0;
+		int uid = 0;
+		std::string token;
+		try {
+			if (connection->_get_params.find("post_id") != connection->_get_params.end()) {
+				post_id = std::stoi(connection->_get_params["post_id"]);
+			}
+			if (connection->_get_params.find("uid") != connection->_get_params.end()) {
+				uid = std::stoi(connection->_get_params["uid"]);
+			}
+			if (connection->_get_params.find("token") != connection->_get_params.end()) {
+				token = connection->_get_params["token"];
+			}
+		}
+		catch (...) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		if (post_id <= 0) {
+			root["error"] = ErrorCodes::PostNotFound;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		PostDetail detail;
+		if (!MysqlMgr::GetInstance()->GetPostDetail(post_id, detail)) {
+			root["error"] = ErrorCodes::PostNotFound;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		bool is_liked = false;
+		bool is_collected = false;
+		if (uid > 0 && !token.empty() && CheckTokenValid(uid, token)) {
+			MysqlMgr::GetInstance()->IsLiked(uid, post_id, is_liked);
+			MysqlMgr::GetInstance()->IsCollected(uid, post_id, is_collected);
+		}
+
+		root["error"] = ErrorCodes::Success;
+		root["post"]["post_id"] = detail.post_id;
+		root["post"]["forum_id"] = detail.forum_id;
+		root["post"]["uid"] = detail.uid;
+		root["post"]["author"] = detail.author;
+		root["post"]["title"] = detail.title;
+		root["post"]["content"] = detail.content;
+		root["post"]["created_at"] = detail.created_at;
+		root["post"]["reply_count"] = detail.reply_cnt;
+		root["post"]["like_count"] = detail.like_cnt;
+		root["post"]["collect_count"] = detail.collect_cnt;
+		root["post"]["is_top"] = detail.is_top;
+		root["post"]["is_essence"] = detail.is_essence;
+		root["post"]["is_liked"] = is_liked;
+		root["post"]["is_collected"] = is_collected;
+		std::string jsonstr = root.toStyledString();
+		beast::ostream(connection->_response.body()) << jsonstr;
+		return true;
+		});
+
+	// 创建帖子
+	RegPost("/post/create", [](std::shared_ptr<HttpConnection> connection) {
+		auto body_str = boost::beast::buffers_to_string(connection->_request.body().data());
+		connection->_response.set(http::field::content_type, "text/json");
+		Json::Value root;
+		Json::Reader reader;
+		Json::Value src_root;
+		if (!reader.parse(body_str, src_root)) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		auto uid = src_root.get("uid", 0).asInt();
+		auto token = src_root.get("token", "").asString();
+		auto forum_id = src_root.get("forum_id", 0).asInt();
+		auto title = src_root.get("title", "").asString();
+		auto content = src_root.get("content", "").asString();
+
+		if (uid <= 0 || forum_id <= 0 || token.empty() || title.empty() || content.empty()) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		if (!CheckTokenValid(uid, token)) {
+			root["error"] = ErrorCodes::TokenInvalid;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		ForumInfo f;
+		if (!MysqlMgr::GetInstance()->GetForum(forum_id, f)) {
+			root["error"] = ErrorCodes::ForumNotFound;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		int post_id = 0;
+		bool ok = MysqlMgr::GetInstance()->CreatePost(uid, forum_id, title, content, post_id);
+		if (!ok) {
+			root["error"] = ErrorCodes::DbError;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		root["error"] = ErrorCodes::Success;
+		root["post_id"] = post_id;
+		std::string jsonstr = root.toStyledString();
+		beast::ostream(connection->_response.body()) << jsonstr;
+		return true;
+		});
+
+	// 更新帖子
+	RegPost("/post/update", [](std::shared_ptr<HttpConnection> connection) {
+		auto body_str = boost::beast::buffers_to_string(connection->_request.body().data());
+		connection->_response.set(http::field::content_type, "text/json");
+		Json::Value root;
+		Json::Reader reader;
+		Json::Value src_root;
+		if (!reader.parse(body_str, src_root)) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		auto uid = src_root.get("uid", 0).asInt();
+		auto token = src_root.get("token", "").asString();
+		auto post_id = src_root.get("post_id", 0).asInt();
+		auto title = src_root.get("title", "").asString();
+		auto content = src_root.get("content", "").asString();
+
+		if (uid <= 0 || post_id <= 0 || token.empty() || title.empty() || content.empty()) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		if (!CheckTokenValid(uid, token)) {
+			root["error"] = ErrorCodes::TokenInvalid;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		int owner_uid = 0;
+		int forum_id = 0;
+		if (!MysqlMgr::GetInstance()->GetPostOwner(post_id, owner_uid, forum_id)) {
+			root["error"] = ErrorCodes::PostNotFound;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		if (uid != owner_uid) {
+			root["error"] = ErrorCodes::NoPermission;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		bool ok = MysqlMgr::GetInstance()->UpdatePost(post_id, uid, title, content);
+		if (!ok) {
+			root["error"] = ErrorCodes::DbError;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		root["error"] = ErrorCodes::Success;
+		std::string jsonstr = root.toStyledString();
+		beast::ostream(connection->_response.body()) << jsonstr;
+		return true;
+		});
+
+	// 删除帖子
+	RegPost("/post/delete", [](std::shared_ptr<HttpConnection> connection) {
+		auto body_str = boost::beast::buffers_to_string(connection->_request.body().data());
+		connection->_response.set(http::field::content_type, "text/json");
+		Json::Value root;
+		Json::Reader reader;
+		Json::Value src_root;
+		if (!reader.parse(body_str, src_root)) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		auto uid = src_root.get("uid", 0).asInt();
+		auto token = src_root.get("token", "").asString();
+		auto post_id = src_root.get("post_id", 0).asInt();
+
+		if (uid <= 0 || post_id <= 0 || token.empty()) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		if (!CheckTokenValid(uid, token)) {
+			root["error"] = ErrorCodes::TokenInvalid;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		int owner_uid = 0;
+		int forum_id = 0;
+		if (!MysqlMgr::GetInstance()->GetPostOwner(post_id, owner_uid, forum_id)) {
+			root["error"] = ErrorCodes::PostNotFound;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		ForumInfo finfo;
+		if (!MysqlMgr::GetInstance()->GetForum(forum_id, finfo)) {
+			root["error"] = ErrorCodes::ForumNotFound;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		if (uid != owner_uid && uid != finfo.owner_uid) {
+			root["error"] = ErrorCodes::NoPermission;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		bool ok = MysqlMgr::GetInstance()->DeletePost(post_id, forum_id);
+		if (!ok) {
+			root["error"] = ErrorCodes::DbError;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		root["error"] = ErrorCodes::Success;
+		std::string jsonstr = root.toStyledString();
+		beast::ostream(connection->_response.body()) << jsonstr;
+		return true;
+		});
+
+	// 点赞帖子
+	RegPost("/like_post", [](std::shared_ptr<HttpConnection> connection) {
+		auto body_str = boost::beast::buffers_to_string(connection->_request.body().data());
+		connection->_response.set(http::field::content_type, "text/json");
+		Json::Value root;
+		Json::Reader reader;
+		Json::Value src_root;
+		if (!reader.parse(body_str, src_root)) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		auto uid = src_root.get("uid", 0).asInt();
+		auto token = src_root.get("token", "").asString();
+		auto post_id = src_root.get("post_id", 0).asInt();
+
+		if (uid <= 0 || post_id <= 0 || token.empty()) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		if (!CheckTokenValid(uid, token)) {
+			root["error"] = ErrorCodes::TokenInvalid;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		int ret = MysqlMgr::GetInstance()->LikePost(uid, post_id);
+		if (ret == 0) root["error"] = ErrorCodes::Success;
+		else if (ret == 1) root["error"] = ErrorCodes::AlreadyLiked;
+		else if (ret == 2) root["error"] = ErrorCodes::PostNotFound;
+		else root["error"] = ErrorCodes::DbError;
+		std::string jsonstr = root.toStyledString();
+		beast::ostream(connection->_response.body()) << jsonstr;
+		return true;
+		});
+
+	// 取消点赞
+	RegPost("/unlike_post", [](std::shared_ptr<HttpConnection> connection) {
+		auto body_str = boost::beast::buffers_to_string(connection->_request.body().data());
+		connection->_response.set(http::field::content_type, "text/json");
+		Json::Value root;
+		Json::Reader reader;
+		Json::Value src_root;
+		if (!reader.parse(body_str, src_root)) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		auto uid = src_root.get("uid", 0).asInt();
+		auto token = src_root.get("token", "").asString();
+		auto post_id = src_root.get("post_id", 0).asInt();
+
+		if (uid <= 0 || post_id <= 0 || token.empty()) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		if (!CheckTokenValid(uid, token)) {
+			root["error"] = ErrorCodes::TokenInvalid;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		int ret = MysqlMgr::GetInstance()->UnlikePost(uid, post_id);
+		if (ret == 0) root["error"] = ErrorCodes::Success;
+		else if (ret == 1) root["error"] = ErrorCodes::NotLiked;
+		else if (ret == 2) root["error"] = ErrorCodes::PostNotFound;
+		else root["error"] = ErrorCodes::DbError;
+		std::string jsonstr = root.toStyledString();
+		beast::ostream(connection->_response.body()) << jsonstr;
+		return true;
+		});
+
+	// 收藏帖子
+	RegPost("/collect_post", [](std::shared_ptr<HttpConnection> connection) {
+		auto body_str = boost::beast::buffers_to_string(connection->_request.body().data());
+		connection->_response.set(http::field::content_type, "text/json");
+		Json::Value root;
+		Json::Reader reader;
+		Json::Value src_root;
+		if (!reader.parse(body_str, src_root)) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		auto uid = src_root.get("uid", 0).asInt();
+		auto token = src_root.get("token", "").asString();
+		auto post_id = src_root.get("post_id", 0).asInt();
+
+		if (uid <= 0 || post_id <= 0 || token.empty()) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		if (!CheckTokenValid(uid, token)) {
+			root["error"] = ErrorCodes::TokenInvalid;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		int ret = MysqlMgr::GetInstance()->CollectPost(uid, post_id);
+		if (ret == 0) root["error"] = ErrorCodes::Success;
+		else if (ret == 1) root["error"] = ErrorCodes::AlreadyCollected;
+		else if (ret == 2) root["error"] = ErrorCodes::PostNotFound;
+		else root["error"] = ErrorCodes::DbError;
+		std::string jsonstr = root.toStyledString();
+		beast::ostream(connection->_response.body()) << jsonstr;
+		return true;
+		});
+
+	// 取消收藏
+	RegPost("/uncollect_post", [](std::shared_ptr<HttpConnection> connection) {
+		auto body_str = boost::beast::buffers_to_string(connection->_request.body().data());
+		connection->_response.set(http::field::content_type, "text/json");
+		Json::Value root;
+		Json::Reader reader;
+		Json::Value src_root;
+		if (!reader.parse(body_str, src_root)) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		auto uid = src_root.get("uid", 0).asInt();
+		auto token = src_root.get("token", "").asString();
+		auto post_id = src_root.get("post_id", 0).asInt();
+
+		if (uid <= 0 || post_id <= 0 || token.empty()) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		if (!CheckTokenValid(uid, token)) {
+			root["error"] = ErrorCodes::TokenInvalid;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		int ret = MysqlMgr::GetInstance()->UncollectPost(uid, post_id);
+		if (ret == 0) root["error"] = ErrorCodes::Success;
+		else if (ret == 1) root["error"] = ErrorCodes::NotCollected;
+		else if (ret == 2) root["error"] = ErrorCodes::PostNotFound;
+		else root["error"] = ErrorCodes::DbError;
+		std::string jsonstr = root.toStyledString();
+		beast::ostream(connection->_response.body()) << jsonstr;
+		return true;
+		});
+
+	// 设置置顶
+	RegPost("/set_top_post", [](std::shared_ptr<HttpConnection> connection) {
+		auto body_str = boost::beast::buffers_to_string(connection->_request.body().data());
+		connection->_response.set(http::field::content_type, "text/json");
+		Json::Value root;
+		Json::Reader reader;
+		Json::Value src_root;
+		if (!reader.parse(body_str, src_root)) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		auto uid = src_root.get("uid", 0).asInt();
+		auto token = src_root.get("token", "").asString();
+		auto post_id = src_root.get("post_id", 0).asInt();
+		bool is_top = src_root.get("is_top", true).asBool();
+
+		if (uid <= 0 || post_id <= 0 || token.empty()) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		if (!CheckTokenValid(uid, token)) {
+			root["error"] = ErrorCodes::TokenInvalid;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		int owner_uid = 0;
+		int forum_id = 0;
+		if (!MysqlMgr::GetInstance()->GetPostOwner(post_id, owner_uid, forum_id)) {
+			root["error"] = ErrorCodes::PostNotFound;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		ForumInfo finfo;
+		if (!MysqlMgr::GetInstance()->GetForum(forum_id, finfo)) {
+			root["error"] = ErrorCodes::ForumNotFound;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		if (uid != finfo.owner_uid) {
+			root["error"] = ErrorCodes::NoPermission;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		bool ok = MysqlMgr::GetInstance()->SetTop(post_id, is_top);
+		root["error"] = ok ? ErrorCodes::Success : ErrorCodes::DbError;
+		std::string jsonstr = root.toStyledString();
+		beast::ostream(connection->_response.body()) << jsonstr;
+		return true;
+		});
+
+	// 设置精华
+	RegPost("/set_essence_post", [](std::shared_ptr<HttpConnection> connection) {
+		auto body_str = boost::beast::buffers_to_string(connection->_request.body().data());
+		connection->_response.set(http::field::content_type, "text/json");
+		Json::Value root;
+		Json::Reader reader;
+		Json::Value src_root;
+		if (!reader.parse(body_str, src_root)) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		auto uid = src_root.get("uid", 0).asInt();
+		auto token = src_root.get("token", "").asString();
+		auto post_id = src_root.get("post_id", 0).asInt();
+		bool is_essence = src_root.get("is_essence", true).asBool();
+
+		if (uid <= 0 || post_id <= 0 || token.empty()) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		if (!CheckTokenValid(uid, token)) {
+			root["error"] = ErrorCodes::TokenInvalid;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		int owner_uid = 0;
+		int forum_id = 0;
+		if (!MysqlMgr::GetInstance()->GetPostOwner(post_id, owner_uid, forum_id)) {
+			root["error"] = ErrorCodes::PostNotFound;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		ForumInfo finfo;
+		if (!MysqlMgr::GetInstance()->GetForum(forum_id, finfo)) {
+			root["error"] = ErrorCodes::ForumNotFound;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		if (uid != finfo.owner_uid) {
+			root["error"] = ErrorCodes::NoPermission;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		bool ok = MysqlMgr::GetInstance()->SetEssence(post_id, is_essence);
+		root["error"] = ok ? ErrorCodes::Success : ErrorCodes::DbError;
+		std::string jsonstr = root.toStyledString();
+		beast::ostream(connection->_response.body()) << jsonstr;
+		return true;
+		});
 }
 
 void LogicSystem::RegGet(const std::string& url, HttpHandler handler) {
