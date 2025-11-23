@@ -42,6 +42,10 @@ enum ErrorCodes {
     PasswdInvalid = 1009,  // 密码无效
     TokenInvalid = 1010,   // Token 失效
     UidInvalid = 1011,     // uid 无效
+    ForumNotFound = 1012,  // 贴吧不存在
+    AlreadyFollowed = 1013,// 已关注
+    NotFollowed = 1014,    // 未关注
+    DbError = 1015,        // 数据库错误
 };
 
 // Defer 辅助类

@@ -7,6 +7,7 @@ set(GATE_SERVER_SOURCES
   LogicSystem.cpp
   MysqlDao.cpp
   MysqlMgr.cpp
+  ForumDao.cpp
   RedisMgr.cpp
   StatusGrpcClient.cpp
   VerifyGrpcClient.cpp
