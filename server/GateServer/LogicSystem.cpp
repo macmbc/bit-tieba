@@ -1646,6 +1646,350 @@ LogicSystem::LogicSystem() {
 		beast::ostream(connection->_response.body()) << jsonstr;
 		return true;
 		});
+
+	// 我的帖子
+	RegGet("/my/posts", [](std::shared_ptr<HttpConnection> connection) {
+		connection->_response.set(http::field::content_type, "text/json");
+		Json::Value root;
+		int uid = 0;
+		std::string token;
+		int page = 1;
+		int limit = 20;
+		try {
+			if (connection->_get_params.find("uid") != connection->_get_params.end()) {
+				uid = std::stoi(connection->_get_params["uid"]);
+			}
+			if (connection->_get_params.find("token") != connection->_get_params.end()) {
+				token = connection->_get_params["token"];
+			}
+			if (connection->_get_params.find("page") != connection->_get_params.end()) {
+				page = std::stoi(connection->_get_params["page"]);
+			}
+			if (connection->_get_params.find("limit") != connection->_get_params.end()) {
+				limit = std::stoi(connection->_get_params["limit"]);
+			}
+		}
+		catch (...) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		if (uid <= 0 || token.empty()) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		if (!CheckTokenValid(uid, token)) {
+			root["error"] = ErrorCodes::TokenInvalid;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		if (page <= 0) page = 1;
+		if (limit <= 0) limit = 20;
+		std::vector<PostSummary> posts;
+		bool ok = MysqlMgr::GetInstance()->ListMyPosts(uid, page, limit, posts);
+		if (!ok) {
+			root["error"] = ErrorCodes::DbError;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		root["error"] = ErrorCodes::Success;
+		for (auto& p : posts) {
+			Json::Value item;
+			item["post_id"] = p.post_id;
+			item["forum_id"] = p.forum_id;
+			item["uid"] = p.uid;
+			item["author"] = p.author;
+			item["title"] = p.title;
+			item["created_at"] = p.created_at;
+			item["reply_count"] = p.reply_cnt;
+			item["like_count"] = p.like_cnt;
+			item["is_top"] = p.is_top;
+			item["is_essence"] = p.is_essence;
+			item["content_preview"] = p.content_preview;
+			root["posts"].append(item);
+		}
+		std::string jsonstr = root.toStyledString();
+		beast::ostream(connection->_response.body()) << jsonstr;
+		return true;
+		});
+
+	// 我的回复
+	RegGet("/my/replies", [](std::shared_ptr<HttpConnection> connection) {
+		connection->_response.set(http::field::content_type, "text/json");
+		Json::Value root;
+		int uid = 0;
+		std::string token;
+		int page = 1;
+		int limit = 20;
+		try {
+			if (connection->_get_params.find("uid") != connection->_get_params.end()) {
+				uid = std::stoi(connection->_get_params["uid"]);
+			}
+			if (connection->_get_params.find("token") != connection->_get_params.end()) {
+				token = connection->_get_params["token"];
+			}
+			if (connection->_get_params.find("page") != connection->_get_params.end()) {
+				page = std::stoi(connection->_get_params["page"]);
+			}
+			if (connection->_get_params.find("limit") != connection->_get_params.end()) {
+				limit = std::stoi(connection->_get_params["limit"]);
+			}
+		}
+		catch (...) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		if (uid <= 0 || token.empty()) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		if (!CheckTokenValid(uid, token)) {
+			root["error"] = ErrorCodes::TokenInvalid;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		if (page <= 0) page = 1;
+		if (limit <= 0) limit = 20;
+		std::vector<ReplyWithPost> replies;
+		bool ok = MysqlMgr::GetInstance()->ListMyReplies(uid, page, limit, replies);
+		if (!ok) {
+			root["error"] = ErrorCodes::DbError;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		root["error"] = ErrorCodes::Success;
+		for (auto& r : replies) {
+			Json::Value item;
+			item["reply_id"] = Json::Int64(r.reply.reply_id);
+			item["post_id"] = r.reply.post_id;
+			item["uid"] = r.reply.uid;
+			item["content"] = r.reply.content;
+			item["parent_reply_id"] = Json::Int64(r.reply.parent_reply_id);
+			item["root_reply_id"] = Json::Int64(r.reply.root_reply_id);
+			item["floor"] = r.reply.floor;
+			item["like_count"] = r.reply.like_cnt;
+			item["created_at"] = r.reply.created_at;
+			item["post_title"] = r.post_title;
+			root["replies"].append(item);
+		}
+		std::string jsonstr = root.toStyledString();
+		beast::ostream(connection->_response.body()) << jsonstr;
+		return true;
+		});
+
+	// 我的收藏
+	RegGet("/my/collections", [](std::shared_ptr<HttpConnection> connection) {
+		connection->_response.set(http::field::content_type, "text/json");
+		Json::Value root;
+		int uid = 0;
+		std::string token;
+		int page = 1;
+		int limit = 20;
+		try {
+			if (connection->_get_params.find("uid") != connection->_get_params.end()) {
+				uid = std::stoi(connection->_get_params["uid"]);
+			}
+			if (connection->_get_params.find("token") != connection->_get_params.end()) {
+				token = connection->_get_params["token"];
+			}
+			if (connection->_get_params.find("page") != connection->_get_params.end()) {
+				page = std::stoi(connection->_get_params["page"]);
+			}
+			if (connection->_get_params.find("limit") != connection->_get_params.end()) {
+				limit = std::stoi(connection->_get_params["limit"]);
+			}
+		}
+		catch (...) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		if (uid <= 0 || token.empty()) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		if (!CheckTokenValid(uid, token)) {
+			root["error"] = ErrorCodes::TokenInvalid;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		if (page <= 0) page = 1;
+		if (limit <= 0) limit = 20;
+		std::vector<PostSummary> posts;
+		bool ok = MysqlMgr::GetInstance()->ListMyCollections(uid, page, limit, posts);
+		if (!ok) {
+			root["error"] = ErrorCodes::DbError;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		root["error"] = ErrorCodes::Success;
+		for (auto& p : posts) {
+			Json::Value item;
+			item["post_id"] = p.post_id;
+			item["forum_id"] = p.forum_id;
+			item["uid"] = p.uid;
+			item["author"] = p.author;
+			item["title"] = p.title;
+			item["created_at"] = p.created_at;
+			item["reply_count"] = p.reply_cnt;
+			item["like_count"] = p.like_cnt;
+			item["is_top"] = p.is_top;
+			item["is_essence"] = p.is_essence;
+			item["content_preview"] = p.content_preview;
+			root["posts"].append(item);
+		}
+		std::string jsonstr = root.toStyledString();
+		beast::ostream(connection->_response.body()) << jsonstr;
+		return true;
+		});
+
+	// 我的粉丝
+	RegGet("/my/followers", [](std::shared_ptr<HttpConnection> connection) {
+		connection->_response.set(http::field::content_type, "text/json");
+		Json::Value root;
+		int uid = 0;
+		std::string token;
+		int page = 1;
+		int limit = 20;
+		try {
+			if (connection->_get_params.find("uid") != connection->_get_params.end()) {
+				uid = std::stoi(connection->_get_params["uid"]);
+			}
+			if (connection->_get_params.find("token") != connection->_get_params.end()) {
+				token = connection->_get_params["token"];
+			}
+			if (connection->_get_params.find("page") != connection->_get_params.end()) {
+				page = std::stoi(connection->_get_params["page"]);
+			}
+			if (connection->_get_params.find("limit") != connection->_get_params.end()) {
+				limit = std::stoi(connection->_get_params["limit"]);
+			}
+		}
+		catch (...) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		if (uid <= 0 || token.empty()) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		if (!CheckTokenValid(uid, token)) {
+			root["error"] = ErrorCodes::TokenInvalid;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		if (page <= 0) page = 1;
+		if (limit <= 0) limit = 20;
+		std::vector<UserBrief> users;
+		bool ok = MysqlMgr::GetInstance()->ListMyFollowers(uid, page, limit, users);
+		if (!ok) {
+			root["error"] = ErrorCodes::DbError;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		root["error"] = ErrorCodes::Success;
+		for (auto& u : users) {
+			Json::Value item;
+			item["uid"] = u.uid;
+			item["name"] = u.name;
+			item["nick"] = u.nick;
+			item["email"] = u.email;
+			item["icon"] = u.icon;
+			item["sex"] = u.sex;
+			root["users"].append(item);
+		}
+		std::string jsonstr = root.toStyledString();
+		beast::ostream(connection->_response.body()) << jsonstr;
+		return true;
+		});
+
+	// 我的关注
+	RegGet("/my/following", [](std::shared_ptr<HttpConnection> connection) {
+		connection->_response.set(http::field::content_type, "text/json");
+		Json::Value root;
+		int uid = 0;
+		std::string token;
+		int page = 1;
+		int limit = 20;
+		try {
+			if (connection->_get_params.find("uid") != connection->_get_params.end()) {
+				uid = std::stoi(connection->_get_params["uid"]);
+			}
+			if (connection->_get_params.find("token") != connection->_get_params.end()) {
+				token = connection->_get_params["token"];
+			}
+			if (connection->_get_params.find("page") != connection->_get_params.end()) {
+				page = std::stoi(connection->_get_params["page"]);
+			}
+			if (connection->_get_params.find("limit") != connection->_get_params.end()) {
+				limit = std::stoi(connection->_get_params["limit"]);
+			}
+		}
+		catch (...) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		if (uid <= 0 || token.empty()) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		if (!CheckTokenValid(uid, token)) {
+			root["error"] = ErrorCodes::TokenInvalid;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		if (page <= 0) page = 1;
+		if (limit <= 0) limit = 20;
+		std::vector<UserBrief> users;
+		bool ok = MysqlMgr::GetInstance()->ListMyFollowing(uid, page, limit, users);
+		if (!ok) {
+			root["error"] = ErrorCodes::DbError;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		root["error"] = ErrorCodes::Success;
+		for (auto& u : users) {
+			Json::Value item;
+			item["uid"] = u.uid;
+			item["name"] = u.name;
+			item["nick"] = u.nick;
+			item["email"] = u.email;
+			item["icon"] = u.icon;
+			item["sex"] = u.sex;
+			root["users"].append(item);
+		}
+		std::string jsonstr = root.toStyledString();
+		beast::ostream(connection->_response.body()) << jsonstr;
+		return true;
+		});
 }
 
 void LogicSystem::RegGet(const std::string& url, HttpHandler handler) {

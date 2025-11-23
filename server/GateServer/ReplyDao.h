@@ -3,6 +3,7 @@
 #include "MysqlDao.h"
 #include <vector>
 #include <unordered_set>
+#include <string>
 
 struct ReplyInfo {
 	long long reply_id;

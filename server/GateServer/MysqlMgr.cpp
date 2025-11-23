@@ -55,6 +55,7 @@ MysqlMgr::MysqlMgr() {
 	_post_dao = std::make_unique<PostDao>(_dao.GetPool());
 	_reply_dao = std::make_unique<ReplyDao>(_dao.GetPool());
 	_search_dao = std::make_unique<SearchDao>(_dao.GetPool());
+	_user_content_dao = std::make_unique<UserContentDao>(_dao.GetPool());
 }
 
 bool MysqlMgr::ListPosts(int forum_id, int page, int limit, const std::string& sort, std::vector<PostSummary>& posts) {
@@ -156,4 +157,24 @@ bool MysqlMgr::SearchForums(const std::string& keyword, int page, int limit, std
 
 bool MysqlMgr::SearchUsers(const std::string& keyword, int page, int limit, std::vector<UserBrief>& users) {
 	return _search_dao->SearchUsers(keyword, page, limit, users);
+}
+
+bool MysqlMgr::ListMyPosts(int uid, int page, int limit, std::vector<PostSummary>& posts) {
+	return _user_content_dao->ListMyPosts(uid, page, limit, posts);
+}
+
+bool MysqlMgr::ListMyReplies(int uid, int page, int limit, std::vector<ReplyWithPost>& replies) {
+	return _user_content_dao->ListMyReplies(uid, page, limit, replies);
+}
+
+bool MysqlMgr::ListMyCollections(int uid, int page, int limit, std::vector<PostSummary>& posts) {
+	return _user_content_dao->ListMyCollections(uid, page, limit, posts);
+}
+
+bool MysqlMgr::ListMyFollowers(int uid, int page, int limit, std::vector<UserBrief>& users) {
+	return _user_content_dao->ListMyFollowers(uid, page, limit, users);
+}
+
+bool MysqlMgr::ListMyFollowing(int uid, int page, int limit, std::vector<UserBrief>& users) {
+	return _user_content_dao->ListMyFollowing(uid, page, limit, users);
 }

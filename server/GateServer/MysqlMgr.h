@@ -52,6 +52,12 @@ public:
 	bool SearchPosts(const std::string& keyword, int forum_id, int page, int limit, std::vector<PostSummary>& posts);
 	bool SearchForums(const std::string& keyword, int page, int limit, std::vector<ForumInfo>& forums);
 	bool SearchUsers(const std::string& keyword, int page, int limit, std::vector<UserBrief>& users);
+	// user content
+	bool ListMyPosts(int uid, int page, int limit, std::vector<PostSummary>& posts);
+	bool ListMyReplies(int uid, int page, int limit, std::vector<ReplyWithPost>& replies);
+	bool ListMyCollections(int uid, int page, int limit, std::vector<PostSummary>& posts);
+	bool ListMyFollowers(int uid, int page, int limit, std::vector<UserBrief>& users);
+	bool ListMyFollowing(int uid, int page, int limit, std::vector<UserBrief>& users);
 private:
 	MysqlMgr();
 	MysqlDao  _dao;
@@ -59,4 +65,5 @@ private:
 	std::unique_ptr<PostDao> _post_dao;
 	std::unique_ptr<ReplyDao> _reply_dao;
 	std::unique_ptr<SearchDao> _search_dao;
+	std::unique_ptr<UserContentDao> _user_content_dao;
 };

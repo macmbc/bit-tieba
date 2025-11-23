@@ -11,6 +11,7 @@ set(GATE_SERVER_SOURCES
   PostDao.cpp
   ReplyDao.cpp
   SearchDao.cpp
+  UserContentDao.cpp
   RedisMgr.cpp
   StatusGrpcClient.cpp
   VerifyGrpcClient.cpp
