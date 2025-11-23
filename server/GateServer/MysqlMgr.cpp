@@ -54,6 +54,7 @@ MysqlMgr::MysqlMgr() {
 	_forum_dao = std::make_unique<ForumDao>(_dao.GetPool());
 	_post_dao = std::make_unique<PostDao>(_dao.GetPool());
 	_reply_dao = std::make_unique<ReplyDao>(_dao.GetPool());
+	_search_dao = std::make_unique<SearchDao>(_dao.GetPool());
 }
 
 bool MysqlMgr::ListPosts(int forum_id, int page, int limit, const std::string& sort, std::vector<PostSummary>& posts) {
@@ -143,4 +144,16 @@ int MysqlMgr::UnlikeReply(int uid, long long reply_id) {
 
 bool MysqlMgr::BatchReplyLiked(int uid, const std::vector<long long>& reply_ids, std::unordered_set<long long>& liked_set) {
 	return _reply_dao->BatchLiked(uid, reply_ids, liked_set);
+}
+
+bool MysqlMgr::SearchPosts(const std::string& keyword, int forum_id, int page, int limit, std::vector<PostSummary>& posts) {
+	return _search_dao->SearchPosts(keyword, forum_id, page, limit, posts);
+}
+
+bool MysqlMgr::SearchForums(const std::string& keyword, int page, int limit, std::vector<ForumInfo>& forums) {
+	return _search_dao->SearchForums(keyword, page, limit, forums);
+}
+
+bool MysqlMgr::SearchUsers(const std::string& keyword, int page, int limit, std::vector<UserBrief>& users) {
+	return _search_dao->SearchUsers(keyword, page, limit, users);
 }

@@ -1530,6 +1530,122 @@ LogicSystem::LogicSystem() {
 		beast::ostream(connection->_response.body()) << jsonstr;
 		return true;
 		});
+
+	// 搜索帖子/贴吧/用户
+	RegGet("/search", [](std::shared_ptr<HttpConnection> connection) {
+		connection->_response.set(http::field::content_type, "text/json");
+		Json::Value root;
+		std::string keyword;
+		std::string type = "post";
+		int page = 1;
+		int limit = 20;
+		int forum_id = 0;
+		try {
+			if (connection->_get_params.find("keyword") != connection->_get_params.end()) {
+				keyword = connection->_get_params["keyword"];
+			}
+			if (connection->_get_params.find("type") != connection->_get_params.end()) {
+				type = connection->_get_params["type"];
+			}
+			if (connection->_get_params.find("page") != connection->_get_params.end()) {
+				page = std::stoi(connection->_get_params["page"]);
+			}
+			if (connection->_get_params.find("limit") != connection->_get_params.end()) {
+				limit = std::stoi(connection->_get_params["limit"]);
+			}
+			if (connection->_get_params.find("forum_id") != connection->_get_params.end()) {
+				forum_id = std::stoi(connection->_get_params["forum_id"]);
+			}
+		}
+		catch (...) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+
+		if (keyword.empty()) {
+			root["error"] = ErrorCodes::Error_Json;
+			std::string jsonstr = root.toStyledString();
+			beast::ostream(connection->_response.body()) << jsonstr;
+			return true;
+		}
+		if (page <= 0) page = 1;
+		if (limit <= 0) limit = 20;
+
+		if (type == "post") {
+			std::vector<PostSummary> posts;
+			bool ok = MysqlMgr::GetInstance()->SearchPosts(keyword, forum_id, page, limit, posts);
+			if (!ok) {
+				root["error"] = ErrorCodes::DbError;
+			}
+			else {
+				root["error"] = ErrorCodes::Success;
+				for (auto& p : posts) {
+					Json::Value item;
+					item["post_id"] = p.post_id;
+					item["forum_id"] = p.forum_id;
+					item["uid"] = p.uid;
+					item["author"] = p.author;
+					item["title"] = p.title;
+					item["created_at"] = p.created_at;
+					item["reply_count"] = p.reply_cnt;
+					item["like_count"] = p.like_cnt;
+					item["is_top"] = p.is_top;
+					item["is_essence"] = p.is_essence;
+					item["content_preview"] = p.content_preview;
+					root["results"].append(item);
+				}
+			}
+		}
+		else if (type == "forum") {
+			std::vector<ForumInfo> forums;
+			bool ok = MysqlMgr::GetInstance()->SearchForums(keyword, page, limit, forums);
+			if (!ok) {
+				root["error"] = ErrorCodes::DbError;
+			}
+			else {
+				root["error"] = ErrorCodes::Success;
+				for (auto& f : forums) {
+					Json::Value item;
+					item["forum_id"] = f.forum_id;
+					item["name"] = f.name;
+					item["avatar"] = f.avatar;
+					item["description"] = f.description;
+					item["follower_count"] = f.follower_count;
+					item["post_count"] = f.post_count;
+					root["results"].append(item);
+				}
+			}
+		}
+		else if (type == "user") {
+			std::vector<UserBrief> users;
+			bool ok = MysqlMgr::GetInstance()->SearchUsers(keyword, page, limit, users);
+			if (!ok) {
+				root["error"] = ErrorCodes::DbError;
+			}
+			else {
+				root["error"] = ErrorCodes::Success;
+				for (auto& u : users) {
+					Json::Value item;
+					item["uid"] = u.uid;
+					item["name"] = u.name;
+					item["nick"] = u.nick;
+					item["email"] = u.email;
+					item["icon"] = u.icon;
+					item["sex"] = u.sex;
+					root["results"].append(item);
+				}
+			}
+		}
+		else {
+			root["error"] = ErrorCodes::Error_Json;
+		}
+
+		std::string jsonstr = root.toStyledString();
+		beast::ostream(connection->_response.body()) << jsonstr;
+		return true;
+		});
 }
 
 void LogicSystem::RegGet(const std::string& url, HttpHandler handler) {

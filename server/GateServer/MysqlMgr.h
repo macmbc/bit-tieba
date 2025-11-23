@@ -4,6 +4,7 @@
 #include "ForumDao.h"
 #include "PostDao.h"
 #include "ReplyDao.h"
+#include "SearchDao.h"
 class MysqlMgr: public Singleton<MysqlMgr>
 {
 	friend class Singleton<MysqlMgr>;
@@ -47,10 +48,15 @@ public:
 	int LikeReply(int uid, long long reply_id);
 	int UnlikeReply(int uid, long long reply_id);
 	bool BatchReplyLiked(int uid, const std::vector<long long>& reply_ids, std::unordered_set<long long>& liked_set);
+	// search
+	bool SearchPosts(const std::string& keyword, int forum_id, int page, int limit, std::vector<PostSummary>& posts);
+	bool SearchForums(const std::string& keyword, int page, int limit, std::vector<ForumInfo>& forums);
+	bool SearchUsers(const std::string& keyword, int page, int limit, std::vector<UserBrief>& users);
 private:
 	MysqlMgr();
 	MysqlDao  _dao;
 	std::unique_ptr<ForumDao> _forum_dao;
 	std::unique_ptr<PostDao> _post_dao;
 	std::unique_ptr<ReplyDao> _reply_dao;
+	std::unique_ptr<SearchDao> _search_dao;
 };

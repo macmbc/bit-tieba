@@ -10,6 +10,7 @@ set(GATE_SERVER_SOURCES
   ForumDao.cpp
   PostDao.cpp
   ReplyDao.cpp
+  SearchDao.cpp
   RedisMgr.cpp
   StatusGrpcClient.cpp
   VerifyGrpcClient.cpp
