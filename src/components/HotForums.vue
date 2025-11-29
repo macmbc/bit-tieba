@@ -1,12 +1,24 @@
 <template>
-  <section class="section">
-    <h2>热门吧</h2>
-    <ul class="forum-list">
+  <section class="section" aria-labelledby="hot-forums-heading">
+    <div class="section-head">
+      <h2 id="hot-forums-heading">热门吧</h2>
+      <p class="section-subtitle">大家都在讨论的版块</p>
+    </div>
+    <p v-if="!forums.length" class="empty-state">暂无热门吧，稍后再试。</p>
+    <ul v-else class="forum-list">
       <li v-for="forum in forums" :key="forum.id" class="forum-item">
-        <router-link :to="`/forum/${forum.id}`">
-          <h3>{{ forum.name }}</h3>
-          <p>{{ forum.description }}</p>
-          <span>帖子数: {{ forum.postCount }}</span>
+        <router-link :to="`/forum/${forum.id}`" class="card-link">
+          <div class="forum-head">
+            <span class="logo" aria-hidden="true">#</span>
+            <div class="info">
+              <h3>{{ forum.name }}</h3>
+              <p>{{ forum.description }}</p>
+            </div>
+          </div>
+          <div class="forum-meta">
+            <span>帖子 {{ forum.postCount }}</span>
+            <span>吧号 {{ forum.id }}</span>
+          </div>
         </router-link>
       </li>
     </ul>
@@ -22,81 +34,119 @@ defineProps<{
 
 <style scoped>
 .section {
-  margin-bottom: 30px;
+  margin-bottom: var(--sp-6);
 }
 
-.section h2 {
-  font-size: 1.5rem;
-  color: #333;
-  margin-bottom: 15px;
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.section-head h2 {
+  font-size: var(--fz-h3);
+  font-weight: var(--fw-bold);
+  color: var(--color-text-1);
+  margin: 0;
+}
+
+.section-subtitle {
+  font-size: var(--fz-sub);
+  color: var(--color-text-3);
+}
+
+.empty-state {
+  padding: var(--sp-5);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+  color: var(--color-text-2);
+  background: var(--color-card-bg);
 }
 
 .forum-list {
   list-style: none;
   padding: 0;
+  margin: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--sp-4);
 }
 
 .forum-item {
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 6px;
-  padding: 15px;
-  transition: box-shadow 0.2s ease;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+  transition: box-shadow var(--ease-fast) ease, transform var(--ease-fast) ease;
 }
 
 .forum-item:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
 }
 
-.forum-item a {
+.card-link {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
   text-decoration: none;
-  color: #333;
+  color: var(--color-text-1);
 }
 
-.forum-item h3 {
-  font-size: 1.2rem;
-  margin: 0 0 10px;
-  color: #4c91d9;
+.forum-head {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: center;
 }
 
-.forum-item p {
-  font-size: 0.9rem;
-  color: #666;
-  margin: 0 0 10px;
+.logo {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-brand) 12%, transparent);
+  color: var(--color-brand);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--fw-bold);
 }
 
-.forum-item span {
-  font-size: 0.85rem;
-  color: #999;
+.info h3 {
+  margin: 0;
+  font-size: var(--fz-body);
 }
 
-/* 响应式 */
+.info p {
+  margin: 0;
+  font-size: var(--fz-sub);
+  color: var(--color-text-2);
+}
+
+.forum-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--fz-caption);
+  color: var(--color-text-3);
+}
+
+.forum-meta span::before {
+  content: '•';
+  margin-right: var(--sp-2);
+  color: var(--color-border-strong);
+}
+
+.forum-meta span:first-child::before {
+  content: '';
+  margin-right: 0;
+}
+
 @media (max-width: 576px) {
-  .forum-list {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* 暗模式 */
-@media (prefers-color-scheme: dark) {
-  .section h2 {
-    color: #ddd;
-  }
-  .forum-item {
-    background: #222;
-    border-color: #444;
-  }
-  .forum-item a {
-    color: #ddd;
-  }
-  .forum-item h3 {
-    color: #6ab0ff;
-  }
-  .forum-item p {
-    color: #aaa;
+  .forum-meta {
+    flex-direction: column;
+    gap: var(--sp-1);
   }
 }
 </style>
