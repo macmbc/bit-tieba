@@ -54,6 +54,7 @@ export interface Message {
   source: string
   isRead: boolean
   link: string
+  target?: string
 }
 
 export interface UserInfo {

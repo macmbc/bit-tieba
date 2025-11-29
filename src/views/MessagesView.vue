@@ -37,7 +37,24 @@
         </button>
       </div>
 
-      <div class="state-wrapper" aria-live="polite">
+      <div v-if="isPrivateView" class="private-shell">
+        <aside class="conversation-column">
+          <ConversationList
+            :groups="privateConversations"
+            :active-id="activeConversationId || undefined"
+            @select="handleConversationSelect"
+          />
+        </aside>
+        <section class="chat-column">
+          <ChatPanel
+            :participant="activeParticipant || undefined"
+            :messages="conversationMessages"
+            @send="sendPrivateMessage"
+          />
+        </section>
+      </div>
+
+      <div v-else class="state-wrapper" aria-live="polite">
         <ul v-if="loading" class="message-list skeleton-list">
           <li v-for="i in 4" :key="`skeleton-${i}`" class="message-item">
             <div class="avatar skeleton"></div>
@@ -87,11 +104,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useUserStore, useMessageStore } from '@/stores/user'
 import { getMessages, markAllMessagesAsRead, markMessageAsRead } from '@/api/forumApi'
 import type { Message } from '@/types'
 import { formatTime } from '@/utils/format'
+import ConversationList, {
+  type ConversationGroup,
+  type ConversationItem,
+} from '@/components/ConversationList.vue'
+import ChatPanel from '@/components/ChatPanel.vue'
 
 type FilterOption = Message['type'] | 'all'
 
@@ -113,6 +135,8 @@ const loading = ref(true)
 const error = ref('')
 const filter = ref<FilterOption>('all')
 const markingAll = ref(false)
+const activeConversationId = ref<number | null>(null)
+const activeParticipant = ref<string | null>(null)
 
 const filteredMessages = computed(() =>
   filter.value === 'all'
@@ -128,7 +152,59 @@ const messageCounts = computed(() => {
 })
 
 const unreadCount = computed(() => messages.value.filter((msg) => !msg.isRead).length)
-const canMarkAll = computed(() => filteredMessages.value.some((msg) => !msg.isRead))
+const isPrivateView = computed(() => filter.value === 'private_message')
+const currentUserId = computed(() => userStore.userId ?? '')
+
+const belongsToParticipant = (msg: Message, participant: string) => {
+  if (msg.type !== 'private_message') return false
+  if (msg.sender === participant && msg.sender !== currentUserId.value) return true
+  return msg.sender === currentUserId.value && msg.target === participant
+}
+
+const conversationMessages = computed(() => {
+  if (!isPrivateView.value || !activeParticipant.value) return []
+  return messages.value.filter((msg) => belongsToParticipant(msg, activeParticipant.value as string))
+})
+
+const privateConversations = computed<ConversationGroup[]>(() => {
+  const map = new Map<string, Message[]>()
+  messages.value
+    .filter((msg) => msg.type === 'private_message')
+    .forEach((msg) => {
+      const participant = msg.sender === currentUserId.value ? msg.target : msg.sender
+      if (!participant) return
+      const bucket = map.get(participant) ?? []
+      bucket.push(msg)
+      map.set(participant, bucket)
+    })
+
+  const items = Array.from(map.entries())
+    .map<ConversationItem | null>(([name, list]) => {
+      const latest = [...list].sort((a, b) => b.timestamp - a.timestamp)[0]
+      if (!latest) return null
+      const unread = list.filter((msg) => !msg.isRead && msg.sender !== currentUserId.value).length
+      return {
+        id: latest.id,
+        name,
+        brief: latest.content,
+        time: formatTime(latest.timestamp),
+        unread,
+      }
+    })
+    .filter((item): item is ConversationItem => Boolean(item))
+
+  return items.length ? [{ title: '会话', items }] : []
+})
+
+const privateUnreadCount = computed(() =>
+  conversationMessages.value.filter((msg) => !msg.isRead && msg.sender !== currentUserId.value).length,
+)
+
+const canMarkAll = computed(() =>
+  isPrivateView.value
+    ? Boolean(activeParticipant.value) && privateUnreadCount.value > 0
+    : filteredMessages.value.some((msg) => !msg.isRead),
+)
 
 const getFilterCount = (value: FilterOption) =>
   value === 'all' ? messages.value.length : messageCounts.value[value] ?? 0
@@ -194,16 +270,28 @@ const markAllAsRead = async () => {
 
   const originalMessages = [...messages.value]
   try {
-    messages.value = messages.value.map((msg) =>
-      (filter.value === 'all' || msg.type === filter.value) && !msg.isRead
-        ? { ...msg, isRead: true }
-        : msg,
-    )
+    if (isPrivateView.value && activeParticipant.value) {
+      const targetIds = conversationMessages.value.filter((msg) => !msg.isRead).map((msg) => msg.id)
+      messages.value = messages.value.map((msg) =>
+        targetIds.includes(msg.id) ? { ...msg, isRead: true } : msg,
+      )
 
-    await markAllMessagesAsRead(
-      userStore.userId!,
-      filter.value === 'all' ? undefined : filter.value,
-    )
+      await Promise.all(targetIds.map((id) => markMessageAsRead(userStore.userId!, id)))
+    } else {
+      const visibleIds = filteredMessages.value
+        .filter((msg) => filter.value === 'all' || msg.type === filter.value)
+        .filter((msg) => !msg.isRead)
+        .map((msg) => msg.id)
+
+      messages.value = messages.value.map((msg) =>
+        visibleIds.includes(msg.id) ? { ...msg, isRead: true } : msg,
+      )
+
+      await markAllMessagesAsRead(
+        userStore.userId!,
+        filter.value === 'all' ? undefined : filter.value,
+      )
+    }
 
     await messageStore.refreshUnreadCount(userStore.userId!)
   } catch (err) {
@@ -213,6 +301,70 @@ const markAllAsRead = async () => {
     markingAll.value = false
   }
 }
+
+const handleConversationSelect = (id: number) => {
+  const target = privateConversations.value.flatMap((group) => group.items).find((item) => item.id === id)
+  if (!target) return
+  activeConversationId.value = id
+  activeParticipant.value = target.name
+  void markConversationAsRead(target.name)
+}
+
+const markConversationAsRead = async (participant: string) => {
+  if (!userStore.userId) return
+  const targets = messages.value.filter((msg) => belongsToParticipant(msg, participant) && !msg.isRead)
+  if (!targets.length) return
+
+  targets.forEach((msg) => {
+    msg.isRead = true
+  })
+
+  try {
+    await Promise.all(targets.map((msg) => markMessageAsRead(userStore.userId!, msg.id)))
+    await messageStore.refreshUnreadCount(userStore.userId!)
+  } catch {
+    targets.forEach((msg) => {
+      msg.isRead = false
+    })
+  }
+}
+
+const sendPrivateMessage = (content: string) => {
+  if (!userStore.userId || !activeParticipant.value) return
+
+  const now = Date.now()
+  const newMessage: Message = {
+    id: now,
+    type: 'private_message',
+    sender: userStore.userId,
+    target: activeParticipant.value,
+    content,
+    timestamp: now,
+    source: '私信',
+    isRead: true,
+    link: `/messages/private/${activeParticipant.value}`,
+  }
+
+  messages.value = [...messages.value, newMessage]
+}
+
+watch(
+  () => ({ groups: privateConversations.value, isPrivate: isPrivateView.value }),
+  ({ groups, isPrivate }) => {
+    if (!isPrivate) {
+      activeConversationId.value = null
+      activeParticipant.value = null
+      return
+    }
+    const first = groups[0]?.items[0]
+    if (first && !activeParticipant.value) {
+      activeConversationId.value = first.id
+      activeParticipant.value = first.name
+      void markConversationAsRead(first.name)
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <style scoped>
@@ -338,6 +490,29 @@ const markAllAsRead = async () => {
 
 .state-wrapper {
   min-height: 200px;
+}
+
+.private-shell {
+  display: grid;
+  grid-template-columns: minmax(260px, 320px) 1fr;
+  gap: var(--sp-4);
+  min-height: 520px;
+}
+
+.conversation-column {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-card-bg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.chat-column {
+  min-height: 0;
+}
+
+.chat-column :deep(.chat-panel) {
+  height: 100%;
 }
 
 .message-list {
@@ -502,6 +677,15 @@ const markAllAsRead = async () => {
 
   .messages-panel {
     padding: var(--sp-4);
+  }
+
+  .private-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .conversation-column {
+    max-height: 320px;
+    overflow: auto;
   }
 }
 
