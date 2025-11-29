@@ -1,98 +1,124 @@
 <template>
-  <div class="me">
-    <h1>我的</h1>
-
-    <!-- 个人信息 -->
-    <section class="section profile">
-      <h2>个人信息</h2>
-      <div v-if="loading.profile" class="loading">加载中...</div>
-      <div v-else-if="error.profile" class="error">{{ error.profile }}</div>
-      <div v-else class="profile-content">
+  <div class="me-page">
+    <section class="profile-hero">
+      <div class="profile-main">
         <img :src="userInfo.avatar || defaultAvatar" alt="头像" class="avatar" />
-        <div class="info">
-          <h3>{{ userInfo.username || '未设置用户名' }}</h3>
-          <p>{{ userInfo.bio || '暂无简介' }}</p>
-          <p>注册时间: {{ formatTime(userInfo.createdAt) }}</p>
+        <div class="profile-copy">
+          <p class="eyebrow">个人中心</p>
+          <h1>{{ userInfo.username || '未设置用户名' }}</h1>
+          <p class="bio">{{ userInfo.bio || '这个人很懒，什么都没写~' }}</p>
+          <div class="meta-row">
+            <span>加入于 {{ formatTime(userInfo.createdAt) }}</span>
+            <span v-if="authStore.user?.email">邮箱 {{ authStore.user?.email }}</span>
+          </div>
         </div>
-        <router-link to="/settings" class="edit-btn">编辑资料</router-link>
-        <button @click="handleLogout" class="logout-btn">退出登录</button>
+      </div>
+      <div class="profile-actions">
+        <router-link to="/settings" class="solid-btn">编辑资料</router-link>
+        <button type="button" class="ghost-btn" @click="router.push('/message')">消息中心</button>
+        <button type="button" class="danger-btn" @click="handleLogout">退出登录</button>
       </div>
     </section>
 
-    <!-- 我的帖子 -->
-    <section class="section posts">
-      <h2>我的帖子</h2>
-      <div v-if="loading.posts" class="loading">加载中...</div>
-      <div v-else-if="error.posts" class="error">{{ error.posts }}</div>
-      <div v-else-if="!posts.length" class="empty">你还没有发布帖子</div>
-      <ul v-else class="post-list">
-        <li v-for="post in posts" :key="post.id" class="post-item">
-          <router-link :to="`/forum/${post.forumId}/post/${post.id}`">
-            <h3>{{ post.title }}</h3>
-            <p>{{ post.content.substring(0, 50) }}...</p>
-            <div class="meta">
-              <span>来自: {{ post.forumName }}</span>
-              <span>回复: {{ post.replyCount }}</span>
-            </div>
-          </router-link>
-        </li>
-      </ul>
+    <section class="stats-grid" aria-label="个人概览">
+      <article v-for="card in statCards" :key="card.label" class="stat-card">
+        <p class="label">{{ card.label }}</p>
+        <p class="value">{{ card.value }}</p>
+        <p class="hint">{{ card.hint }}</p>
+      </article>
     </section>
 
-    <!-- 我的关注吧 -->
-    <section class="section forums">
-      <h2>我的关注吧</h2>
-      <div v-if="loading.forums" class="loading">加载中...</div>
-      <div v-else-if="error.forums" class="error">{{ error.forums }}</div>
-      <div v-else-if="!followedForums.length" class="empty">你还没有关注任何吧</div>
-      <ul v-else class="forum-list">
-        <li v-for="forum in followedForums" :key="forum.id" class="forum-item">
-          <router-link :to="`/forum/${forum.id}`">
-            <h3>{{ forum.name }}</h3>
-            <p>{{ forum.description }}</p>
-            <span>帖子数: {{ forum.postCount }}</span>
-          </router-link>
-        </li>
-      </ul>
-    </section>
+    <div class="content-grid">
+      <section class="panel posts-panel">
+        <header class="panel-header">
+          <div>
+            <h2>我的帖子</h2>
+            <p>追踪你在各个吧内的创作表现</p>
+          </div>
+        </header>
+        <div v-if="loading.posts" class="state-block">加载中...</div>
+        <div v-else-if="error.posts" class="state-block error">{{ error.posts }}</div>
+        <div v-else-if="!posts.length" class="state-block empty">你还没有发布帖子</div>
+        <ul v-else class="post-list">
+          <li v-for="post in posts" :key="post.id" class="post-item">
+            <router-link :to="`/forum/${post.forumId}/post/${post.id}`">
+              <p class="post-forum">{{ post.forumName }}</p>
+              <h3>{{ post.title }}</h3>
+              <p class="post-preview">{{ post.content.substring(0, 80) }}...</p>
+              <div class="post-meta">
+                <span>{{ formatTime(post.createdAt) }}</span>
+                <span>回复 {{ post.replyCount }}</span>
+              </div>
+            </router-link>
+          </li>
+        </ul>
+      </section>
 
-    <!-- 我的消息概览 -->
-    <section class="section messages">
-      <h2>最近消息 <router-link to="/message" class="view-all">查看全部</router-link></h2>
-      <div v-if="loading.messages" class="loading">加载中...</div>
-      <div v-else-if="error.messages" class="error">{{ error.messages }}</div>
-      <div v-else-if="!messages.length" class="empty">暂无消息</div>
-      <ul v-else class="message-list">
-        <li
-          v-for="message in messages.slice(0, 3)"
-          :key="message.id"
-          class="message-item"
-          :class="{ unread: !message.isRead }"
-        >
-          <router-link :to="message.link" @click="markAsRead(message.id)">
-            <div class="message-header">
-              <span class="sender">{{ message.sender }}</span>
-              <span class="time">{{ formatTime(message.timestamp) }}</span>
-            </div>
-            <p class="content">{{ message.content.substring(0, 50) }}...</p>
-            <div class="meta">
-              <span>来自: {{ message.source }}</span>
-              <span>{{ messageTypeText(message.type) }}</span>
-            </div>
-          </router-link>
-        </li>
-      </ul>
-    </section>
+      <section class="panel forums-panel">
+        <header class="panel-header">
+          <div>
+            <h2>关注的吧</h2>
+            <p>常逛社区概况</p>
+          </div>
+        </header>
+        <div v-if="loading.forums" class="state-block">加载中...</div>
+        <div v-else-if="error.forums" class="state-block error">{{ error.forums }}</div>
+        <div v-else-if="!followedForums.length" class="state-block empty">你还没有关注任何吧</div>
+        <ul v-else class="forum-list">
+          <li v-for="forum in followedForums" :key="forum.id" class="forum-item">
+            <router-link :to="`/forum/${forum.id}`">
+              <div>
+                <h3>{{ forum.name }}</h3>
+                <p>{{ forum.description }}</p>
+              </div>
+              <span>帖子 {{ forum.postCount }}</span>
+            </router-link>
+          </li>
+        </ul>
+      </section>
+
+      <section class="panel messages-panel">
+        <header class="panel-header">
+          <div>
+            <h2>最近消息</h2>
+            <p>最新互动提醒</p>
+          </div>
+          <router-link to="/message" class="ghost-btn">查看全部</router-link>
+        </header>
+        <div v-if="loading.messages" class="state-block">加载中...</div>
+        <div v-else-if="error.messages" class="state-block error">{{ error.messages }}</div>
+        <div v-else-if="!messages.length" class="state-block empty">暂无消息</div>
+        <ul v-else class="message-list">
+          <li
+            v-for="message in limitedMessages"
+            :key="message.id"
+            class="message-item"
+            :class="{ unread: !message.isRead }"
+          >
+            <router-link :to="message.link" @click="markAsRead(message.id)">
+              <div class="message-top">
+                <span class="sender">{{ message.sender }}</span>
+                <span class="time">{{ formatTime(message.timestamp) }}</span>
+              </div>
+              <p class="message-content">{{ message.content.substring(0, 60) }}...</p>
+              <div class="message-meta">
+                <span>{{ message.source }}</span>
+                <span>{{ messageTypeText(message.type) }}</span>
+              </div>
+            </router-link>
+          </li>
+        </ul>
+      </section>
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'  
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
 import { useUserStore, useMessageStore } from '@/stores/user'
 import {
-  getUserInfo,
   getUserPosts,
   getFollowedForums,
   getMessages,
@@ -102,8 +128,8 @@ import type { UserInfo, Post, Forum, Message } from '@/types'
 import defaultAvatar from '@/assets/default.png'
 import { formatTime } from '@/utils/format'
 
-const router = useRouter() 
-const authStore = useAuthStore()  
+const router = useRouter()
+const authStore = useAuthStore()
 const userStore = useUserStore()
 const messageStore = useMessageStore()
 const userInfo = ref<UserInfo>({ username: '', bio: '', createdAt: 0 })
@@ -126,10 +152,9 @@ const error = ref({
 
 // 加载数据
 onMounted(async () => {
-  
   // 使用真实的登录用户信息
   const authStore = useAuthStore()
-  
+
   if (!authStore.isLoggedIn) {
     error.value.profile = '请先登录以查看个人资料'
     loading.value.profile = false
@@ -157,30 +182,56 @@ onMounted(async () => {
     return
   }
 
-  try {//userInfo给注释掉,就不用mock数据了。不过还需要后端支持
-    const [ userPosts, forums, userMessages] = await Promise.all([
-      //getUserInfo(userStore.userId!).catch(() => ({}) as UserInfo),
+  try {
+    const [userPosts, forums, userMessages] = await Promise.all([
       getUserPosts(userStore.userId!).catch(() => [] as Post[]),
       getFollowedForums(userStore.userId!).catch(() => [] as Forum[]),
       getMessages(userStore.userId!).catch(() => [] as Message[]),
     ])
-    //userInfo.value = info
     posts.value = userPosts
     followedForums.value = forums
     messages.value = userMessages
-  } catch (err) {/*
-    error.value.profile =
-      error.value.posts =
-      error.value.forums =
-      error.value.messages =
-        (err as Error).message*/
+  } catch (err) {
+    console.error(err)
   } finally {
-    //loading.value.profile = false
     loading.value.posts = false
     loading.value.forums = false
     loading.value.messages = false
   }
 })
+
+const limitedMessages = computed(() => messages.value.slice(0, 4))
+
+const unreadMessages = computed(() => messages.value.filter((m) => !m.isRead).length)
+
+const memberDays = computed(() => {
+  if (!userInfo.value.createdAt) return 0
+  const diff = Date.now() - userInfo.value.createdAt
+  return Math.max(1, Math.round(diff / (1000 * 60 * 60 * 24)))
+})
+
+const statCards = computed(() => [
+  {
+    label: '发帖数',
+    value: loading.value.posts ? '--' : posts.value.length,
+    hint: posts.value.length ? `最新帖子收到 ${posts.value[0]?.replyCount ?? 0} 条互动` : '快去发布你的第一条帖子',
+  },
+  {
+    label: '关注的吧',
+    value: loading.value.forums ? '--' : followedForums.value.length,
+    hint: followedForums.value.length ? '保持活跃可以获得更多推荐' : '去发现更多感兴趣的社区',
+  },
+  {
+    label: '未读消息',
+    value: loading.value.messages ? '--' : unreadMessages.value,
+    hint: unreadMessages.value ? '及时回复以保持互动热度' : '所有消息都已处理',
+  },
+  {
+    label: '活跃天数',
+    value: memberDays.value || '--',
+    hint: memberDays.value ? '坚持打卡更容易获得等级徽章' : '完善资料后解锁更多能力',
+  },
+])
 
 // 消息类型文本
 const messageTypeText = (type: Message['type']) => {
@@ -226,264 +277,331 @@ const handleLogout = () => {
 </script>
 
 <style scoped>
-.logout-btn {
-  background: #ff4444;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 0.9rem;
-  cursor: pointer;
-  margin-left: 10px;
-}
-
-.logout-btn:hover {
-  background: #dd3333;
-}
-.me {
-  max-width: 1200px;
+.me-page {
+  max-width: var(--layout-heart-width);
   margin: 0 auto;
-  padding: 20px;
-  padding-left: 100px;
-}
-
-h1 {
-  font-size: 2rem;
-  color: #333;
-  margin-bottom: 20px;
-}
-
-.section {
-  margin-bottom: 30px;
-}
-
-.section h2 {
-  font-size: 1.5rem;
-  color: #333;
-  margin-bottom: 15px;
-  position: relative;
-}
-
-.view-all {
-  position: absolute;
-  right: 0;
-  font-size: 0.9rem;
-  color: #4c91d9;
-  text-decoration: none;
-}
-
-.view-all:hover {
-  text-decoration: underline;
-}
-
-.profile-content {
+  padding: var(--sp-8) var(--sp-6) var(--sp-10);
   display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+}
+
+.profile-hero {
+  background: linear-gradient(135deg, rgba(25, 118, 210, 0.12), rgba(25, 118, 210, 0.04));
+  border-radius: var(--radius-lg);
+  padding: var(--sp-6);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-6);
+  border: 1px solid rgba(25, 118, 210, 0.15);
+}
+
+.profile-main {
+  display: flex;
+  gap: var(--sp-5);
   align-items: center;
-  gap: 20px;
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 6px;
-  padding: 15px;
 }
 
 .avatar {
-  width: 80px;
-  height: 80px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
   object-fit: cover;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-sm);
 }
 
-.info {
-  flex: 1;
+.profile-copy h1 {
+  font-size: var(--fz-h1);
+  margin-bottom: var(--sp-2);
 }
 
-.info h3 {
-  font-size: 1.3rem;
-  margin: 0 0 10px;
+.bio {
+  color: var(--color-text-2);
+  font-size: var(--fz-body);
 }
 
-.info p {
-  font-size: 0.9rem;
-  color: #666;
-  margin: 0 0 5px;
+.eyebrow {
+  font-size: var(--fz-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-brand);
+  margin-bottom: var(--sp-1);
 }
 
-.edit-btn {
-  background: #4c91d9;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 12px;
+.meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
+  color: var(--color-text-3);
+  font-size: var(--fz-sub);
+}
+
+.profile-actions {
+  display: flex;
+  gap: var(--sp-3);
+  align-items: flex-start;
+}
+
+.solid-btn,
+.ghost-btn,
+.danger-btn {
+  border-radius: var(--radius-md);
+  padding: var(--sp-2) var(--sp-4);
+  font-size: var(--fz-sub);
+  font-weight: var(--fw-medium);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background var(--ease-fast), color var(--ease-fast), border var(--ease-fast);
   text-decoration: none;
-  font-size: 0.9rem;
 }
 
-.edit-btn:hover {
-  background: #3a7ab8;
+.solid-btn {
+  background: var(--color-brand);
+  color: #fff;
+}
+
+.solid-btn:hover {
+  background: var(--color-brand-hover);
+}
+
+.ghost-btn {
+  border-color: rgba(25, 118, 210, 0.4);
+  color: var(--color-brand);
+  background: transparent;
+}
+
+.ghost-btn:hover {
+  border-color: var(--color-brand);
+}
+
+.danger-btn {
+  background: rgba(244, 67, 54, 0.1);
+  border-color: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+}
+
+.danger-btn:hover {
+  background: rgba(244, 67, 54, 0.18);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--sp-4);
+}
+
+.stat-card {
+  background: var(--color-card-bg);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-4);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.stat-card .label {
+  font-size: var(--fz-sub);
+  color: var(--color-text-3);
+  margin-bottom: var(--sp-2);
+  text-transform: uppercase;
+}
+
+.stat-card .value {
+  font-size: 32px;
+  font-weight: var(--fw-bold);
+  margin-bottom: var(--sp-2);
+}
+
+.stat-card .hint {
+  color: var(--color-text-2);
+  font-size: var(--fz-sub);
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--sp-5);
+}
+
+.panel {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+
+.panel-header h2 {
+  font-size: var(--fz-h3);
+  margin-bottom: var(--sp-1);
+}
+
+.panel-header p {
+  color: var(--color-text-2);
+  font-size: var(--fz-sub);
+}
+
+.state-block {
+  text-align: center;
+  padding: var(--sp-5);
+  color: var(--color-text-2);
+  border-radius: var(--radius-md);
+  background: var(--color-background-soft);
+}
+
+.state-block.error {
+  color: var(--color-danger);
+}
+
+.state-block.empty {
+  color: var(--color-text-3);
 }
 
 .post-list,
 .forum-list,
 .message-list {
   list-style: none;
+  margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  gap: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
 }
 
 .post-item,
 .forum-item,
 .message-item {
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 6px;
-  padding: 15px;
-  transition: box-shadow 0.2s ease;
-}
-
-.post-item:hover,
-.forum-item:hover,
-.message-item:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: border var(--ease-fast), box-shadow var(--ease-fast);
+  background: var(--color-background);
 }
 
 .post-item a,
 .forum-item a,
 .message-item a {
-  text-decoration: none;
-  color: #333;
   display: block;
+  padding: var(--sp-4);
+  text-decoration: none;
+  color: inherit;
 }
 
-.post-item h3,
-.forum-item h3 {
-  font-size: 1.2rem;
-  margin: 0 0 10px;
-  color: #4c91d9;
+.post-item:hover,
+.forum-item:hover,
+.message-item:hover {
+  border-color: var(--color-border-hover);
+  box-shadow: var(--shadow-sm);
 }
 
-.post-item p,
-.forum-item p {
-  font-size: 0.9rem;
-  color: #666;
-  margin: 0 0 10px;
+.post-forum {
+  font-size: var(--fz-sub);
+  color: var(--color-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
-.post-item .meta,
-.forum-item span,
-.message-item .meta {
-  font-size: 0.85rem;
-  color: #999;
+.post-item h3 {
+  margin: var(--sp-2) 0;
+  font-size: var(--fz-h3);
 }
 
-.message-item.unread {
-  background: #f0f8ff;
+.post-preview {
+  color: var(--color-text-2);
+  font-size: var(--fz-body);
 }
 
-.message-header {
+.post-meta {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-top: var(--sp-3);
+  color: var(--color-text-3);
+  font-size: var(--fz-sub);
+}
+
+.forum-item a {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  align-items: center;
+}
+
+.forum-item h3 {
+  font-size: var(--fz-h3);
+  margin-bottom: var(--sp-2);
+}
+
+.forum-item p {
+  color: var(--color-text-2);
+  font-size: var(--fz-body);
+}
+
+.message-top {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-2);
 }
 
 .sender {
-  font-weight: bold;
-  color: #4c91d9;
+  font-weight: var(--fw-medium);
+  color: var(--color-brand);
 }
 
 .time {
-  font-size: 0.85rem;
-  color: #999;
+  font-size: var(--fz-sub);
+  color: var(--color-text-3);
 }
 
-.content {
-  font-size: 0.9rem;
-  color: #666;
-  margin: 0 0 8px;
+.message-content {
+  color: var(--color-text-2);
+  margin-bottom: var(--sp-2);
 }
 
-.meta {
+.message-meta {
   display: flex;
-  gap: 15px;
+  justify-content: space-between;
+  font-size: var(--fz-sub);
+  color: var(--color-text-3);
 }
 
-.loading,
-.empty,
-.error {
-  color: #666;
-  text-align: center;
-  font-size: 1rem;
+.message-item.unread {
+  border-color: rgba(25, 118, 210, 0.35);
+  background: rgba(25, 118, 210, 0.04);
 }
 
-.error {
-  color: red;
-}
-
-@media (max-width: 576px) {
-  .me {
-    padding-left: 20px;
-  }
-  .profile-content {
+@media (max-width: 960px) {
+  .profile-hero {
     flex-direction: column;
-    align-items: flex-start;
   }
-  .post-list,
-  .forum-list,
-  .message-list {
+  .profile-actions {
+    flex-wrap: wrap;
+  }
+  .content-grid {
     grid-template-columns: 1fr;
   }
 }
 
 @media (prefers-color-scheme: dark) {
-  .me {
-    background: #1a1a1a;
+  .profile-hero {
+    border-color: rgba(255, 255, 255, 0.08);
   }
-  h1,
-  .section h2 {
-    color: #ddd;
-  }
-  .profile-content,
+  .stat-card,
+  .panel,
   .post-item,
   .forum-item,
   .message-item {
-    background: #222;
-    border-color: #444;
+    background: var(--color-background-soft);
   }
-  .post-item a,
-  .forum-item a,
-  .message-item a {
-    color: #ddd;
-  }
-  .post-item h3,
-  .forum-item h3,
-  .sender {
-    color: #6ab0ff;
-  }
-  .post-item p,
-  .forum-item p,
-  .content {
-    color: #aaa;
-  }
-  .meta,
-  .time,
-  .post-item span,
-  .forum-item span,
-  .loading,
-  .empty {
-    color: #aaa;
-  }
-  .edit-btn {
-    background: #6ab0ff;
-  }
-  .edit-btn:hover {
-    background: #5a9be6;
-  }
-  .view-all {
-    color: #6ab0ff;
-  }
-  .message-item.unread {
-    background: #2a3a4a;
+  .avatar {
+    border-color: rgba(0, 0, 0, 0.4);
   }
 }
 </style>
