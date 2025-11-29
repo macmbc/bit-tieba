@@ -1,65 +1,107 @@
 <template>
-  <div class="post-detail">
-    <!-- 楼主帖子 -->
-    <section class="section main-post" v-if="mainPost">
-      <div class="post-header">
-        <h1>{{ mainPost.title }}</h1>
-        <div class="meta">
-          <router-link :to="`/user/${mainPost.authorId}`" class="author">
-            {{ mainPost.author }}
-          </router-link>
-          <span class="time">{{ formatTime(mainPost.createdAt) }}</span>
+  <div class="post-page">
+    <div class="post-grid">
+      <div class="post-main">
+        <section v-if="mainPost" class="post-hero">
+          <p class="eyebrow">来自 {{ mainPost.forumName }}</p>
+          <h1>{{ mainPost.title }}</h1>
+          <div class="post-meta">
+            <router-link :to="`/forum/${forumId}`" class="meta-author">
+              {{ mainPost.author }}
+            </router-link>
+            <span>{{ formatTime(mainPost.createdAt) }}</span>
+          </div>
+        </section>
+
+        <section class="post-body" :class="{ loading: loading.post }">
+          <div v-if="loading.post" class="state-block">帖子加载中...</div>
+          <template v-else-if="mainPost">
+            <div class="post-content" v-html="safeMainContent"></div>
+            <div class="action-row">
+              <button
+                class="action-btn"
+                :class="{ active: mainPost.isLiked }"
+                @click="toggleLike"
+                :disabled="liking"
+              >
+                {{ mainPost.isLiked ? '已赞' : '点赞' }} · {{ mainPost.likeCount }}
+              </button>
+              <button
+                class="action-btn"
+                :class="{ active: mainPost.isCollected }"
+                @click="toggleCollect"
+                :disabled="collecting"
+              >
+                {{ mainPost.isCollected ? '已收藏' : '收藏' }} · {{ mainPost.collectCount }}
+              </button>
+            </div>
+          </template>
+          <p v-else class="state-block error">未找到该帖子</p>
+        </section>
+
+        <section class="replies section">
+          <header class="replies-header">
+            <div>
+              <h3>回复 ({{ totalReplies }})</h3>
+              <p>与吧友保持实时互动</p>
+            </div>
+            <div class="reply-filters">
+              <button
+                v-for="filter in replyFilters"
+                :key="filter.value"
+                type="button"
+                class="filter-chip"
+                :class="{ active: replySort === filter.value }"
+                @click="replySort = filter.value"
+              >
+                {{ filter.label }}
+              </button>
+            </div>
+          </header>
+          <div v-if="loading.replies" class="state-block">回复加载中...</div>
+          <div v-else-if="error.replies" class="state-block error">{{ error.replies }}</div>
+          <div v-else-if="!displayedReplies.length" class="state-block empty">暂无回复</div>
+          <ul v-else class="reply-list">
+            <li v-for="reply in displayedReplies" :key="reply.id" class="reply-item">
+              <ReplyItem
+                :reply="reply"
+                :post-id="postId"
+                :loading="!!loadingSub[reply.id]"
+                @reply="openSubReply"
+                @load-more-sub="loadMoreSubReplies"
+                @like="handleLike"
+              />
+            </li>
+          </ul>
+          <div v-if="hasMore" class="load-more" ref="loadMoreRef">
+            <button @click="loadMoreReplies" :disabled="loading.more">
+              {{ loading.more ? '加载中...' : '加载更多' }}
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <aside class="post-aside" v-if="mainPost">
+        <div class="aside-card">
+          <h4>帖子概览</h4>
+          <ul>
+            <li v-for="stat in postStats" :key="stat.label">
+              <span>{{ stat.label }}</span>
+              <strong>{{ stat.value }}</strong>
+            </li>
+          </ul>
+          <button type="button" class="solid-btn" @click="openMainReply">快速回复</button>
         </div>
-      </div>
-      <div class="content" v-html="safeMainContent"></div>
-      <div class="actions">
-        <button
-          class="action-btn like"
-          :class="{ active: mainPost.isLiked }"
-          @click="toggleLike"
-          :disabled="liking"
-        >
-          {{ mainPost.isLiked ? '已赞' : '点赞' }} {{ mainPost.likeCount }}
-        </button>
-        <button
-          class="action-btn collect"
-          :class="{ active: mainPost.isCollected }"
-          @click="toggleCollect"
-          :disabled="collecting"
-        >
-          {{ mainPost.isCollected ? '已收藏' : '收藏' }} {{ mainPost.collectCount }}
-        </button>
-      </div>
-    </section>
+        <div class="aside-card">
+          <h4>楼主信息</h4>
+          <p class="author-name">{{ mainPost.author }}</p>
+          <p class="author-meta">发表于 {{ formatTime(mainPost.createdAt) }}</p>
+          <p class="author-meta">所在吧：{{ mainPost.forumName }}</p>
+          <p class="aside-tip">关注楼主可第一时间收到新帖更新</p>
+        </div>
+      </aside>
+    </div>
 
-    <!-- 回复列表（支持楼中楼） -->
-    <section class="section replies">
-      <h3>回复 ({{ totalReplies }})</h3>
-      <div v-if="loading.replies" class="loading">加载中...</div>
-      <div v-else-if="error.replies" class="error">{{ error.replies }}</div>
-      <div v-else-if="!topLevelReplies.length" class="empty">暂无回复</div>
-      <ul v-else class="reply-list">
-        <li v-for="reply in topLevelReplies" :key="reply.id" class="reply-item">
-          <ReplyItem
-            :reply="reply"
-            :post-id="postId"
-            :loading="!!loadingSub[reply.id]"
-            @reply="openSubReply"
-            @load-more-sub="loadMoreSubReplies"
-            @like="handleLike"
-          />
-        </li>
-      </ul>
-
-      <!-- 加载更多一级回复 -->
-      <div v-if="hasMore && !loading.more" class="load-more" ref="loadMoreRef">
-        <button @click="loadMoreReplies" :disabled="loading.more">
-          {{ loading.more ? '加载中...' : '加载更多' }}
-        </button>
-      </div>
-    </section>
-
-    <!-- 右下角发帖按钮 -->
     <button class="fab-reply" @click="openMainReply" title="发表回复">
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -77,7 +119,6 @@
       </svg>
     </button>
 
-    <!-- 回复模态框 -->
     <ReplyModal
       v-model:show="showReplyModal"
       :replying="replying"
@@ -136,6 +177,12 @@ const replying = ref(false)
 const showReplyModal = ref(false)
 const targetUser = ref('')
 const targetParentId = ref<number | undefined>()
+type ReplySort = 'latest' | 'hot'
+const replySort = ref<ReplySort>('latest')
+const replyFilters: Array<{ label: string; value: ReplySort }> = [
+  { label: '最新回复', value: 'latest' },
+  { label: '最热互动', value: 'hot' },
+]
 
 // 安全内容
 const safeMainContent = computed(() =>
@@ -186,7 +233,7 @@ const loadInitialData = async () => {
     mainPost.value = postData
     replies.value = replyData.replies
     totalReplies.value = replyData.total
-    hasMore.value = replyData.replies.length === INITIAL_SUB_REPLY_COUNT
+    hasMore.value = replyData.replies.length === ROOT_REPLY_PAGE_SIZE
   } catch (err) {
     error.value.post = error.value.replies = (err as Error).message
   } finally {
@@ -228,7 +275,7 @@ const handleLike = (payload: { replyId: number; isLiked: boolean }) => {
 }
 
 // 楼中楼：构建树
-const topLevelReplies = computed(() => {
+const replyTree = computed(() => {
   const map = new Map<number, Reply>()
   const top: Reply[] = []
 
@@ -245,6 +292,23 @@ const topLevelReplies = computed(() => {
 
   return top
 })
+
+const displayedReplies = computed(() => {
+  const list = [...replyTree.value]
+  if (replySort.value === 'hot') {
+    return list.sort(
+      (a, b) =>
+        b.likeCount + (b.children?.length ?? 0) - (a.likeCount + (a.children?.length ?? 0)),
+    )
+  }
+  return list.sort((a, b) => b.createdAt - a.createdAt)
+})
+
+const postStats = computed(() => [
+  { label: '楼层数', value: totalReplies.value },
+  { label: '点赞', value: mainPost.value?.likeCount ?? 0 },
+  { label: '收藏', value: mainPost.value?.collectCount ?? 0 },
+])
 
 // 打开回复
 const openMainReply = () => {
@@ -366,100 +430,159 @@ const toggleCollect = async () => {
 </script>
 
 <style scoped>
-.post-detail {
-  max-width: 1000px;
+.post-page {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
-  padding-left: 100px;
+  padding: var(--sp-8) var(--sp-5) var(--sp-10);
 }
 
-.section {
-  margin-bottom: 30px;
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 6px;
-  padding: 20px;
+.post-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: var(--sp-6);
 }
 
-.main-post h1 {
-  font-size: 1.8rem;
-  color: #333;
-  margin: 0 0 10px;
+.post-hero {
+  background: linear-gradient(135deg, rgba(25, 118, 210, 0.16), rgba(25, 118, 210, 0.05));
+  border-radius: var(--radius-lg);
+  padding: var(--sp-5);
+  border: 1px solid rgba(25, 118, 210, 0.2);
+  margin-bottom: var(--sp-4);
 }
 
-.post-header .meta {
+.post-hero h1 {
+  font-size: var(--fz-h1);
+  margin-bottom: var(--sp-3);
+}
+
+.eyebrow {
+  font-size: var(--fz-sub);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-brand);
+  margin-bottom: var(--sp-2);
+}
+
+.post-meta {
   display: flex;
-  align-items: center;
-  gap: 15px;
-  font-size: 0.9rem;
-  color: #999;
-  margin-bottom: 15px;
+  gap: var(--sp-4);
+  color: var(--color-text-3);
+  font-size: var(--fz-sub);
 }
 
-.author {
-  color: #4c91d9;
+.meta-author {
+  color: var(--color-brand);
   text-decoration: none;
-  font-weight: bold;
+  font-weight: var(--fw-medium);
 }
 
-.author:hover {
+.meta-author:hover {
   text-decoration: underline;
 }
 
-.content {
-  font-size: 1rem;
-  line-height: 1.8;
-  color: #333;
-  margin-bottom: 20px;
-  word-break: break-word;
+.post-body {
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-5);
+  box-shadow: var(--shadow-sm);
 }
 
-.actions {
+.post-content :deep(p) {
+  margin-bottom: var(--sp-3);
+  line-height: 1.8;
+  color: var(--color-text);
+}
+
+.post-content :deep(img) {
+  max-width: 100%;
+  border-radius: var(--radius-md);
+}
+
+.action-row {
+  margin-top: var(--sp-4);
   display: flex;
-  gap: 15px;
+  gap: var(--sp-3);
 }
 
 .action-btn {
-  padding: 8px 16px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: #fff;
+  flex: none;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--color-background);
   cursor: pointer;
-  font-size: 0.9rem;
-  display: flex;
-  align-items: center;
-  gap: 5px;
+  transition: background var(--ease-fast), border var(--ease-fast);
 }
 
 .action-btn.active {
-  background: #4c91d9;
-  color: white;
-  border-color: #4c91d9;
-}
-
-.action-btn:hover:not(:disabled) {
-  background: #f0f8ff;
+  border-color: var(--color-brand);
+  background: rgba(25, 118, 210, 0.08);
 }
 
 .action-btn:disabled {
-  background: #f5f5f5;
+  opacity: 0.5;
   cursor: not-allowed;
-  opacity: 0.6;
 }
 
-.replies h3 {
-  font-size: 1.3rem;
-  margin-bottom: 15px;
+.section {
+  margin-top: var(--sp-6);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.replies-header {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-4);
+}
+
+.replies-header h3 {
+  font-size: var(--fz-h3);
+}
+
+.replies-header p {
+  color: var(--color-text-2);
+  font-size: var(--fz-sub);
+}
+
+.reply-filters {
+  display: flex;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  padding: var(--sp-1) var(--sp-3);
+  font-size: var(--fz-sub);
+  cursor: pointer;
+}
+
+.filter-chip.active {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+  background: rgba(25, 118, 210, 0.08);
 }
 
 .reply-list {
   list-style: none;
   padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
 }
 
 .reply-item {
-  border-bottom: 1px solid #eee;
-  padding: 15px 0;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: var(--sp-3);
 }
 
 .reply-item:last-child {
@@ -467,123 +590,134 @@ const toggleCollect = async () => {
 }
 
 .load-more {
+  margin-top: var(--sp-4);
   text-align: center;
-  margin-top: 20px;
 }
 
 .load-more button {
-  padding: 8px 16px;
-  border: 1px solid #ddd;
-  background: #fff;
-  border-radius: 4px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  padding: var(--sp-2) var(--sp-4);
   cursor: pointer;
 }
 
-.loading,
-.empty,
-.error {
-  text-align: center;
-  color: #666;
-  font-size: 1rem;
-  padding: 20px;
+.post-aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
 }
 
-.error {
-  color: red;
+.aside-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-4);
+  background: var(--color-background);
+  box-shadow: var(--shadow-sm);
+}
+
+.aside-card h4 {
+  font-size: var(--fz-h3);
+  margin-bottom: var(--sp-3);
+}
+
+.aside-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--sp-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.aside-card li {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--fz-body);
+}
+
+.solid-btn {
+  width: 100%;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--sp-2) var(--sp-4);
+  background: var(--color-brand);
+  color: #fff;
+  cursor: pointer;
+}
+
+.author-name {
+  font-weight: var(--fw-medium);
+  margin-bottom: var(--sp-1);
+}
+
+.author-meta {
+  color: var(--color-text-3);
+  font-size: var(--fz-sub);
+}
+
+.aside-tip {
+  margin-top: var(--sp-3);
+  font-size: var(--fz-sub);
+  color: var(--color-text-2);
+}
+
+.state-block {
+  text-align: center;
+  padding: var(--sp-4);
+  background: var(--color-background-soft);
+  border-radius: var(--radius-md);
+  color: var(--color-text-2);
+}
+
+.state-block.error {
+  color: var(--color-danger);
+}
+
+.state-block.empty {
+  color: var(--color-text-3);
 }
 
 .fab-reply {
   position: fixed;
-  right: 50px;
-  bottom: 50px;
+  right: 40px;
+  bottom: 40px;
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: #4c91d9;
+  background: var(--color-brand);
   color: #fff;
   border: none;
-  box-shadow: 0 4px 12px rgba(76, 145, 217, 0.4);
+  box-shadow: 0 12px 30px rgba(25, 118, 210, 0.25);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  transition:
-    transform 0.2s,
-    background 0.2s;
+  transition: transform var(--ease-fast), background var(--ease-fast);
 }
 
 .fab-reply:hover {
-  background: #3a7ab8;
-  transform: scale(1.08);
+  transform: translateY(-2px);
+  background: var(--color-brand-hover);
 }
 
-.fab-reply:active {
-  transform: scale(0.96);
-}
-
-/* 响应式 */
-@media (max-width: 576px) {
-  .post-detail {
-    padding-left: 20px;
+@media (max-width: 960px) {
+  .post-grid {
+    grid-template-columns: 1fr;
   }
-  .post-header .meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
+  .post-aside {
+    order: -1;
   }
 }
 
-/* 暗黑模式 */
 @media (prefers-color-scheme: dark) {
-  .post-detail {
-    background: #1a1a1a;
+  .post-hero,
+  .post-body,
+  .section,
+  .aside-card {
+    background: var(--color-background-soft);
   }
-  .section {
-    background: #222;
-    border-color: #444;
-  }
-  h1,
-  .content {
-    color: #ddd;
-  }
-  .meta,
-  .time,
-  .loading,
-  .empty {
-    color: #aaa;
-  }
-  .author {
-    color: #6ab0ff;
-  }
-  .action-btn {
-    background: #222;
-    border-color: #444;
-    color: #ddd;
-  }
-  .action-btn.active {
-    background: #6ab0ff;
-    border-color: #6ab0ff;
-  }
-  .action-btn:hover:not(:disabled) {
-    background: #2a3a4a;
-  }
-  .load-more button {
-    background: #222;
-    border-color: #444;
-    color: #ddd;
-  }
-  .load-more button:hover:not(:disabled) {
-    background: #2a3a4a;
-  }
-  .fab-reply {
-    background: #6ab0ff;
-  }
-  .fab-reply:hover {
-    background: #5a9be6;
-  }
-  .error {
-    color: #ff6347;
+  .filter-chip {
+    border-color: rgba(255, 255, 255, 0.2);
   }
 }
 </style>
