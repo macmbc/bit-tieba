@@ -1,22 +1,20 @@
 <template>
-  <div>
-    <!-- 如果用户未登录，显示登录/注册页面 -->
+  <div class="app-root">
     <router-view v-if="!userStore.isLoggedIn" />
-    <!-- 如果用户已登录，显示主布局 -->
-    <div class="app-container">
-      <Sidebar class="sidebar" />
-      <div class="main-content">
+    <div v-else class="app-shell">
+      <HeaderBar class="app-header" />
+      <main class="main-content">
         <router-view />
-      </div>
+      </main>
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import Sidebar from '@/components/SideBar.vue'
 import { onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { useMessageStore } from '@/stores/user'
+import HeaderBar from '@/components/HeaderBar.vue'
 
 const userStore = useUserStore()
 const messageStore = useMessageStore()
@@ -30,30 +28,35 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.app-container {
-  display: flex;
-  flex-direction: row;
-  width: 100vw;
-  height: 100vh;
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+.app-root {
+  min-height: 100vh;
+  background: var(--color-background);
 }
 
-.sidebar {
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background);
+}
+
+.app-header {
   flex-shrink: 0;
-  color: #fff;
-  height: 100vh;
-  overflow-y: auto;
 }
 
 .main-content {
   flex: 1;
-  overflow-y: auto;
-  background-color: #f8f9fa;
-  height: 100vh;
+  width: 100%;
+  max-width: var(--layout-heart-width);
+  margin: 0 auto;
+  padding: calc(64px + var(--sp-5)) var(--sp-5) var(--sp-5);
   box-sizing: border-box;
-  padding: 0;
-  margin: 0;
+  background: var(--color-background);
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: calc(64px + var(--sp-4)) var(--sp-3) var(--sp-4);
+  }
 }
 </style>

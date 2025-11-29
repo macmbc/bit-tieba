@@ -11,61 +11,75 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-const searchQuery = ref('');
-const router = useRouter();
+const searchQuery = ref('')
+const router = useRouter()
 
 const handleSearch = () => {
-  if (searchQuery.value.trim()) {
-    router.push(`/search?q=${searchQuery.value}`);
-  }
-};
+  const query = searchQuery.value.trim()
+  if (!query) return
+  router.push({ path: '/search', query: { q: query } })
+}
 </script>
 
 <style scoped>
 .search-bar {
   display: flex;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: var(--sp-5);
+}
+
+.icon {
+  font-size: 1rem;
+  color: var(--color-text-3);
 }
 
 .search-input {
   width: 100%;
   max-width: 500px;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px 0 0 4px;
-  font-size: 1rem;
+  padding: var(--sp-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  font-size: var(--fz-body);
+  background: var(--color-card-bg);
+  color: var(--color-text-1);
+}
+
+.search-input::placeholder {
+  color: var(--color-text-3);
+}
+
+.search-input:focus {
+  outline: none;
 }
 
 .search-btn {
-  padding: 10px 15px;
-  border: 1px solid #ddd;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--color-border);
   border-left: none;
-  background: #4c91d9; /* 贴吧蓝色 */
-  color: white;
-  border-radius: 0 4px 4px 0;
+  background: var(--color-brand);
+  color: #fff;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
   cursor: pointer;
+  transition: background var(--ease-fast);
 }
 
 .search-btn:hover {
-  background: #3a7bc8;
+  background: var(--color-brand-hover);
 }
 
-/* 暗模式 */
-@media (prefers-color-scheme: dark) {
-  .search-input {
-    background: #222;
-    border-color: #444;
-    color: #ddd;
+.search-btn:active {
+  transform: scale(0.96);
+}
+
+@media (max-width: 576px) {
+  .search-bar {
+    width: 100%;
   }
   .search-btn {
-    background: #6ab0ff;
-  }
-  .search-btn:hover {
-    background: #5a9be6;
+    display: none;
   }
 }
 </style>
