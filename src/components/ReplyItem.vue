@@ -92,8 +92,9 @@ const expanded = ref(false) // 控制「查看全部」
 const getSafeReplyContent = (html: string) => DOMPurify.sanitize(html)
 
 /* ---------- 折叠逻辑 ---------- */
-const shouldCollapse = computed(() => props.reply.replyCount! > 2)
-const displayedChildren = computed(() => props.reply.children!.slice(0, 2))
+const PREVIEW_CHILDREN = 2
+const shouldCollapse = computed(() => (props.reply.replyCount ?? 0) > PREVIEW_CHILDREN)
+const displayedChildren = computed(() => props.reply.children?.slice(0, PREVIEW_CHILDREN) ?? [])
 
 // 统一处理点赞（一级 + 二级）
 const handleLike = async (replyId: number) => {
@@ -158,203 +159,200 @@ const handleShowAll = () => {
 </script>
 
 <style scoped>
-/* ==================== 基础 ==================== */
 .reply-wrapper {
-  margin-bottom: 16px;
+  margin-bottom: var(--sp-4);
 }
 
-/* 一级回复卡片 */
 .reply-main {
-  background: #fafafa;
-  border-radius: 6px;
-  padding: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  transition: box-shadow 0.2s ease;
-}
-.reply-main:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-4);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--ease-fast) ease, transform var(--ease-fast) ease;
 }
 
-/* 头部信息 */
+.reply-main:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
 .reply-header {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
-  font-size: 0.9rem;
-  color: #666;
-  margin-bottom: 8px;
+  gap: var(--sp-2);
+  font-size: var(--fz-sub);
+  color: var(--color-text-3);
+  margin-bottom: var(--sp-2);
 }
+
 .author {
-  color: #2a72d4;
-  font-weight: 500;
+  color: var(--color-brand);
+  font-weight: var(--fw-medium);
   text-decoration: none;
 }
+
 .author:hover {
   text-decoration: underline;
 }
+
 .floor {
-  color: #999;
-}
-.time {
-  color: #aaa;
-  font-size: 0.8rem;
+  color: var(--color-text-2);
 }
 
-/* 回复按钮 */
+.time {
+  color: var(--color-text-3);
+  font-size: var(--fz-caption);
+}
+
 .reply-btn {
   margin-left: auto;
-  background: transparent;
   border: none;
-  color: #4c91d9;
-  font-size: 0.85rem;
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
+  background: transparent;
+  color: var(--color-brand);
+  font-size: var(--fz-sub);
+  font-weight: var(--fw-medium);
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--radius-sm);
+  transition: background-color var(--ease-fast) ease, color var(--ease-fast) ease;
 }
+
 .reply-btn:hover {
-  background: #e8f1ff;
+  background: color-mix(in srgb, var(--color-brand) 12%, transparent);
+  color: var(--color-brand-hover);
 }
 
-/* 内容 */
 .reply-content {
-  color: #333;
-  line-height: 1.6;
+  color: var(--color-text-1);
+  line-height: var(--lh-body);
   word-break: break-word;
-  margin-bottom: 10px;
+  margin-bottom: var(--sp-3);
 }
 
-/* 点赞按钮 */
 .reply-actions {
   display: flex;
-  align-items: center;
-  gap: 10px;
+  justify-content: flex-end;
 }
+
 .action-btn.like {
-  position: relative;
-  padding: 6px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: #fff;
-  font-size: 0.85rem;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+  font-size: var(--fz-sub);
+  color: var(--color-text-2);
+  cursor: pointer;
+  transition: background-color var(--ease-fast) ease, color var(--ease-fast) ease, border-color var(--ease-fast) ease;
 }
-.action-btn.like.active {
-  background: #ff4757;
-  color: #fff;
-  border-color: #ff4757;
-}
+
 .action-btn.like:hover:not(:disabled) {
-  background: #fff0f0;
+  border-color: var(--color-brand);
+  color: var(--color-brand);
 }
+
+.action-btn.like.active {
+  background: color-mix(in srgb, var(--color-brand) 12%, transparent);
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
 .action-btn.like:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
 .action-btn.like.anim-like .like-icon {
   animation: likePop 0.4s ease;
 }
+
 @keyframes likePop {
   0%,
   100% {
     transform: scale(1);
   }
+
   50% {
-    transform: scale(1.5);
+    transform: scale(1.4);
   }
 }
+
 .action-btn.like .like-icon::before {
   content: '❤';
-  opacity: 0.6;
-}
-.action-btn.like.active .like-icon::before {
-  content: '❤';
+  color: currentColor;
 }
 
-/* ==================== 子回复 ==================== */
 .sub-replies {
-  margin-top: 8px;
-  margin-left: 40px;
-  border-left: 3px solid #4c91d9;
-  padding-left: 12px;
+  margin-top: var(--sp-3);
+  margin-left: var(--sp-6);
+  border-left: 2px solid color-mix(in srgb, var(--color-brand) 25%, transparent);
+  padding-left: var(--sp-3);
 }
 
-/* 每条子回复 */
-.sub-replies >>> .reply-wrapper {
-  margin-bottom: 8px;
+.sub-replies :deep(.reply-wrapper) {
+  margin-bottom: var(--sp-3);
 }
-.sub-replies >>> .reply-main {
-  background: #f5f5f5;
-  padding: 8px 12px;
-  border-radius: 0 4px 4px 0;
+
+.sub-replies :deep(.reply-main) {
+  background: var(--color-background);
+  border: 1px dashed var(--color-border);
   box-shadow: none;
 }
 
-/* ==================== 折叠按钮 ==================== */
 .show-all {
-  margin: 8px 0;
-  padding: 6px 12px;
-  background: #eef5ff;
-  color: #4c91d9;
-  font-size: 0.85rem;
+  margin: var(--sp-2) 0;
+  padding: var(--sp-2) var(--sp-3);
+  background: color-mix(in srgb, var(--color-brand) 10%, transparent);
+  color: var(--color-brand);
+  font-size: var(--fz-sub);
   text-align: center;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  border-radius: 4px;
-}
-.show-all:hover {
-  background: #ddeaff;
+  transition: background-color var(--ease-fast) ease;
 }
 
-/* ==================== 加载更多 ==================== */
+.show-all:hover {
+  background: color-mix(in srgb, var(--color-brand) 18%, transparent);
+}
+
 .load-more-sub {
   text-align: center;
-  margin-top: 8px;
-}
-.load-more-sub button {
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 20px;
-  padding: 4px 14px;
-  color: #555;
-  font-size: 0.85rem;
-  cursor: pointer;
-}
-.load-more-sub button:hover {
-  background: #f0f6ff;
-  border-color: #4c91d9;
-  color: #4c91d9;
+  margin-top: var(--sp-2);
 }
 
-/* ==================== 暗黑模式 ==================== */
-@media (prefers-color-scheme: dark) {
+.load-more-sub button {
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: transparent;
+  padding: var(--sp-1) var(--sp-4);
+  color: var(--color-text-2);
+  font-size: var(--fz-caption);
+  cursor: pointer;
+}
+
+.load-more-sub button:hover {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
+@media (max-width: 576px) {
   .reply-main {
-    background: #2a2a2a;
+    padding: var(--sp-3);
   }
-  .reply-content {
-    color: #ddd;
+
+  .sub-replies {
+    margin-left: var(--sp-3);
   }
-  .author {
-    color: #6ab0ff;
-  }
-  .action-btn.like {
-    background: #333;
-    border-color: #555;
-    color: #ddd;
-  }
-  .action-btn.like.active {
-    background: #ff4757;
-  }
-  .sub-replies >>> .reply-main {
-    background: #333;
-  }
-  .show-all {
-    background: #334;
-    color: #6ab0ff;
-  }
-  .show-all:hover {
-    background: #445;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reply-main,
+  .action-btn.like.anim-like .like-icon {
+    transition: none;
+    animation: none;
   }
 }
 </style>
