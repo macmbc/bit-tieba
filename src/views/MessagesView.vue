@@ -1,106 +1,159 @@
 <template>
-  <div class="message">
-    <h1>我的消息</h1>
-    <section class="section">
-      <h2>消息列表</h2>
-      <div class="filter">
-        <button :class="{ active: filter === 'all' }" @click="filter = 'all'">全部</button>
-        <button :class="{ active: filter === 'post_reply' }" @click="filter = 'post_reply'">
-          帖子回复
-        </button>
-        <button :class="{ active: filter === 'comment_reply' }" @click="filter = 'comment_reply'">
-          评论回复
-        </button>
-        <button :class="{ active: filter === 'mention' }" @click="filter = 'mention'">@我</button>
-        <button :class="{ active: filter === 'system' }" @click="filter = 'system'">
-          系统通知
-        </button>
+  <div class="messages-page">
+    <section class="messages-hero">
+      <div>
+        <p class="eyebrow">消息中心</p>
+        <h1>我的消息</h1>
+        <p class="subtitle">集中查看帖子互动、系统通知与私信，及时跟进社区动态</p>
+      </div>
+      <div class="hero-actions">
+        <span class="unread-pill" aria-live="polite">未读 <strong>{{ unreadCount }}</strong></span>
         <button
-          :class="{ active: filter === 'private_message' }"
-          @click="filter = 'private_message'"
-        >
-          私信
-        </button>
-        <button :class="{ active: filter === 'like_collect' }" @click="filter = 'like_collect'">
-          点赞收藏
-        </button>
-        <!-- 新增批量标记已读按钮 -->
-        <button
-          v-show="filteredMessages.some((msg) => !msg.isRead) || markingAll"
-          class="mark-all-read"
+          v-if="canMarkAll || markingAll"
+          type="button"
+          class="primary-btn"
           @click="markAllAsRead"
-          :disabled="markingAll"
+          :disabled="markingAll || !canMarkAll"
         >
           {{ markingAll ? '标记中...' : '全部标记为已读' }}
         </button>
       </div>
-      <div v-if="loading">加载中...</div>
-      <div v-else-if="error" class="error">加载失败：{{ error }}</div>
-      <div v-else-if="!filteredMessages.length" class="empty">暂无消息</div>
-      <ul v-else class="message-list">
-        <li
-          v-for="message in filteredMessages"
-          :key="message.id"
-          class="message-item"
-          :class="{ unread: !message.isRead }"
+    </section>
+
+    <section class="messages-panel">
+      <div class="filter-group" role="tablist" aria-label="消息类型筛选">
+        <button
+          v-for="option in filterOptions"
+          :key="option.value"
+          type="button"
+          class="filter-chip"
+          :class="{ active: filter === option.value }"
+          role="tab"
+          :aria-selected="filter === option.value"
+          @click="filter = option.value"
         >
-          <router-link :to="message.link" @click="markAsRead(message.id)">
-            <div class="message-header">
-              <span class="sender">{{ message.sender }}</span>
-              <span class="time">{{ formatTime(message.timestamp) }}</span>
+          <span>{{ option.label }}</span>
+          <span class="chip-count">{{ getFilterCount(option.value) }}</span>
+        </button>
+      </div>
+
+      <div class="state-wrapper" aria-live="polite">
+        <ul v-if="loading" class="message-list skeleton-list">
+          <li v-for="i in 4" :key="`skeleton-${i}`" class="message-item">
+            <div class="avatar skeleton"></div>
+            <div class="skeleton-text">
+              <div class="skeleton-line" style="width: 60%"></div>
+              <div class="skeleton-line" style="width: 80%"></div>
+              <div class="skeleton-line" style="width: 40%"></div>
             </div>
-            <p class="content">{{ message.content.substring(0, 50) }}...</p>
-            <div class="meta">
-              <span>来自: {{ message.source }}</span>
-              <span>{{ messageTypeText(message.type) }}</span>
-            </div>
-          </router-link>
-        </li>
-      </ul>
+          </li>
+        </ul>
+
+        <div v-else-if="error" class="state-card error">加载失败：{{ error }}</div>
+        <div v-else-if="!filteredMessages.length" class="state-card empty">
+          <h3>暂无消息</h3>
+          <p>你还没有新的通知，去逛逛热门帖子吧～</p>
+        </div>
+
+        <ul v-else class="message-list">
+          <li
+            v-for="message in filteredMessages"
+            :key="message.id"
+            class="message-item"
+            :class="{ unread: !message.isRead }"
+          >
+            <router-link :to="message.link" class="message-card" @click="markAsRead(message.id)">
+              <div class="card-head">
+                <div class="avatar" aria-hidden="true">{{ message.sender?.charAt(0) || '访' }}</div>
+                <div class="sender-meta">
+                  <p class="sender">{{ message.sender }}</p>
+                  <p class="time">{{ formatTime(message.timestamp) }}</p>
+                </div>
+                <span v-if="!message.isRead" class="status-pill">未读</span>
+              </div>
+
+              <p class="content" :title="message.content">{{ message.content }}</p>
+
+              <div class="card-meta">
+                <span class="badge">{{ messageTypeText(message.type) }}</span>
+                <span class="origin">来自 {{ message.source }}</span>
+              </div>
+            </router-link>
+          </li>
+        </ul>
+      </div>
     </section>
   </div>
 </template>
 
-<script lang="ts" setup>
-import { ref, onMounted, computed, nextTick } from 'vue'
+<script setup lang="ts">
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { useUserStore, useMessageStore } from '@/stores/user'
-import { getMessages, markMessageAsRead, markAllMessagesAsRead } from '@/api/forumApi'
+import { getMessages, markAllMessagesAsRead, markMessageAsRead } from '@/api/forumApi'
 import type { Message } from '@/types'
 import { formatTime } from '@/utils/format'
 
+type FilterOption = Message['type'] | 'all'
+
+const filterOptions: Array<{ value: FilterOption; label: string }> = [
+  { value: 'all', label: '全部' },
+  { value: 'post_reply', label: '帖子回复' },
+  { value: 'comment_reply', label: '评论回复' },
+  { value: 'mention', label: '@我' },
+  { value: 'system', label: '系统通知' },
+  { value: 'private_message', label: '私信' },
+  { value: 'like_collect', label: '点赞收藏' },
+]
+
 const userStore = useUserStore()
 const messageStore = useMessageStore()
+
 const messages = ref<Message[]>([])
 const loading = ref(true)
 const error = ref('')
-const filter = ref<Message['type'] | 'all'>('all')
+const filter = ref<FilterOption>('all')
 const markingAll = ref(false)
 
-const filteredMessages = computed(() => {
-  return filter.value === 'all'
+const filteredMessages = computed(() =>
+  filter.value === 'all'
     ? messages.value
-    : messages.value.filter((msg) => msg.type === filter.value)
+    : messages.value.filter((msg) => msg.type === filter.value),
+)
+
+const messageCounts = computed(() => {
+  return messages.value.reduce((acc, msg) => {
+    acc[msg.type] = (acc[msg.type] ?? 0) + 1
+    return acc
+  }, {} as Record<Message['type'], number>)
 })
 
-// 消息列表
-onMounted(async () => {
-  if (!userStore.isLoggedIn) {
+const unreadCount = computed(() => messages.value.filter((msg) => !msg.isRead).length)
+const canMarkAll = computed(() => filteredMessages.value.some((msg) => !msg.isRead))
+
+const getFilterCount = (value: FilterOption) =>
+  value === 'all' ? messages.value.length : messageCounts.value[value] ?? 0
+
+const loadMessages = async () => {
+  if (!userStore.isLoggedIn || !userStore.userId) {
     error.value = '请先登录以查看消息'
+    messages.value = []
     loading.value = false
     return
   }
 
   try {
     loading.value = true
+    error.value = ''
     messages.value = await getMessages(userStore.userId)
   } catch (err) {
-    error.value = (err as Error).message
+    error.value = (err as Error).message || '获取消息失败'
   } finally {
     loading.value = false
   }
-})
+}
 
-// 消息类型文本
+onMounted(loadMessages)
+
 const messageTypeText = (type: Message['type']) => {
   switch (type) {
     case 'post_reply':
@@ -116,30 +169,29 @@ const messageTypeText = (type: Message['type']) => {
     case 'like_collect':
       return '点赞/收藏'
     default:
-      return ''
+      return '消息'
   }
 }
 
-// 标记单条消息为已读
 const markAsRead = async (messageId: number) => {
-  const msgIndex = messages.value.findIndex((m) => m.id === messageId)
-  const msg = messages.value[msgIndex]
-  if (!msg) return
-  msg.isRead = true // 乐观更新
+  const msg = messages.value.find((m) => m.id === messageId)
+  if (!msg || msg.isRead) return
+
+  msg.isRead = true
   try {
     await markMessageAsRead(userStore.userId!, messageId)
     await messageStore.refreshUnreadCount(userStore.userId!)
   } catch {
-    msg.isRead = false // 出错回滚
+    msg.isRead = false
   }
 }
 
-// 批量标记为已读
 const markAllAsRead = async () => {
-  if (!userStore.isLoggedIn || !userStore.userId) return
+  if (!userStore.isLoggedIn || !userStore.userId || !canMarkAll.value) return
+
   markingAll.value = true
   await nextTick()
-  // 乐观更新：先标记筛选出的未读消息为已读
+
   const originalMessages = [...messages.value]
   try {
     messages.value = messages.value.map((msg) =>
@@ -147,17 +199,16 @@ const markAllAsRead = async () => {
         ? { ...msg, isRead: true }
         : msg,
     )
-    // 调用 API
+
     await markAllMessagesAsRead(
       userStore.userId!,
       filter.value === 'all' ? undefined : filter.value,
     )
 
-    // 更新未读消息数
     await messageStore.refreshUnreadCount(userStore.userId!)
   } catch (err) {
     error.value = `批量标记已读失败：${(err as Error).message}`
-    messages.value = originalMessages // 出错回滚
+    messages.value = originalMessages
   } finally {
     markingAll.value = false
   }
@@ -165,191 +216,314 @@ const markAllAsRead = async () => {
 </script>
 
 <style scoped>
-.message {
-  max-width: 1200px;
+.messages-page {
+  max-width: var(--layout-heart-width);
   margin: 0 auto;
-  padding: 20px;
-  padding-left: 100px;
+  padding: var(--sp-6) var(--sp-4) var(--sp-8);
+  color: var(--color-text-1);
 }
 
-h1 {
-  font-size: 2rem;
-  color: #333;
-  margin-bottom: 20px;
-}
-
-.section {
-  margin-bottom: 30px;
-}
-
-.section h2 {
-  font-size: 1.5rem;
-  color: #333;
-  margin-bottom: 15px;
-}
-
-.filter {
+.messages-hero {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--color-brand) 12%, transparent),
+      color-mix(in srgb, var(--color-brand) 4%, transparent));
+  border: 1px solid color-mix(in srgb, var(--color-brand) 18%, transparent);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-6);
   display: flex;
-  gap: 10px;
-  margin-bottom: 15px;
+  justify-content: space-between;
   flex-wrap: wrap;
+  gap: var(--sp-4);
+  box-shadow: var(--shadow-sm);
 }
 
-.filter button {
-  padding: 8px 12px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  background: #fff;
-  cursor: pointer;
-  font-size: 0.9rem;
+.eyebrow {
+  font-size: var(--fz-caption);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-3);
+  margin-bottom: var(--sp-2);
 }
 
-.filter button.active {
-  background: #4c91d9;
-  color: white;
-  border-color: #4c91d9;
+.messages-hero h1 {
+  font-size: var(--fz-h1);
+  line-height: var(--lh-title);
+  margin-bottom: var(--sp-2);
 }
 
-.mark-all-read {
-  background: #ff4500; /* 贴吧红色 */
-  color: black;
+.subtitle {
+  color: var(--color-text-2);
+  font-size: var(--fz-sub);
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.unread-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: 999px;
+  background: var(--color-background);
+  font-weight: var(--fw-medium);
+  color: var(--color-text-2);
+  box-shadow: var(--shadow-sm);
+}
+
+.primary-btn {
+  min-width: 140px;
+  height: 40px;
   border: none;
-  border-radius: 4px;
-  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-brand);
+  color: #fff;
+  font-weight: var(--fw-medium);
   cursor: pointer;
+  transition: background-color var(--ease-fast) ease;
 }
 
-.mark-all-read:hover:not(:disabled) {
-  background: #e63900;
-  color: white;
-}
-
-.mark-all-read:disabled {
-  background: #ccc;
+.primary-btn:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
+}
+
+.primary-btn:not(:disabled):hover {
+  background: var(--color-brand-hover);
+}
+
+.messages-panel {
+  margin-top: var(--sp-6);
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+.filter-chip {
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-2);
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: 999px;
+  font-size: var(--fz-sub);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  cursor: pointer;
+  transition: border-color var(--ease-fast) ease, color var(--ease-fast) ease,
+    background-color var(--ease-fast) ease;
+}
+
+.filter-chip.active {
+  background: color-mix(in srgb, var(--color-brand) 12%, transparent);
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+}
+
+.chip-count {
+  font-size: var(--fz-caption);
+  color: inherit;
+}
+
+.state-wrapper {
+  min-height: 200px;
 }
 
 .message-list {
   list-style: none;
+  margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
 }
 
 .message-item {
-  background: #fff;
-  border: 1px solid #eee;
-  border-radius: 6px;
-  padding: 15px;
-  margin-bottom: 10px;
-  transition: box-shadow 0.2s ease;
-}
-
-.message-item:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-background);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--ease-fast) ease, transform var(--ease-fast) ease;
 }
 
 .message-item.unread {
-  background: #f0f8ff;
+  border-color: color-mix(in srgb, var(--color-brand) 35%, transparent);
 }
 
-.message-item a {
-  text-decoration: none;
-  color: #333;
-  display: block;
+.message-item:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
-.message-header {
+.message-card {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
+  flex-direction: column;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  color: inherit;
+  text-decoration: none;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-brand) 15%, transparent);
+  color: var(--color-brand);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: var(--fw-medium);
+}
+
+.sender-meta {
+  flex: 1;
 }
 
 .sender {
-  font-weight: bold;
-  color: #4c91d9;
+  font-weight: var(--fw-medium);
+  color: var(--color-text-1);
+  margin: 0;
 }
 
 .time {
-  font-size: 0.85rem;
-  color: #999;
+  font-size: var(--fz-caption);
+  color: var(--color-text-3);
+  margin: 0;
+}
+
+.status-pill {
+  margin-left: auto;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: 999px;
+  font-size: var(--fz-caption);
+  color: var(--color-brand);
+  background: color-mix(in srgb, var(--color-brand) 18%, transparent);
+  font-weight: var(--fw-medium);
 }
 
 .content {
-  font-size: 0.9rem;
-  color: #666;
-  margin: 0 0 8px;
+  margin: 0;
+  color: var(--color-text-1);
+  font-size: var(--fz-body);
+  line-height: var(--lh-body);
+  display: -webkit-box;
+  line-clamp: 3;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-.meta {
+.card-meta {
   display: flex;
-  gap: 15px;
-  font-size: 0.85rem;
-  color: #999;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  font-size: var(--fz-caption);
+  color: var(--color-text-3);
 }
 
-.empty {
-  color: #666;
+.badge {
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--radius-md);
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  font-size: var(--fz-caption);
+}
+
+.origin {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.state-card {
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--sp-6);
   text-align: center;
-  font-size: 1rem;
+  color: var(--color-text-2);
 }
 
-.error {
-  color: red;
-  text-align: center;
-  font-size: 1rem;
+.state-card h3 {
+  margin-bottom: var(--sp-2);
+  color: var(--color-text-1);
 }
 
-@media (max-width: 576px) {
-  .message {
-    padding-left: 20px;
+.state-card.error {
+  border-color: color-mix(in srgb, var(--color-danger) 40%, transparent);
+  color: var(--color-danger);
+}
+
+.skeleton-list .message-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  box-shadow: none;
+}
+
+.skeleton-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+@media (max-width: 768px) {
+  .messages-page {
+    padding: var(--sp-5) var(--sp-3);
+  }
+
+  .messages-hero {
+    padding: var(--sp-4);
+  }
+
+  .hero-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .messages-panel {
+    padding: var(--sp-4);
   }
 }
 
 @media (prefers-color-scheme: dark) {
-  .message {
-    background: #1a1a1a;
+  .messages-hero {
+    background: color-mix(in srgb, var(--color-brand) 18%, var(--color-background));
   }
-  h1,
-  .section h2 {
-    color: #ddd;
+
+  .avatar {
+    background: color-mix(in srgb, var(--color-brand) 35%, transparent);
   }
-  .filter button {
-    background: #222;
-    border-color: #444;
-    color: #ddd;
+
+  .badge {
+    background: var(--color-background);
   }
-  .filter button.active {
-    background: #6ab0ff;
-    border-color: #6ab0ff;
-  }
-  .mark-all-read {
-    background: #ff6347;
-  }
-  .mark-all-read:hover:not(:disabled) {
-    background: #e55337;
-  }
-  .mark-all-read:disabled {
-    background: #666;
-  }
-  .message-item {
-    background: #222;
-    border-color: #444;
-  }
-  .message-item.unread {
-    background: #2a3a4a;
-  }
-  .message-item a {
-    color: #ddd;
-  }
-  .sender {
-    color: #6ab0ff;
-  }
-  .content {
-    color: #aaa;
-  }
-  .meta,
-  .time,
-  .empty {
-    color: #aaa;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .message-item,
+  .primary-btn,
+  .filter-chip {
+    transition: none;
   }
 }
 </style>
