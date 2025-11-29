@@ -1,13 +1,16 @@
 <template>
-  <div class="search-bar">
+  <form class="search-bar" role="search" @submit.prevent="handleSearch">
+    <span class="icon" aria-hidden="true">🔍</span>
     <input
       v-model="searchQuery"
-      placeholder="搜索吧、帖子或用户"
-      @input="handleSearch"
+      type="search"
       class="search-input"
+      placeholder="搜索吧、帖子或用户"
+      autocomplete="off"
+      maxlength="50"
     />
-    <button class="search-btn">🔍</button>
-  </div>
+    <button type="submit" class="search-btn">搜索</button>
+  </form>
 </template>
 
 <script lang="ts" setup>
@@ -28,7 +31,18 @@ const handleSearch = () => {
 .search-bar {
   display: flex;
   align-items: center;
-  margin-bottom: var(--sp-5);
+  gap: var(--sp-2);
+  height: 44px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-background);
+  transition: border-color var(--ease-fast) ease, box-shadow var(--ease-fast) ease;
+}
+
+.search-bar:focus-within {
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 15%, transparent);
 }
 
 .icon {
@@ -37,13 +51,10 @@ const handleSearch = () => {
 }
 
 .search-input {
-  width: 100%;
-  max-width: 500px;
-  padding: var(--sp-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  flex: 1;
+  border: none;
   font-size: var(--fz-body);
-  background: var(--color-card-bg);
+  background: transparent;
   color: var(--color-text-1);
 }
 
@@ -56,14 +67,16 @@ const handleSearch = () => {
 }
 
 .search-btn {
-  padding: var(--sp-3) var(--sp-4);
-  border: 1px solid var(--color-border);
-  border-left: none;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0 var(--sp-3);
+  height: 32px;
+  font-size: var(--fz-sub);
+  font-weight: var(--fw-medium);
   background: var(--color-brand);
   color: #fff;
-  border-radius: 0 var(--radius-md) var(--radius-md) 0;
   cursor: pointer;
-  transition: background var(--ease-fast);
+  transition: transform var(--ease-fast) ease, background-color var(--ease-fast) ease;
 }
 
 .search-btn:hover {
