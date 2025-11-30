@@ -19,6 +19,52 @@ api.interceptors.response.use(
   }
 )
 
+// ==================== 数据转换函数 ====================
+
+function transformForum(data: any): Forum {
+  return {
+    id: data.forum_id,
+    name: data.name,
+    description: data.description || '',
+    postCount: data.post_count || 0,
+  }
+}
+
+function transformPost(data: any): Post {
+  return {
+    id: data.post_id,
+    forumId: data.forum_id,
+    forumName: data.forum_name || '',
+    title: data.title,
+    content: data.content || data.content_preview || '',
+    replyCount: data.reply_count || 0,
+    author: data.author || '',
+    authorId: data.uid?.toString() || '',
+    createdAt: new Date(data.created_at).getTime(),
+    likeCount: data.like_count || 0,
+    collectCount: data.collect_count || 0,
+    isLiked: data.is_liked || false,
+    isCollected: data.is_collected || false,
+  }
+}
+
+function transformReply(data: any): Reply {
+  return {
+    id: data.reply_id,
+    postId: data.post_id,
+    author: data.author || '',
+    authorId: data.uid?.toString() || '',
+    content: data.content,
+    floor: data.floor || 0,
+    createdAt: new Date(data.created_at).getTime(),
+    likeCount: data.like_count || 0,
+    isLiked: data.is_liked || false,
+    parentId: data.parent_reply_id || undefined,
+    children: data.sub_replies?.map(transformReply) || [],
+    replyCount: data.sub_replies?.length || 0,
+  }
+}
+
 // ==================== 2.2 贴吧管理 ====================
 
 export interface GetForumsParams {
@@ -27,7 +73,11 @@ export interface GetForumsParams {
 }
 
 export const getForums = async (params: GetForumsParams): Promise<{ error: number; forums: Forum[] }> => {
-  return api.get('/forums', { params })
+  const response: any = await api.get('/forums', { params })
+  return {
+    error: response.error,
+    forums: (response.forums || []).map(transformForum),
+  }
 }
 
 export interface GetForumDetailParams {
@@ -37,7 +87,11 @@ export interface GetForumDetailParams {
 }
 
 export const getForumDetail = async (params: GetForumDetailParams): Promise<{ error: number; forum: Forum }> => {
-  return api.get('/forum/detail', { params })
+  const response: any = await api.get('/forum/detail', { params })
+  return {
+    error: response.error,
+    forum: transformForum(response.forum),
+  }
 }
 
 export interface FollowForumParams {
@@ -62,7 +116,11 @@ export interface GetFollowedForumsParams {
 }
 
 export const getFollowedForums = async (params: GetFollowedForumsParams): Promise<{ error: number; forums: Forum[] }> => {
-  return api.get('/followed_forums', { params })
+  const response: any = await api.get('/followed_forums', { params })
+  return {
+    error: response.error,
+    forums: (response.forums || []).map(transformForum),
+  }
 }
 
 // ==================== 2.3 帖子管理 ====================
@@ -75,7 +133,11 @@ export interface GetPostsParams {
 }
 
 export const getPosts = async (params: GetPostsParams): Promise<{ error: number; posts: Post[] }> => {
-  return api.get('/posts', { params })
+  const response: any = await api.get('/posts', { params })
+  return {
+    error: response.error,
+    posts: (response.posts || []).map(transformPost),
+  }
 }
 
 export interface GetPostDetailParams {
@@ -85,7 +147,11 @@ export interface GetPostDetailParams {
 }
 
 export const getPostDetail = async (params: GetPostDetailParams): Promise<{ error: number; post: Post }> => {
-  return api.get('/post/detail', { params })
+  const response: any = await api.get('/post/detail', { params })
+  return {
+    error: response.error,
+    post: transformPost(response.post),
+  }
 }
 
 export interface CreatePostParams {
@@ -178,7 +244,11 @@ export interface GetRepliesParams {
 }
 
 export const getReplies = async (params: GetRepliesParams): Promise<{ error: number; replies: Reply[] }> => {
-  return api.get('/post/replies', { params })
+  const response: any = await api.get('/post/replies', { params })
+  return {
+    error: response.error,
+    replies: (response.replies || []).map(transformReply),
+  }
 }
 
 export interface CreateReplyParams {
@@ -241,15 +311,27 @@ export interface GetMyPostsParams {
 }
 
 export const getMyPosts = async (params: GetMyPostsParams): Promise<{ error: number; posts: Post[] }> => {
-  return api.get('/my/posts', { params })
+  const response: any = await api.get('/my/posts', { params })
+  return {
+    error: response.error,
+    posts: (response.posts || []).map(transformPost),
+  }
 }
 
 export const getMyReplies = async (params: GetMyPostsParams): Promise<{ error: number; replies: Reply[] }> => {
-  return api.get('/my/replies', { params })
+  const response: any = await api.get('/my/replies', { params })
+  return {
+    error: response.error,
+    replies: (response.replies || []).map(transformReply),
+  }
 }
 
 export const getMyCollections = async (params: GetMyPostsParams): Promise<{ error: number; posts: Post[] }> => {
-  return api.get('/my/collections', { params })
+  const response: any = await api.get('/my/collections', { params })
+  return {
+    error: response.error,
+    posts: (response.posts || []).map(transformPost),
+  }
 }
 
 export const getMyFollowers = async (params: GetMyPostsParams): Promise<{ error: number; users: any[] }> => {
