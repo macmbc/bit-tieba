@@ -14,8 +14,10 @@ bool ForumDao::ListForums(int page, int limit, std::vector<ForumInfo>& forums) {
 	try {
 		auto offset = (page - 1) * limit;
 		std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement(
-			"SELECT forum_id,name,avatar,description,follower_cnt,post_cnt,owner_uid "
-			"FROM forum ORDER BY forum_id LIMIT ? OFFSET ?"));
+			"SELECT f.forum_id,f.name,f.avatar,f.description,"
+			"(SELECT COUNT(*) FROM forum_follow ff WHERE ff.forum_id = f.forum_id) AS follower_cnt,"
+			"f.post_cnt,f.owner_uid "
+			"FROM forum f ORDER BY f.forum_id LIMIT ? OFFSET ?"));
 		pstmt->setInt(1, limit);
 		pstmt->setInt(2, offset);
 		std::unique_ptr<sql::ResultSet> res(pstmt->executeQuery());
@@ -49,8 +51,10 @@ bool ForumDao::GetForum(int forum_id, ForumInfo& info) {
 
 	try {
 		std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement(
-			"SELECT forum_id,name,avatar,description,follower_cnt,post_cnt,owner_uid "
-			"FROM forum WHERE forum_id = ?"));
+			"SELECT f.forum_id,f.name,f.avatar,f.description,"
+			"(SELECT COUNT(*) FROM forum_follow ff WHERE ff.forum_id = f.forum_id) AS follower_cnt,"
+			"f.post_cnt,f.owner_uid "
+			"FROM forum f WHERE f.forum_id = ?"));
 		pstmt->setInt(1, forum_id);
 		std::unique_ptr<sql::ResultSet> res(pstmt->executeQuery());
 		if (!res->next()) {
@@ -209,7 +213,9 @@ bool ForumDao::ListFollowedForums(int uid, int page, int limit, std::vector<Foru
 	try {
 		auto offset = (page - 1) * limit;
 		std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement(
-			"SELECT f.forum_id,f.name,f.avatar,f.description,f.follower_cnt,f.post_cnt,f.owner_uid "
+			"SELECT f.forum_id,f.name,f.avatar,f.description,"
+			"(SELECT COUNT(*) FROM forum_follow ff2 WHERE ff2.forum_id = f.forum_id) AS follower_cnt,"
+			"f.post_cnt,f.owner_uid "
 			"FROM forum_follow ff JOIN forum f ON ff.forum_id = f.forum_id "
 			"WHERE ff.uid = ? ORDER BY ff.id DESC LIMIT ? OFFSET ?"));
 		pstmt->setInt(1, uid);
