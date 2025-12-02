@@ -7,7 +7,7 @@
     </h2>
 
     <!-- 搜索类型切换 -->
-    <div class="search-tabs">
+    <div class="search-tabs" :data-active="type">
       <button
         v-for="item in types"
         :key="item"
@@ -204,163 +204,202 @@ const prevPage = () => {
 
 <style scoped>
 .search-page {
-  max-width: 800px;
-  margin: auto;
-  padding: 20px;
-  font-family: 'Helvetica Neue', Arial, sans-serif;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  background: var(--sp-bg);
+  color: var(--sp-text);
 }
+
+/* ============ 浅色变量 ============ */
+:root {
+  --sp-bg: #f6f7f9;
+  --sp-card: #ffffff;
+  --sp-text: #1a1a1a;
+  --sp-text-muted: #6b7280;
+  --sp-border: #e5e7eb;
+  --sp-hover: #f3f4f6;
+  --sp-brand: #0969da;
+  --sp-tag-bg: #f0f5ff;
+}
+
+/* ============ 暗黑变量 ============ */
+.dark {
+  --sp-bg: #09090b;
+  --sp-card: #18181b;
+  --sp-text: #f9fafb;
+  --sp-text-muted: #a1a1aa;
+  --sp-border: #27272a;
+  --sp-hover: #1f2937;
+  --sp-brand: #60a5fa;
+  --sp-tag-bg: #1e293b;
+}
+
+/* 标题区 */
 .search-title {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 20px;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--sp-text);
 }
 .keyword {
-  color: var(--color-brand, #409eff);
+  color: var(--sp-brand);
+  padding: 2px 6px;
+  background: var(--sp-tag-bg);
+  border-radius: 6px;
+  font-weight: 600;
 }
+
+/* Tab */
 .search-tabs {
   display: flex;
-  gap: 12px;
-  margin-bottom: 25px;
+  gap: 8px;
+  margin: 24px 0 32px;
+  padding: 6px;
+  background: var(--sp-hover);
+  border-radius: 16px;
+  width: fit-content;
 }
 .tab-btn {
-  padding: 6px 18px;
-  border-radius: 20px;
-  border: 1px solid #ccc;
-  background: #f5f5f5;
+  padding: 10px 24px;
+  border-radius: 12px;
+  font-size: 15px;
+  color: var(--sp-text-muted);
+  background: transparent;
+  border: none;
   cursor: pointer;
-  transition: 0.2s;
 }
 .tab-btn.active {
-  background: var(--color-brand, #409eff);
-  color: #fff;
-  border: none;
+  color: var(--sp-text);
+  font-weight: 600;
+  background: var(--sp-card);
 }
-.tab-btn:hover {
-  background: #e0e0e0;
-}
+
+/* 列表 */
 .result-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
+
 .result-item {
-  padding: 16px;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  transition: 0.2s;
+  background: var(--sp-card);
+  border-radius: 16px;
+  padding: 18px 20px;
+  border: 1px solid var(--sp-border);
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
+
 .result-item:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  background: var(--sp-hover);
 }
-.title {
+
+/* 帖子 */
+.result-item .title {
   font-size: 18px;
   font-weight: 600;
-  margin-bottom: 6px;
+  color: var(--sp-text);
+  margin-bottom: 8px;
 }
-.description {
-  color: #555;
-}
-.meta {
-  color: #888;
+.result-item .meta {
   font-size: 13px;
-  margin-top: 4px;
-}
-.preview {
-  color: #444;
-  margin-top: 8px;
-}
-.user-item {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-.user-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 1px solid #ddd;
-}
-.state {
-  text-align: center;
-  padding: 50px 0;
-  font-size: 16px;
-  color: #888;
-}
-.state.loading {
-  color: var(--color-brand, #409eff);
-}
-.state.empty {
-  color: #bbb;
-  font-style: italic;
-}
-.pagination {
-  margin-top: 30px;
-  display: flex;
-  justify-content: center;
-  gap: 15px;
-  align-items: center;
-}
-.page-btn {
-  padding: 6px 16px;
-  border: 1px solid #ccc;
-  background: #f5f5f5;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-.page-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-.page-info {
-  font-weight: 500;
+  color: var(--sp-text-muted);
 }
 
-.result-item {
-  padding: 12px;
-  border-bottom: 1px solid #eee;
-}
-
+/* 贴吧 */
 .forum-info {
   display: flex;
-  align-items: center; /* 图片和文字垂直居中 */
-  gap: 12px; /* 图片和文字的间距 */
+  align-items: center;
+  gap: 16px;
 }
-
 .forum-logo {
-  width: 60px; /* 固定宽度 */
-  height: 60px; /* 固定高度 */
-  object-fit: cover; /* 保持图片比例填充 */
-  border-radius: 50%; /* 圆形头像，可选 */
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  border: 1px solid var(--sp-border);
+  background: var(--sp-hover);
+}
+.description {
+  color: var(--sp-text-muted);
 }
 
-.text-content .title {
-  margin: 0;
-  font-size: 16px;
-  line-height: 1.2;
+/* 用户 */
+.user-list .result-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.user-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+}
+.user-item h3 {
+  color: var(--sp-text);
+}
+.user-item p {
+  color: var(--sp-text-muted);
 }
 
-.text-content .description {
-  margin: 4px 0 0;
-  font-size: 14px;
-  color: #666;
+/* 状态 */
+.state {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--sp-text-muted);
 }
 
-.text-content .meta {
-  margin: 4px 0 0;
-  font-size: 12px;
-  color: #999;
+/* 分页 */
+.pagination {
+  margin-top: 48px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
 }
 
-.result-list {
-  list-style: none; /* 去掉默认的点 */
-  padding: 0; /* 去掉默认内边距 */
-  margin: 0; /* 去掉默认外边距 */
+.page-btn {
+  min-width: 44px;
+  height: 44px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: var(--sp-card);
+  color: var(--sp-text);
+  border: 1px solid var(--sp-border);
+  cursor: pointer;
+}
+.page-btn:hover:not(:disabled) {
+  background: var(--sp-hover);
+}
+.page-btn:disabled {
+  opacity: 0.4;
 }
 
-.result-list .result-item {
-  margin-bottom: 12px; /* 每条结果的间距 */
+/* 响应式 */
+@media (max-width: 640px) {
+  .search-page {
+    padding: 16px;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .search-page {
+    --sp-bg: #09090b;
+    --sp-card: #18181b;
+    --sp-text: #f9fafb;
+    --sp-text-muted: #a1a1aa;
+    --sp-border: #27272a;
+    --sp-hover: #1f2937;
+    --sp-brand: #60a5fa;
+    --sp-tag-bg: #1e293b;
+  }
 }
 </style>

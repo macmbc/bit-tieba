@@ -43,3 +43,9 @@ export const formatTime = (timestamp: number): string => {
     minute: '2-digit',
   })
 }
+
+export function formatCount(num: number) {
+  if (num >= 10000) return (num / 10000).toFixed(1).replace('.0', '') + 'w'
+  if (num >= 1000) return (num / 1000).toFixed(1).replace('.0', '') + 'k'
+  return num
+}

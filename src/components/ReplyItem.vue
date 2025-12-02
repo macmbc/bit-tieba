@@ -22,15 +22,28 @@
 
       <!-- 点赞按钮 -->
       <div class="reply-actions">
+        <!-- 点赞 -->
         <buttonfa
           class="action-btn like"
           :class="{ active: reply.isLiked, 'anim-like': animating[reply.id] }"
           @click="handleLike(reply.id)"
           :disabled="liking[reply.id]"
         >
-          <span class="like-icon"> </span>
+          <span class="like-icon"></span>
           {{ reply.likeCount }}
         </buttonfa>
+
+        <!-- 复制回复内容 -->
+        <button class="action-btn copy" @click="copyReply(reply.content)">
+          <svg class="icon" viewBox="0 0 24 24">
+            <path
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              d="M8 8h12v12H8z M4 4h12v12H4z"
+            /></svg
+          >复制
+        </button>
       </div>
     </div>
 
@@ -101,6 +114,28 @@ const PREVIEW_CHILDREN = 2
 const shouldCollapse = computed(() => (props.reply.replyCount ?? 0) > PREVIEW_CHILDREN)
 const displayedChildren = computed(() => props.reply.children?.slice(0, PREVIEW_CHILDREN) ?? [])
 
+const copyReply = async (content: string) => {
+  if (!content) return
+
+  // 去除 html 标签，因为你是用 v-html 渲染
+  const text = content.replace(/<[^>]*>/g, '')
+
+  try {
+    // 现代写法
+    await navigator.clipboard.writeText(text)
+    alert('复制成功 ✅')
+  } catch (err) {
+    // 兼容写法
+    console.log(err)
+    const textarea = document.createElement('textarea')
+    textarea.value = text
+    document.body.appendChild(textarea)
+    textarea.select()
+    document.execCommand('copy')
+    document.body.removeChild(textarea)
+  }
+}
+
 // 统一处理点赞（一级 + 二级）
 const handleLike = async (replyId: number) => {
   if (!userStore.isLoggedIn || liking.value[replyId]) return
@@ -158,7 +193,6 @@ const handleShowAll = () => {
     emit('load-more-sub', props.reply.id)
   }
 }
-
 </script>
 
 <style scoped>
@@ -410,6 +444,30 @@ const handleShowAll = () => {
   padding: 2px 8px;
   font-size: var(--fz-caption);
 }
+
+.action-btn.copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+
+  background: transparent;
+  border: none;
+  color: #6b7280;
+
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 6px;
+  transition: 0.15s;
+}
+
+.action-btn.copy:hover {
+  /* background: #f3f4f6; */
+  color: var(--color-text-2);
+}
+
+.action-btn.copy .icon {
+  width: 13px;
+  height: 13px;
+}
 </style>
-
-

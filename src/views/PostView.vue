@@ -23,29 +23,76 @@
           </div>
         </section>
 
-        <section class="post-body" :class="{ loading: loading.post }">
+        <section class="post-card" :class="{ loading: loading.post }">
+          <!-- 加载状态 -->
           <div v-if="loading.post" class="state-block">帖子加载中...</div>
+
           <template v-else-if="mainPost">
+            <!-- 帖子正文 -->
             <div class="post-content" v-html="safeMainContent"></div>
-            <div class="action-row">
-              <button
-                class="action-btn"
-                :class="{ active: mainPost.isLiked }"
-                @click="toggleLike"
-                :disabled="liking"
-              >
-                {{ mainPost.isLiked ? '已赞' : '点赞' }} · {{ mainPost.likeCount }}
-              </button>
-              <button
-                class="action-btn"
-                :class="{ active: mainPost.isCollected }"
-                @click="toggleCollect"
-                :disabled="collecting"
-              >
-                {{ mainPost.isCollected ? '已收藏' : '收藏' }} · {{ mainPost.collectCount }}
+
+            <!-- 交互操作栏（重点优化区域）-->
+            <div class="post-actions">
+              <div class="actions-left">
+                <!-- 点赞 -->
+                <button
+                  class="action-btn like-btn"
+                  :class="{ active: mainPost.isLiked }"
+                  @click="toggleLike"
+                  :disabled="liking"
+                >
+                  <svg class="icon" viewBox="0 0 24 24">
+                    <path
+                      fill="currentColor"
+                      d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+                    />
+                  </svg>
+                  <span class="count">{{ formatCount(mainPost.likeCount) }}</span>
+                </button>
+
+                <!-- 收藏 -->
+                <button
+                  class="action-btn collect-btn"
+                  :class="{ active: mainPost.isCollected }"
+                  @click="toggleCollect"
+                  :disabled="collecting"
+                >
+                  <svg class="icon" viewBox="0 0 24 24">
+                    <path
+                      fill="currentColor"
+                      d="M17 3H7c-1.1 0-1.99.9-1.99 2L5 21l7-3 7 3V5c0-1.1-.9-2-2-2z"
+                    />
+                  </svg>
+                  <span class="count">{{ formatCount(mainPost.collectCount) }}</span>
+                </button>
+
+                <button class="action-btn copy-btn" @click="copyPostContent">
+                  <svg class="icon" viewBox="0 0 24 24">
+                    <path
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      d="M8 8h12v12H8z M4 4h12v12H4z"
+                    />
+                  </svg>
+                  <span>复制</span>
+                </button>
+              </div>
+
+              <!-- 可选：右侧放评论/分享 -->
+              <button class="action-btn share-btn">
+                <svg class="icon" viewBox="0 0 24 24">
+                  <path
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    d="M19 11v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V11m14-4l-7-5-7 5m7-5v5"
+                  />
+                </svg>
               </button>
             </div>
           </template>
+
           <p v-else class="state-block error">未找到该帖子</p>
         </section>
 
@@ -106,7 +153,7 @@
           <h4>楼主信息</h4>
           <p class="author-name">{{ mainPost.author }}</p>
           <p class="author-meta">发表于 {{ formatTime(mainPost.createdAt) }}</p>
-          <p class="author-meta">所在吧：{{ mainPost.forumName || "未知贴吧" }}</p>
+          <p class="author-meta">所在吧：{{ mainPost.forumName || '未知贴吧' }}</p>
         </div>
       </aside>
     </div>
@@ -136,16 +183,35 @@
       :post-id="postId"
       @submit="handleReplySubmit"
     />
+
+    <!-- 回到顶部按钮 -->
+    <transition name="backtop">
+      <button v-show="showBackTop" class="back-to-top" @click="scrollToTop" aria-label="回到顶部">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.4"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M18 15l-6-6-6 6"></path>
+        </svg>
+      </button>
+    </transition>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import ReplyModal from '@/components/ReplyModal.vue'
 import ReplyItem from '@/components/ReplyItem.vue'
 import { useUserStore } from '@/stores/user'
 import DOMPurify from 'dompurify'
+import { formatCount } from '@/utils/format'
 import {
   getPost,
   getReplies,
@@ -160,6 +226,29 @@ import { formatTime } from '@/utils/format'
 import { REPLY_CONSTANTS } from '@/constants/forum'
 import { getUserAvatar } from '@/utils/load_image'
 const { SUB_REPLY_PAGE_SIZE, ROOT_REPLY_PAGE_SIZE, INITIAL_SUB_REPLY_COUNT } = REPLY_CONSTANTS
+
+const showBackTop = ref(false)
+
+// 控制出现/隐藏
+const handleScroll = () => {
+  showBackTop.value = window.scrollY > 300
+}
+
+// 平滑回顶
+const scrollToTop = () => {
+  window.scrollTo({
+    top: 0,
+    behavior: 'smooth',
+  })
+}
+
+onMounted(() => {
+  window.addEventListener('scroll', handleScroll, { passive: true })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('scroll', handleScroll)
+})
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -193,6 +282,23 @@ const replyFilters: Array<{ label: string; value: ReplySort }> = [
   { label: '最新回复', value: 'latest' },
   { label: '最热互动', value: 'hot' },
 ]
+
+const copyPostContent = async () => {
+  try {
+    // 获取纯文本（去掉 html 标签）
+    const tempDiv = document.createElement('div')
+    tempDiv.innerHTML = safeMainContent.value || mainPost.value?.content || ''
+    const plainText = tempDiv.innerText
+
+    await navigator.clipboard.writeText(plainText)
+
+    // 提示
+    alert('复制成功 ✅')
+  } catch (err) {
+    console.error('复制失败:', err)
+    alert('复制失败，请手动选择复制')
+  }
+}
 
 // 安全内容
 const safeMainContent = computed(() =>
@@ -766,4 +872,240 @@ const toggleCollect = async () => {
     border-color: rgba(255, 255, 255, 0.2);
   }
 }
+.action-row {
+  display: flex;
+  gap: 32px;
+  margin-top: 16px;
+  padding: 8px 0;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #536471;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  background-color: rgba(15, 20, 25, 0.1);
+}
+
+.action-btn .icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  transition: all 0.2s ease;
+}
+
+.action-btn .icon.filled {
+  fill: currentColor;
+  stroke: none;
+}
+
+/* 点赞 - 红色 */
+.like-btn.active,
+.like-btn.active .count {
+  color: #f91880;
+}
+.like-btn:hover {
+  background-color: rgba(249, 24, 128, 0.1);
+}
+
+/* 收藏 - 黄色/绿色（可自定义） */
+.collect-btn.active,
+.collect-btn.active .count {
+  color: #1d9bf0; /* 或者 #ffd400 金色 */
+}
+.collect-btn:hover {
+  background-color: rgba(29, 155, 240, 0.1);
+}
+
+/* 数字高亮 */
+.count {
+  transition: all 0.2s ease;
+}
+.count-active {
+  font-weight: 700;
+}
+
+/* 点赞心跳动画（可选） */
+.like-btn:active .icon {
+  animation: heartBeat 0.4s ease;
+}
+@keyframes heartBeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+}
+
+.post-card {
+  background: var(--color-background-soft);
+  color: var(--color-text-1);
+  border-radius: 16px;
+  padding: 20px 20px 0 20px; /* 下方留空给 actions */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  transition: all 0.2s;
+}
+.post-card:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* 正文区域 */
+.post-content {
+  font-size: 16px;
+  line-height: 1.7;
+  margin-bottom: 16px;
+  word-break: break-word;
+}
+
+/* 底部操作栏 */
+.post-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  margin: 12px -20px 0 -20px; /* 抵消卡片 padding，铺满宽度 */
+  background: var(--color-background-soft);
+  border-top: 1px solid #eee;
+}
+
+.actions-left {
+  display: flex;
+  gap: 24px;
+  padding-left: 4px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.action-btn .icon {
+  width: 22px;
+  height: 22px;
+}
+
+/* 已点赞 - 红心 */
+.like-btn.active {
+  color: #e0245e;
+}
+.like-btn:hover {
+  background: rgba(224, 36, 94, 0.1);
+}
+
+/* 已收藏 - 蓝色/黄色任选 */
+.collect-btn.active {
+  color: #1a91ff; /* 或者 #ffb400 金色 */
+}
+.collect-btn:hover {
+  background: rgba(26, 145, 255, 0.1);
+}
+
+.share-btn {
+  color: #888;
+}
+.share-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #333;
+}
+
+/* 数字格式化（1.2k、5.8w） */
+.count {
+  min-width: 24px;
+  font-weight: 600;
+  color: inherit;
+}
+
+.back-to-top {
+  position: fixed;
+  left: 48px;
+  bottom: 64px;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #1677ff, #4096ff);
+  color: #fff;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 24px rgba(22, 119, 255, 0.35);
+  z-index: 999;
+  transition: all 0.3s ease;
+}
+
+/* hover 动效 */
+.back-to-top:hover {
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 0 12px 28px rgba(22, 119, 255, 0.45);
+}
+
+/* 点击时 */
+.back-to-top:active {
+  transform: scale(0.95);
+}
+
+/* 出现/消失动画 */
+.backtop-enter-active,
+.backtop-leave-active {
+  transition: all 0.35s ease;
+}
+
+.backtop-enter-from {
+  opacity: 0;
+  transform: translateY(20px) scale(0.8);
+}
+
+.backtop-enter-to {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.backtop-leave-from {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.backtop-leave-to {
+  opacity: 0;
+  transform: translateY(20px) scale(0.85);
+}
+
+.copy-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.copy-btn:active {
+  transform: scale(0.95);
+}
+
 </style>

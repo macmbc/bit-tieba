@@ -50,6 +50,55 @@
             </svg>
           </span>
         </router-link>
+        <button
+          class="theme-btn"
+          @click="toggleDark()"
+          :aria-label="isDark ? '切换为亮色' : '切换为暗黑'"
+        >
+          <span class="theme-icon">
+            <!-- 暗黑 → 月亮 -->
+            <svg
+              v-if="!isDark"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M21 12.79A9 9 0 0 1 11.21 3
+               7 7 0 1 0 21 12.79z"
+              />
+            </svg>
+
+            <!-- 亮色 → 太阳 -->
+            <svg
+              v-else
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="5" />
+              <line x1="12" y1="1" x2="12" y2="3" />
+              <line x1="12" y1="21" x2="12" y2="23" />
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+              <line x1="1" y1="12" x2="3" y2="12" />
+              <line x1="21" y1="12" x2="23" y2="12" />
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+            </svg>
+          </span>
+
+        </button>
       </div>
     </div>
   </header>
@@ -59,10 +108,14 @@
 import { computed } from 'vue'
 import { useMessageStore } from '@/stores/user'
 import SearchBar from '@/components/SearchBar.vue'
+import { toggleDark } from '@/main'
+import { ref } from 'vue'
 
 const messageStore = useMessageStore()
 const unreadCount = computed(() => messageStore.unreadCount)
 const unreadText = computed(() => (unreadCount.value > 99 ? '99+' : unreadCount.value))
+
+const isDark = ref(true)
 </script>
 
 <style scoped>
@@ -224,7 +277,7 @@ const unreadText = computed(() => (unreadCount.value > 99 ? '99+' : unreadCount.
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #F8F8F8;
+  background: #f8f8f8;
   color: black;
   display: flex;
   align-items: center;
@@ -242,4 +295,45 @@ const unreadText = computed(() => (unreadCount.value > 99 ? '99+' : unreadCount.
   align-items: center;
   justify-content: center;
 }
+.theme-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-card-bg);
+  color: var(--color-text-1);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition:
+    all 0.2s ease,
+    transform 0.05s ease;
+}
+
+.theme-btn:hover {
+  background: color-mix(in srgb, var(--color-brand) 8%, transparent);
+  border-color: var(--color-brand);
+}
+
+.theme-btn:active {
+  transform: scale(0.96);
+}
+
+.theme-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-btn svg {
+  stroke: currentColor;
+}
+
+.theme-text {
+  letter-spacing: 1px;
+}
+
 </style>
