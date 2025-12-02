@@ -433,6 +433,118 @@ bool TiebaDao::IsTiebaMember(int uid, int tieba_id, int& role) {
 	catch (sql::SQLException& e) {
 		std::cerr << "SQLException in IsTiebaMember: " << e.what() << std::endl;
 		return false;
+	return true;
+}
+
+// 更新贴吧信息
+bool TiebaDao::UpdateTiebaInfo(int uid, int tieba_id, const std::string& desc, const std::string& icon, int new_owner_id) {
+	auto con = pool_->getConnection();
+	if (con == nullptr) {
+		return false;
+	}
+
+	Defer defer([this, &con]() {
+		if (con) {
+			pool_->returnConnection(std::move(con));
+		}
+	});
+
+	try {
+		con->_con->setAutoCommit(false);
+
+		// 检查权限（只有吧主可以修改贴吧信息）
+		int role = 0;
+		bool is_member = IsTiebaMember(uid, tieba_id, role);
+		if (!is_member || role != 2) {  // 只有吧主(role=2)可以修改
+			con->_con->rollback();
+			return false;
+		}
+
+		// 构建更新语句
+		std::string sql = "UPDATE tieba SET ";
+		bool need_comma = false;
+		
+		if (!desc.empty()) {
+			sql += "tieba_desc = ?";
+			need_comma = true;
+		}
+		
+		if (!icon.empty()) {
+			if (need_comma) sql += ", ";
+			sql += "tieba_icon = ?";
+			need_comma = true;
+		}
+		
+		if (new_owner_id > 0) {
+			if (need_comma) sql += ", ";
+			sql += "owner_uid = ?";
+		}
+		
+		sql += " WHERE tieba_id = ?";
+		
+		// 如果没有需要更新的字段，则直接返回成功
+		if (!need_comma && new_owner_id <= 0) {
+			con->_con->commit();
+			return true;
+		}
+
+		std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement(sql));
+		int param_index = 1;
+		
+		if (!desc.empty()) {
+			pstmt->setString(param_index++, desc);
+		}
+		
+		if (!icon.empty()) {
+			pstmt->setString(param_index++, icon);
+		}
+		
+		if (new_owner_id > 0) {
+			pstmt->setInt(param_index++, new_owner_id);
+		}
+		
+		pstmt->setInt(param_index, tieba_id);
+		pstmt->executeUpdate();
+
+		// 如果更换了吧主，需要更新贴吧成员表
+		if (new_owner_id > 0) {
+			// 将原吧主的角色改为普通成员
+			std::unique_ptr<sql::PreparedStatement> pstmt_update_old(con->_con->prepareStatement(
+				"UPDATE tieba_member SET role = 0 WHERE tieba_id = ? AND role = 2"));
+			pstmt_update_old->setInt(1, tieba_id);
+			pstmt_update_old->executeUpdate();
+			
+			// 将新吧主的角色改为吧主（如果已是成员）
+			std::unique_ptr<sql::PreparedStatement> pstmt_update_new(con->_con->prepareStatement(
+				"UPDATE tieba_member SET role = 2 WHERE tieba_id = ? AND uid = ?"));
+			pstmt_update_new->setInt(1, tieba_id);
+			pstmt_update_new->setInt(2, new_owner_id);
+			pstmt_update_new->executeUpdate();
+			
+			// 如果新吧主还不是成员，则添加为吧主
+			std::unique_ptr<sql::PreparedStatement> pstmt_check(con->_con->prepareStatement(
+				"SELECT 1 FROM tieba_member WHERE tieba_id = ? AND uid = ?"));
+			pstmt_check->setInt(1, tieba_id);
+			pstmt_check->setInt(2, new_owner_id);
+			std::unique_ptr<sql::ResultSet> res_check(pstmt_check->executeQuery());
+			if (!res_check->next()) {
+				std::unique_ptr<sql::PreparedStatement> pstmt_insert(con->_con->prepareStatement(
+					"INSERT INTO tieba_member (tieba_id, uid, role) VALUES (?, ?, 2)"));
+				pstmt_insert->setInt(1, tieba_id);
+				pstmt_insert->setInt(2, new_owner_id);
+				pstmt_insert->executeUpdate();
+			}
+		}
+
+		con->_con->commit();
+		return true;
+	}
+	catch (sql::SQLException& e) {
+		if (con) {
+			con->_con->rollback();
+		}
+		std::cerr << "SQLException in UpdateTiebaInfo: " << e.what() << std::endl;
+		return false;
 	}
 }
 
@@ -1356,3 +1468,216 @@ bool TiebaDao::GetTiebaMemberList(int uid, int tieba_id, int offset, int limit, 
 	}
 }
 
+// 关注/取关贴吧
+bool TiebaDao::SetFollowedTieba(int uid, int tieba_id, bool is_followed) {
+	auto con = pool_->getConnection();
+	if (con == nullptr) {
+		return false;
+	}
+
+	Defer defer([this, &con]() {
+		if (con) {
+			pool_->returnConnection(std::move(con));
+		}
+	});
+
+	try {
+		if (is_followed) {
+			// 关注贴吧 - 使用JoinTieba逻辑
+			con->_con->setAutoCommit(false);
+
+			// 检查是否已经是成员
+			std::unique_ptr<sql::PreparedStatement> pstmt_check(con->_con->prepareStatement(
+				"SELECT 1 FROM tieba_member WHERE tieba_id = ? AND uid = ?"));
+			pstmt_check->setInt(1, tieba_id);
+			pstmt_check->setInt(2, uid);
+			std::unique_ptr<sql::ResultSet> res_check(pstmt_check->executeQuery());
+			if (res_check->next()) {
+				con->_con->rollback();
+				return true;  // 已经是成员
+			}
+
+			// 插入成员记录
+			std::unique_ptr<sql::PreparedStatement> pstmt_insert(con->_con->prepareStatement(
+				"INSERT INTO tieba_member (tieba_id, uid, role) VALUES (?, ?, 0)"));
+			pstmt_insert->setInt(1, tieba_id);
+			pstmt_insert->setInt(2, uid);
+			pstmt_insert->executeUpdate();
+
+			// 更新成员数量
+			std::unique_ptr<sql::PreparedStatement> pstmt_update(con->_con->prepareStatement(
+				"UPDATE tieba SET member_count = member_count + 1 WHERE tieba_id = ?"));
+			pstmt_update->setInt(1, tieba_id);
+			pstmt_update->executeUpdate();
+
+			con->_con->commit();
+			return true;
+		} else {
+			// 取关贴吧 - 使用LeaveTieba逻辑，但允许吧主取关
+			con->_con->setAutoCommit(false);
+
+			// 检查是否为成员
+			std::unique_ptr<sql::PreparedStatement> pstmt_check(con->_con->prepareStatement(
+				"SELECT role FROM tieba_member WHERE tieba_id = ? AND uid = ?"));
+			pstmt_check->setInt(1, tieba_id);
+			pstmt_check->setInt(2, uid);
+			std::unique_ptr<sql::ResultSet> res_check(pstmt_check->executeQuery());
+			if (!res_check->next()) {
+				con->_con->rollback();
+				return true;  // 不是成员，直接返回成功
+			}
+
+			// 删除成员记录
+			std::unique_ptr<sql::PreparedStatement> pstmt_delete(con->_con->prepareStatement(
+				"DELETE FROM tieba_member WHERE tieba_id = ? AND uid = ?"));
+			pstmt_delete->setInt(1, tieba_id);
+			pstmt_delete->setInt(2, uid);
+			pstmt_delete->executeUpdate();
+
+			// 更新成员数量
+			std::unique_ptr<sql::PreparedStatement> pstmt_update(con->_con->prepareStatement(
+				"UPDATE tieba SET member_count = member_count - 1 WHERE tieba_id = ?"));
+			pstmt_update->setInt(1, tieba_id);
+			pstmt_update->executeUpdate();
+
+			con->_con->commit();
+			return true;
+		}
+	}
+	catch (sql::SQLException& e) {
+		if (con) {
+			con->_con->rollback();
+		}
+		std::cerr << "SQLException in SetFollowedTieba: " << e.what() << std::endl;
+		return false;
+	}
+}
+
+// 获取用户关注的贴吧列表
+bool TiebaDao::GetFollowedTiebaList(int uid, int offset, int limit, std::vector<std::shared_ptr<TiebaInfo>>& tieba_list, int& total) {
+	auto con = pool_->getConnection();
+	if (con == nullptr) {
+		return false;
+	}
+
+	Defer defer([this, &con]() {
+		if (con) {
+			pool_->returnConnection(std::move(con));
+		}
+	});
+
+	try {
+		// 获取总数
+		std::unique_ptr<sql::PreparedStatement> pstmt_count(con->_con->prepareStatement(
+			"SELECT COUNT(*) as total FROM tieba_member tm JOIN tieba t ON tm.tieba_id = t.tieba_id WHERE tm.uid = ?"));
+		pstmt_count->setInt(1, uid);
+		std::unique_ptr<sql::ResultSet> res_count(pstmt_count->executeQuery());
+		if (res_count->next()) {
+			total = res_count->getInt("total");
+		}
+
+		// 获取贴吧列表
+		std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement(
+			"SELECT t.tieba_id, t.tieba_name, t.tieba_desc, t.tieba_icon, t.owner_uid, t.member_count, t.post_count, t.create_time "
+			"FROM tieba_member tm JOIN tieba t ON tm.tieba_id = t.tieba_id "
+			"WHERE tm.uid = ? ORDER BY t.create_time DESC LIMIT ? OFFSET ?"));
+		pstmt->setInt(1, uid);
+		pstmt->setInt(2, limit);
+		pstmt->setInt(3, offset);
+		std::unique_ptr<sql::ResultSet> res(pstmt->executeQuery());
+
+		while (res->next()) {
+			auto info = std::make_shared<TiebaInfo>();
+			info->tieba_id = res->getInt("tieba_id");
+			info->tieba_name = res->getString("tieba_name");
+			info->tieba_desc = res->getString("tieba_desc");
+			info->tieba_icon = res->getString("tieba_icon");
+			info->owner_uid = res->getInt("owner_uid");
+			info->member_count = res->getInt("member_count");
+			info->post_count = res->getInt("post_count");
+			info->create_time = res->getString("create_time").asStdString();
+			tieba_list.push_back(info);
+		}
+		return true;
+	}
+	catch (sql::SQLException& e) {
+		std::cerr << "SQLException in GetFollowedTiebaList: " << e.what() << std::endl;
+		return false;
+	}
+}
+
+// 收藏/取消收藏帖子
+bool TiebaDao::SetCollectedPost(int uid, int post_id, bool is_collected) {
+	auto con = pool_->getConnection();
+	if (con == nullptr) {
+		return false;
+	}
+
+	Defer defer([this, &con]() {
+		if (con) {
+			pool_->returnConnection(std::move(con));
+		}
+	});
+
+	try {
+		if (is_collected) {
+			// 收藏帖子
+			// 检查是否已经收藏
+			std::unique_ptr<sql::PreparedStatement> pstmt_check(con->_con->prepareStatement(
+				"SELECT 1 FROM post_collection WHERE uid = ? AND post_id = ?"));
+			pstmt_check->setInt(1, uid);
+			pstmt_check->setInt(2, post_id);
+			std::unique_ptr<sql::ResultSet> res_check(pstmt_check->executeQuery());
+			if (res_check->next()) {
+				return true;  // 已经收藏
+			}
+
+			// 插入收藏记录
+			std::unique_ptr<sql::PreparedStatement> pstmt_insert(con->_con->prepareStatement(
+				"INSERT INTO post_collection (uid, post_id, create_time) VALUES (?, ?, NOW())"));
+			pstmt_insert->setInt(1, uid);
+			pstmt_insert->setInt(2, post_id);
+			pstmt_insert->executeUpdate();
+		} else {
+			// 取消收藏
+			std::unique_ptr<sql::PreparedStatement> pstmt_delete(con->_con->prepareStatement(
+				"DELETE FROM post_collection WHERE uid = ? AND post_id = ?"));
+			pstmt_delete->setInt(1, uid);
+			pstmt_delete->setInt(2, post_id);
+			pstmt_delete->executeUpdate();
+		}
+		return true;
+	}
+	catch (sql::SQLException& e) {
+		std::cerr << "SQLException in SetCollectedPost: " << e.what() << std::endl;
+		return false;
+	}
+}
+
+// 检查是否收藏帖子
+bool TiebaDao::IsCollected(int uid, int post_id) {
+	auto con = pool_->getConnection();
+	if (con == nullptr) {
+		return false;
+	}
+
+	Defer defer([this, &con]() {
+		if (con) {
+			pool_->returnConnection(std::move(con));
+		}
+	});
+
+	try {
+		std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement(
+			"SELECT 1 FROM post_collection WHERE uid = ? AND post_id = ?"));
+		pstmt->setInt(1, uid);
+		pstmt->setInt(2, post_id);
+		std::unique_ptr<sql::ResultSet> res(pstmt->executeQuery());
+
+		return res->next();
+	}
+	catch (sql::SQLException& e) {
+		std::cerr << "SQLException in IsCollected: " << e.what() << std::endl;
+		return false;
+	}
+}
