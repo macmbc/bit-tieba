@@ -14,6 +14,7 @@ struct PostSummary {
 	bool is_top;
 	bool is_essence;
 	std::string content_preview;
+	std::string forum_name;
 };
 
 struct PostDetail {
@@ -29,6 +30,7 @@ struct PostDetail {
 	int collect_cnt;
 	bool is_top;
 	bool is_essence;
+	std::string forum_name;
 };
 
 class PostDao {

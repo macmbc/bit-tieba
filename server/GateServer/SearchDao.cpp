@@ -13,8 +13,9 @@ bool SearchDao::SearchPosts(const std::string& keyword, int forum_id, int page, 
 		if (forum_id > 0) {
 			pstmt.reset(con->_con->prepareStatement(
 				"SELECT p.post_id,p.forum_id,p.uid,p.title,p.created_at,p.reply_cnt,p.like_cnt,p.is_top,p.is_essence,"
-				"SUBSTRING(p.content,1,120) AS preview, IFNULL(u.nick,u.name) AS author "
+				"SUBSTRING(p.content,1,120) AS preview, IFNULL(u.nick,u.name) AS author, f.name AS forum_name "
 				"FROM post p LEFT JOIN user u ON p.uid=u.uid "
+				"LEFT JOIN forum f ON p.forum_id = f.forum_id "
 				"WHERE p.status = 1 AND p.forum_id = ? AND (p.title LIKE ? OR p.content LIKE ?) "
 				"ORDER BY p.created_at DESC LIMIT ? OFFSET ?"));
 			pstmt->setInt(1, forum_id);
@@ -26,8 +27,9 @@ bool SearchDao::SearchPosts(const std::string& keyword, int forum_id, int page, 
 		else {
 			pstmt.reset(con->_con->prepareStatement(
 				"SELECT p.post_id,p.forum_id,p.uid,p.title,p.created_at,p.reply_cnt,p.like_cnt,p.is_top,p.is_essence,"
-				"SUBSTRING(p.content,1,120) AS preview, IFNULL(u.nick,u.name) AS author "
+				"SUBSTRING(p.content,1,120) AS preview, IFNULL(u.nick,u.name) AS author, f.name AS forum_name "
 				"FROM post p LEFT JOIN user u ON p.uid=u.uid "
+				"LEFT JOIN forum f ON p.forum_id = f.forum_id "
 				"WHERE p.status = 1 AND (p.title LIKE ? OR p.content LIKE ?) "
 				"ORDER BY p.created_at DESC LIMIT ? OFFSET ?"));
 			pstmt->setString(1, "%" + keyword + "%");
@@ -49,6 +51,7 @@ bool SearchDao::SearchPosts(const std::string& keyword, int forum_id, int page, 
 			ps.is_essence = res->getInt("is_essence") != 0;
 			ps.author = res->getString("author");
 			ps.content_preview = res->getString("preview");
+			ps.forum_name = res->getString("forum_name");
 			posts.push_back(ps);
 		}
 		return true;

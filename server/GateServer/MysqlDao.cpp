@@ -255,6 +255,8 @@ bool MysqlDao::CheckPwd(const std::string& email, const std::string& pwd, UserIn
 		userInfo.email = res->getString("email");
 		userInfo.uid = res->getInt("uid");
 		userInfo.pwd = origin_pwd;
+		userInfo.nick = res->getString("nick");
+		userInfo.desc = res->getString("desc");
 		return true;
 	}
 	catch (sql::SQLException& e) {

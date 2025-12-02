@@ -217,6 +217,8 @@ struct UserInfo {
 	std::string pwd;
 	int uid;
 	std::string email;
+	std::string nick;
+	std::string desc;
 };
 
 class MysqlDao
@@ -234,4 +236,3 @@ public:
 private:
 	std::unique_ptr<MySqlPool> pool_;
 };
-

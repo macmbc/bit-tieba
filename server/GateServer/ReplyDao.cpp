@@ -24,8 +24,8 @@ bool ReplyDao::ListTopReplies(int post_id, int page, int limit, const std::strin
 		auto sort_mode = NormalizeSort(sort);
 		std::string order_by = sort_mode == "hot" ? "r.like_cnt DESC, r.created_at DESC" : "r.created_at DESC";
 		std::string sql = "SELECT r.reply_id,r.post_id,r.uid,r.content,r.parent_reply_id,r.root_reply_id,"
-			"r.floor,r.like_cnt,r.created_at "
-			"FROM reply r "
+			"r.floor,r.like_cnt,r.created_at,IFNULL(u.nick,u.name) AS author "
+			"FROM reply r LEFT JOIN user u ON r.uid = u.uid "
 			"WHERE r.post_id = ? AND r.status = 1 AND r.parent_reply_id = 0 "
 			"ORDER BY " + order_by + " LIMIT ? OFFSET ?";
 		std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement(sql));
@@ -44,6 +44,7 @@ bool ReplyDao::ListTopReplies(int post_id, int page, int limit, const std::strin
 			info.floor = res->getInt("floor");
 			info.like_cnt = res->getInt("like_cnt");
 			info.created_at = res->getString("created_at");
+			info.author = res->getString("author");
 			replies.push_back(info);
 		}
 		return true;
@@ -62,8 +63,10 @@ bool ReplyDao::ListChildren(int post_id, const std::vector<long long>& root_ids,
 
 	try {
 		std::stringstream ss;
-		ss << "SELECT reply_id,post_id,uid,content,parent_reply_id,root_reply_id,floor,like_cnt,created_at "
-			"FROM reply WHERE post_id = ? AND status = 1 AND root_reply_id IN (";
+		ss << "SELECT r.reply_id,r.post_id,r.uid,r.content,r.parent_reply_id,r.root_reply_id,r.floor,r.like_cnt,r.created_at,"
+			"IFNULL(u.nick,u.name) AS author "
+			"FROM reply r LEFT JOIN user u ON r.uid = u.uid "
+			"WHERE r.post_id = ? AND r.status = 1 AND r.root_reply_id IN (";
 		for (size_t i = 0; i < root_ids.size(); ++i) {
 			if (i > 0) ss << ",";
 			ss << "?";
@@ -87,6 +90,7 @@ bool ReplyDao::ListChildren(int post_id, const std::vector<long long>& root_ids,
 			info.floor = res->getInt("floor");
 			info.like_cnt = res->getInt("like_cnt");
 			info.created_at = res->getString("created_at");
+			info.author = res->getString("author");
 			children[info.root_reply_id].push_back(info);
 		}
 		return true;

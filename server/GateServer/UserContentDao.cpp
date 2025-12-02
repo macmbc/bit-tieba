@@ -10,8 +10,9 @@ bool UserContentDao::ListMyPosts(int uid, int page, int limit, std::vector<PostS
 		auto offset = (page - 1) * limit;
 		std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement(
 			"SELECT p.post_id,p.forum_id,p.uid,p.title,p.created_at,p.reply_cnt,p.like_cnt,p.is_top,p.is_essence,"
-			"SUBSTRING(p.content,1,120) AS preview, IFNULL(u.nick,u.name) AS author "
+			"SUBSTRING(p.content,1,120) AS preview, IFNULL(u.nick,u.name) AS author, f.name AS forum_name "
 			"FROM post p LEFT JOIN user u ON p.uid = u.uid "
+			"LEFT JOIN forum f ON p.forum_id = f.forum_id "
 			"WHERE p.status = 1 AND p.uid = ? ORDER BY p.created_at DESC LIMIT ? OFFSET ?"));
 		pstmt->setInt(1, uid);
 		pstmt->setInt(2, limit);
@@ -30,6 +31,7 @@ bool UserContentDao::ListMyPosts(int uid, int page, int limit, std::vector<PostS
 			ps.is_essence = res->getInt("is_essence") != 0;
 			ps.author = res->getString("author");
 			ps.content_preview = res->getString("preview");
+			ps.forum_name = res->getString("forum_name");
 			posts.push_back(ps);
 		}
 		return true;
@@ -86,9 +88,10 @@ bool UserContentDao::ListMyCollections(int uid, int page, int limit, std::vector
 		auto offset = (page - 1) * limit;
 		std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement(
 			"SELECT p.post_id,p.forum_id,p.uid,p.title,p.created_at,p.reply_cnt,p.like_cnt,p.is_top,p.is_essence,"
-			"SUBSTRING(p.content,1,120) AS preview, IFNULL(u.nick,u.name) AS author "
+			"SUBSTRING(p.content,1,120) AS preview, IFNULL(u.nick,u.name) AS author, f.name AS forum_name "
 			"FROM post_collect pc JOIN post p ON pc.post_id = p.post_id "
 			"LEFT JOIN user u ON p.uid = u.uid "
+			"LEFT JOIN forum f ON p.forum_id = f.forum_id "
 			"WHERE p.status = 1 AND pc.uid = ? ORDER BY pc.id DESC LIMIT ? OFFSET ?"));
 		pstmt->setInt(1, uid);
 		pstmt->setInt(2, limit);
@@ -107,6 +110,7 @@ bool UserContentDao::ListMyCollections(int uid, int page, int limit, std::vector
 			ps.is_essence = res->getInt("is_essence") != 0;
 			ps.author = res->getString("author");
 			ps.content_preview = res->getString("preview");
+			ps.forum_name = res->getString("forum_name");
 			posts.push_back(ps);
 		}
 		return true;

@@ -38,8 +38,9 @@ bool PostDao::ListPosts(int forum_id, int page, int limit, const std::string& so
 
 		std::string sql = "SELECT p.post_id,p.forum_id,p.uid,p.title,p.created_at,"
 			"p.reply_cnt,p.like_cnt,p.is_top,p.is_essence,"
-			"SUBSTRING(p.content,1,120) AS preview, IFNULL(u.nick, u.name) AS author "
+			"SUBSTRING(p.content,1,120) AS preview, IFNULL(u.nick, u.name) AS author, f.name AS forum_name "
 			"FROM post p LEFT JOIN user u ON p.uid = u.uid "
+			"LEFT JOIN forum f ON p.forum_id = f.forum_id "
 			"WHERE p.forum_id = ? AND p.status = 1 "
 			"ORDER BY " + order_by + " LIMIT ? OFFSET ?";
 
@@ -61,6 +62,7 @@ bool PostDao::ListPosts(int forum_id, int page, int limit, const std::string& so
 			ps.is_essence = res->getInt("is_essence") != 0;
 			ps.author = res->getString("author");
 			ps.content_preview = res->getString("preview");
+			ps.forum_name = res->getString("forum_name");
 			posts.push_back(ps);
 		}
 		return true;
@@ -84,8 +86,9 @@ bool PostDao::GetPostDetail(int post_id, PostDetail& detail) {
 		std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement(
 			"SELECT p.post_id,p.forum_id,p.uid,p.title,p.content,p.created_at,"
 			"p.reply_cnt,p.like_cnt,p.collect_cnt,p.is_top,p.is_essence,p.status,"
-			"IFNULL(u.nick,u.name) AS author "
+			"IFNULL(u.nick,u.name) AS author, f.name AS forum_name "
 			"FROM post p LEFT JOIN user u ON p.uid = u.uid "
+			"LEFT JOIN forum f ON p.forum_id = f.forum_id "
 			"WHERE p.post_id = ?"));
 		pstmt->setInt(1, post_id);
 		std::unique_ptr<sql::ResultSet> res(pstmt->executeQuery());
@@ -107,6 +110,7 @@ bool PostDao::GetPostDetail(int post_id, PostDetail& detail) {
 		detail.is_top = res->getInt("is_top") != 0;
 		detail.is_essence = res->getInt("is_essence") != 0;
 		detail.author = res->getString("author");
+		detail.forum_name = res->getString("forum_name");
 		return true;
 	}
 	catch (sql::SQLException& e) {

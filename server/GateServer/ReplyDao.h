@@ -15,6 +15,7 @@ struct ReplyInfo {
 	int floor;
 	int like_cnt;
 	std::string created_at;
+	std::string author;
 };
 
 class ReplyDao {

@@ -291,6 +291,8 @@ LogicSystem::LogicSystem() {
 		root["token"] = reply.token();
 		root["host"] = reply.host();
 		root["port"] = reply.port();
+		root["username"] = userInfo.name;
+		root["bio"] = userInfo.desc;
 		std::string jsonstr = root.toStyledString();
 		beast::ostream(connection->_response.body()) << jsonstr;
 		return true;
@@ -652,6 +654,7 @@ LogicSystem::LogicSystem() {
 			item["is_top"] = p.is_top;
 			item["is_essence"] = p.is_essence;
 			item["content_preview"] = p.content_preview;
+			item["forum_name"] = p.forum_name;
 			root["posts"].append(item);
 		}
 		std::string jsonstr = root.toStyledString();
@@ -721,6 +724,7 @@ LogicSystem::LogicSystem() {
 		root["post"]["is_essence"] = detail.is_essence;
 		root["post"]["is_liked"] = is_liked;
 		root["post"]["is_collected"] = is_collected;
+		root["post"]["forum_name"] = detail.forum_name;
 		std::string jsonstr = root.toStyledString();
 		beast::ostream(connection->_response.body()) << jsonstr;
 		return true;
@@ -1297,6 +1301,7 @@ LogicSystem::LogicSystem() {
 			item["like_count"] = t.like_cnt;
 			item["created_at"] = t.created_at;
 			item["is_liked"] = authed && liked_set.count(t.reply_id) > 0;
+			item["author"] = t.author;
 			for (auto& c : children[t.reply_id]) {
 				Json::Value sub;
 				sub["reply_id"] = Json::Int64(c.reply_id);
@@ -1309,6 +1314,7 @@ LogicSystem::LogicSystem() {
 				sub["like_count"] = c.like_cnt;
 				sub["created_at"] = c.created_at;
 				sub["is_liked"] = authed && liked_set.count(c.reply_id) > 0;
+				sub["author"] = c.author;
 				item["sub_replies"].append(sub);
 			}
 			root["replies"].append(item);
@@ -1594,6 +1600,7 @@ LogicSystem::LogicSystem() {
 					item["is_top"] = p.is_top;
 					item["is_essence"] = p.is_essence;
 					item["content_preview"] = p.content_preview;
+					item["forum_name"] = p.forum_name;
 					root["results"].append(item);
 				}
 			}
@@ -1711,6 +1718,7 @@ LogicSystem::LogicSystem() {
 			item["is_top"] = p.is_top;
 			item["is_essence"] = p.is_essence;
 			item["content_preview"] = p.content_preview;
+			item["forum_name"] = p.forum_name;
 			root["posts"].append(item);
 		}
 		std::string jsonstr = root.toStyledString();
@@ -1852,6 +1860,7 @@ LogicSystem::LogicSystem() {
 			item["is_top"] = p.is_top;
 			item["is_essence"] = p.is_essence;
 			item["content_preview"] = p.content_preview;
+			item["forum_name"] = p.forum_name;
 			root["posts"].append(item);
 		}
 		std::string jsonstr = root.toStyledString();
