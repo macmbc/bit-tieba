@@ -14,6 +14,12 @@ set(CHAT_SERVER2_SOURCES
   RedisMgr.cpp
   StatusGrpcClient.cpp
   UserMgr.cpp
+  ../common/bbs/ForumDao.cpp
+  ../common/bbs/PostDao.cpp
+  ../common/bbs/ReplyDao.cpp
+  ../common/bbs/SearchDao.cpp
+  ../common/bbs/UserContentDao.cpp
+  BbsServiceImpl.cpp
   message.pb.cc
   message.grpc.pb.cc
   bbs.pb.cc
@@ -26,6 +32,7 @@ set_target_properties(chatserver2 PROPERTIES
 )
 target_include_directories(chatserver2 PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/../common/bbs
   /usr/local/include
 )
 target_link_libraries(chatserver2 PRIVATE llfc_common)

@@ -280,6 +280,9 @@ inline constexpr Reply::Impl_::Impl_(
         author_(
             &::google::protobuf::internal::fixed_address_empty_string,
             ::_pbi::ConstantInitialized()),
+        post_title_(
+            &::google::protobuf::internal::fixed_address_empty_string,
+            ::_pbi::ConstantInitialized()),
         reply_id_{::int64_t{0}},
         post_id_{0},
         uid_{0},
@@ -1502,7 +1505,7 @@ const ::uint32_t
         4,
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::bbs::Reply, _impl_._has_bits_),
-        15, // hasbit index offset
+        16, // hasbit index offset
         PROTOBUF_FIELD_OFFSET(::bbs::Reply, _impl_.reply_id_),
         PROTOBUF_FIELD_OFFSET(::bbs::Reply, _impl_.post_id_),
         PROTOBUF_FIELD_OFFSET(::bbs::Reply, _impl_.uid_),
@@ -1515,18 +1518,20 @@ const ::uint32_t
         PROTOBUF_FIELD_OFFSET(::bbs::Reply, _impl_.is_liked_),
         PROTOBUF_FIELD_OFFSET(::bbs::Reply, _impl_.author_),
         PROTOBUF_FIELD_OFFSET(::bbs::Reply, _impl_.sub_replies_),
-        4,
+        PROTOBUF_FIELD_OFFSET(::bbs::Reply, _impl_.post_title_),
         5,
         6,
-        1,
         7,
+        1,
         8,
         9,
         10,
-        2,
         11,
+        2,
+        12,
         3,
         0,
+        4,
         0x081, // bitmap
         PROTOBUF_FIELD_OFFSET(::bbs::UserBrief, _impl_._has_bits_),
         9, // hasbit index offset
@@ -1892,48 +1897,48 @@ static const ::_pbi::MigrationSchema
         {24, sizeof(::bbs::PostSummary)},
         {51, sizeof(::bbs::PostDetail)},
         {84, sizeof(::bbs::Reply)},
-        {111, sizeof(::bbs::UserBrief)},
-        {126, sizeof(::bbs::ForumsReq)},
-        {133, sizeof(::bbs::ForumsResp)},
-        {140, sizeof(::bbs::ForumDetailReq)},
-        {149, sizeof(::bbs::ForumDetailResp)},
-        {156, sizeof(::bbs::FollowForumReq)},
-        {165, sizeof(::bbs::FollowForumResp)},
-        {170, sizeof(::bbs::FollowedForumsReq)},
-        {181, sizeof(::bbs::FollowedForumsResp)},
-        {188, sizeof(::bbs::PostsReq)},
-        {199, sizeof(::bbs::PostsResp)},
-        {206, sizeof(::bbs::PostDetailReq)},
-        {215, sizeof(::bbs::PostDetailResp)},
-        {222, sizeof(::bbs::CreatePostReq)},
-        {235, sizeof(::bbs::CreatePostResp)},
-        {242, sizeof(::bbs::UpdatePostReq)},
-        {255, sizeof(::bbs::UpdatePostResp)},
-        {260, sizeof(::bbs::DeletePostReq)},
-        {269, sizeof(::bbs::DeletePostResp)},
-        {274, sizeof(::bbs::LikePostReq)},
-        {283, sizeof(::bbs::LikePostResp)},
-        {288, sizeof(::bbs::CollectPostReq)},
-        {297, sizeof(::bbs::CollectPostResp)},
-        {302, sizeof(::bbs::SetTopReq)},
-        {313, sizeof(::bbs::SetTopResp)},
-        {318, sizeof(::bbs::SetEssenceReq)},
-        {329, sizeof(::bbs::SetEssenceResp)},
-        {334, sizeof(::bbs::RepliesReq)},
-        {349, sizeof(::bbs::RepliesResp)},
-        {356, sizeof(::bbs::CreateReplyReq)},
-        {369, sizeof(::bbs::CreateReplyResp)},
-        {376, sizeof(::bbs::DeleteReplyReq)},
-        {385, sizeof(::bbs::DeleteReplyResp)},
-        {390, sizeof(::bbs::LikeReplyReq)},
-        {399, sizeof(::bbs::LikeReplyResp)},
-        {404, sizeof(::bbs::SearchReq)},
-        {417, sizeof(::bbs::SearchResp)},
-        {428, sizeof(::bbs::MyListReq)},
-        {439, sizeof(::bbs::MyPostsResp)},
-        {446, sizeof(::bbs::MyRepliesResp)},
-        {453, sizeof(::bbs::MyCollectionsResp)},
-        {460, sizeof(::bbs::MyUsersResp)},
+        {113, sizeof(::bbs::UserBrief)},
+        {128, sizeof(::bbs::ForumsReq)},
+        {135, sizeof(::bbs::ForumsResp)},
+        {142, sizeof(::bbs::ForumDetailReq)},
+        {151, sizeof(::bbs::ForumDetailResp)},
+        {158, sizeof(::bbs::FollowForumReq)},
+        {167, sizeof(::bbs::FollowForumResp)},
+        {172, sizeof(::bbs::FollowedForumsReq)},
+        {183, sizeof(::bbs::FollowedForumsResp)},
+        {190, sizeof(::bbs::PostsReq)},
+        {201, sizeof(::bbs::PostsResp)},
+        {208, sizeof(::bbs::PostDetailReq)},
+        {217, sizeof(::bbs::PostDetailResp)},
+        {224, sizeof(::bbs::CreatePostReq)},
+        {237, sizeof(::bbs::CreatePostResp)},
+        {244, sizeof(::bbs::UpdatePostReq)},
+        {257, sizeof(::bbs::UpdatePostResp)},
+        {262, sizeof(::bbs::DeletePostReq)},
+        {271, sizeof(::bbs::DeletePostResp)},
+        {276, sizeof(::bbs::LikePostReq)},
+        {285, sizeof(::bbs::LikePostResp)},
+        {290, sizeof(::bbs::CollectPostReq)},
+        {299, sizeof(::bbs::CollectPostResp)},
+        {304, sizeof(::bbs::SetTopReq)},
+        {315, sizeof(::bbs::SetTopResp)},
+        {320, sizeof(::bbs::SetEssenceReq)},
+        {331, sizeof(::bbs::SetEssenceResp)},
+        {336, sizeof(::bbs::RepliesReq)},
+        {351, sizeof(::bbs::RepliesResp)},
+        {358, sizeof(::bbs::CreateReplyReq)},
+        {371, sizeof(::bbs::CreateReplyResp)},
+        {378, sizeof(::bbs::DeleteReplyReq)},
+        {387, sizeof(::bbs::DeleteReplyResp)},
+        {392, sizeof(::bbs::LikeReplyReq)},
+        {401, sizeof(::bbs::LikeReplyResp)},
+        {406, sizeof(::bbs::SearchReq)},
+        {419, sizeof(::bbs::SearchResp)},
+        {430, sizeof(::bbs::MyListReq)},
+        {441, sizeof(::bbs::MyPostsResp)},
+        {448, sizeof(::bbs::MyRepliesResp)},
+        {455, sizeof(::bbs::MyCollectionsResp)},
+        {462, sizeof(::bbs::MyUsersResp)},
 };
 static const ::_pb::Message* PROTOBUF_NONNULL const file_default_instances[] = {
     &::bbs::_CommonResp_default_instance_._instance,
@@ -2004,122 +2009,122 @@ const char descriptor_table_protodef_bbs_2eproto[] ABSL_ATTRIBUTE_SECTION_VARIAB
     "ike_count\030\t \001(\005\022\025\n\rcollect_count\030\n \001(\005\022\016"
     "\n\006is_top\030\013 \001(\010\022\022\n\nis_essence\030\014 \001(\010\022\020\n\010is"
     "_liked\030\r \001(\010\022\024\n\014is_collected\030\016 \001(\010\022\022\n\nfo"
-    "rum_name\030\017 \001(\t\"\362\001\n\005Reply\022\020\n\010reply_id\030\001 \001"
+    "rum_name\030\017 \001(\t\"\206\002\n\005Reply\022\020\n\010reply_id\030\001 \001"
     "(\003\022\017\n\007post_id\030\002 \001(\005\022\013\n\003uid\030\003 \001(\005\022\017\n\007cont"
     "ent\030\004 \001(\t\022\027\n\017parent_reply_id\030\005 \001(\003\022\025\n\rro"
     "ot_reply_id\030\006 \001(\003\022\r\n\005floor\030\007 \001(\005\022\022\n\nlike"
     "_count\030\010 \001(\005\022\022\n\ncreated_at\030\t \001(\t\022\020\n\010is_l"
     "iked\030\n \001(\010\022\016\n\006author\030\013 \001(\t\022\037\n\013sub_replie"
-    "s\030\014 \003(\0132\n.bbs.Reply\"^\n\tUserBrief\022\013\n\003uid\030"
-    "\001 \001(\005\022\014\n\004name\030\002 \001(\t\022\014\n\004nick\030\003 \001(\t\022\r\n\005ema"
-    "il\030\004 \001(\t\022\014\n\004icon\030\005 \001(\t\022\013\n\003sex\030\006 \001(\005\"(\n\tF"
-    "orumsReq\022\014\n\004page\030\001 \001(\005\022\r\n\005limit\030\002 \001(\005\"7\n"
-    "\nForumsResp\022\r\n\005error\030\001 \001(\005\022\032\n\006forums\030\002 \003"
-    "(\0132\n.bbs.Forum\">\n\016ForumDetailReq\022\020\n\010foru"
-    "m_id\030\001 \001(\005\022\013\n\003uid\030\002 \001(\005\022\r\n\005token\030\003 \001(\t\";"
-    "\n\017ForumDetailResp\022\r\n\005error\030\001 \001(\005\022\031\n\005foru"
-    "m\030\002 \001(\0132\n.bbs.Forum\">\n\016FollowForumReq\022\013\n"
+    "s\030\014 \003(\0132\n.bbs.Reply\022\022\n\npost_title\030\r \001(\t\""
+    "^\n\tUserBrief\022\013\n\003uid\030\001 \001(\005\022\014\n\004name\030\002 \001(\t\022"
+    "\014\n\004nick\030\003 \001(\t\022\r\n\005email\030\004 \001(\t\022\014\n\004icon\030\005 \001"
+    "(\t\022\013\n\003sex\030\006 \001(\005\"(\n\tForumsReq\022\014\n\004page\030\001 \001"
+    "(\005\022\r\n\005limit\030\002 \001(\005\"7\n\nForumsResp\022\r\n\005error"
+    "\030\001 \001(\005\022\032\n\006forums\030\002 \003(\0132\n.bbs.Forum\">\n\016Fo"
+    "rumDetailReq\022\020\n\010forum_id\030\001 \001(\005\022\013\n\003uid\030\002 "
+    "\001(\005\022\r\n\005token\030\003 \001(\t\";\n\017ForumDetailResp\022\r\n"
+    "\005error\030\001 \001(\005\022\031\n\005forum\030\002 \001(\0132\n.bbs.Forum\""
+    ">\n\016FollowForumReq\022\013\n\003uid\030\001 \001(\005\022\r\n\005token\030"
+    "\002 \001(\t\022\020\n\010forum_id\030\003 \001(\005\" \n\017FollowForumRe"
+    "sp\022\r\n\005error\030\001 \001(\005\"L\n\021FollowedForumsReq\022\013"
+    "\n\003uid\030\001 \001(\005\022\r\n\005token\030\002 \001(\t\022\014\n\004page\030\003 \001(\005"
+    "\022\r\n\005limit\030\004 \001(\005\"\?\n\022FollowedForumsResp\022\r\n"
+    "\005error\030\001 \001(\005\022\032\n\006forums\030\002 \003(\0132\n.bbs.Forum"
+    "\"G\n\010PostsReq\022\020\n\010forum_id\030\001 \001(\005\022\014\n\004page\030\002"
+    " \001(\005\022\r\n\005limit\030\003 \001(\005\022\014\n\004sort\030\004 \001(\t\";\n\tPos"
+    "tsResp\022\r\n\005error\030\001 \001(\005\022\037\n\005posts\030\002 \003(\0132\020.b"
+    "bs.PostSummary\"<\n\rPostDetailReq\022\017\n\007post_"
+    "id\030\001 \001(\005\022\013\n\003uid\030\002 \001(\005\022\r\n\005token\030\003 \001(\t\">\n\016"
+    "PostDetailResp\022\r\n\005error\030\001 \001(\005\022\035\n\004post\030\002 "
+    "\001(\0132\017.bbs.PostDetail\"]\n\rCreatePostReq\022\013\n"
     "\003uid\030\001 \001(\005\022\r\n\005token\030\002 \001(\t\022\020\n\010forum_id\030\003 "
-    "\001(\005\" \n\017FollowForumResp\022\r\n\005error\030\001 \001(\005\"L\n"
-    "\021FollowedForumsReq\022\013\n\003uid\030\001 \001(\005\022\r\n\005token"
-    "\030\002 \001(\t\022\014\n\004page\030\003 \001(\005\022\r\n\005limit\030\004 \001(\005\"\?\n\022F"
-    "ollowedForumsResp\022\r\n\005error\030\001 \001(\005\022\032\n\006foru"
-    "ms\030\002 \003(\0132\n.bbs.Forum\"G\n\010PostsReq\022\020\n\010foru"
-    "m_id\030\001 \001(\005\022\014\n\004page\030\002 \001(\005\022\r\n\005limit\030\003 \001(\005\022"
-    "\014\n\004sort\030\004 \001(\t\";\n\tPostsResp\022\r\n\005error\030\001 \001("
-    "\005\022\037\n\005posts\030\002 \003(\0132\020.bbs.PostSummary\"<\n\rPo"
-    "stDetailReq\022\017\n\007post_id\030\001 \001(\005\022\013\n\003uid\030\002 \001("
-    "\005\022\r\n\005token\030\003 \001(\t\">\n\016PostDetailResp\022\r\n\005er"
-    "ror\030\001 \001(\005\022\035\n\004post\030\002 \001(\0132\017.bbs.PostDetail"
-    "\"]\n\rCreatePostReq\022\013\n\003uid\030\001 \001(\005\022\r\n\005token\030"
-    "\002 \001(\t\022\020\n\010forum_id\030\003 \001(\005\022\r\n\005title\030\004 \001(\t\022\017"
-    "\n\007content\030\005 \001(\t\"0\n\016CreatePostResp\022\r\n\005err"
-    "or\030\001 \001(\005\022\017\n\007post_id\030\002 \001(\005\"\\\n\rUpdatePostR"
+    "\001(\005\022\r\n\005title\030\004 \001(\t\022\017\n\007content\030\005 \001(\t\"0\n\016C"
+    "reatePostResp\022\r\n\005error\030\001 \001(\005\022\017\n\007post_id\030"
+    "\002 \001(\005\"\\\n\rUpdatePostReq\022\013\n\003uid\030\001 \001(\005\022\r\n\005t"
+    "oken\030\002 \001(\t\022\017\n\007post_id\030\003 \001(\005\022\r\n\005title\030\004 \001"
+    "(\t\022\017\n\007content\030\005 \001(\t\"\037\n\016UpdatePostResp\022\r\n"
+    "\005error\030\001 \001(\005\"<\n\rDeletePostReq\022\013\n\003uid\030\001 \001"
+    "(\005\022\r\n\005token\030\002 \001(\t\022\017\n\007post_id\030\003 \001(\005\"\037\n\016De"
+    "letePostResp\022\r\n\005error\030\001 \001(\005\":\n\013LikePostR"
     "eq\022\013\n\003uid\030\001 \001(\005\022\r\n\005token\030\002 \001(\t\022\017\n\007post_i"
-    "d\030\003 \001(\005\022\r\n\005title\030\004 \001(\t\022\017\n\007content\030\005 \001(\t\""
-    "\037\n\016UpdatePostResp\022\r\n\005error\030\001 \001(\005\"<\n\rDele"
-    "tePostReq\022\013\n\003uid\030\001 \001(\005\022\r\n\005token\030\002 \001(\t\022\017\n"
-    "\007post_id\030\003 \001(\005\"\037\n\016DeletePostResp\022\r\n\005erro"
-    "r\030\001 \001(\005\":\n\013LikePostReq\022\013\n\003uid\030\001 \001(\005\022\r\n\005t"
-    "oken\030\002 \001(\t\022\017\n\007post_id\030\003 \001(\005\"\035\n\014LikePostR"
-    "esp\022\r\n\005error\030\001 \001(\005\"=\n\016CollectPostReq\022\013\n\003"
-    "uid\030\001 \001(\005\022\r\n\005token\030\002 \001(\t\022\017\n\007post_id\030\003 \001("
-    "\005\" \n\017CollectPostResp\022\r\n\005error\030\001 \001(\005\"H\n\tS"
-    "etTopReq\022\013\n\003uid\030\001 \001(\005\022\r\n\005token\030\002 \001(\t\022\017\n\007"
-    "post_id\030\003 \001(\005\022\016\n\006is_top\030\004 \001(\010\"\033\n\nSetTopR"
-    "esp\022\r\n\005error\030\001 \001(\005\"P\n\rSetEssenceReq\022\013\n\003u"
-    "id\030\001 \001(\005\022\r\n\005token\030\002 \001(\t\022\017\n\007post_id\030\003 \001(\005"
-    "\022\022\n\nis_essence\030\004 \001(\010\"\037\n\016SetEssenceResp\022\r"
-    "\n\005error\030\001 \001(\005\"d\n\nRepliesReq\022\017\n\007post_id\030\001"
-    " \001(\005\022\014\n\004page\030\002 \001(\005\022\r\n\005limit\030\003 \001(\005\022\014\n\004sor"
-    "t\030\004 \001(\t\022\013\n\003uid\030\005 \001(\005\022\r\n\005token\030\006 \001(\t\"9\n\013R"
-    "epliesResp\022\r\n\005error\030\001 \001(\005\022\033\n\007replies\030\002 \003"
-    "(\0132\n.bbs.Reply\"g\n\016CreateReplyReq\022\013\n\003uid\030"
-    "\001 \001(\005\022\r\n\005token\030\002 \001(\t\022\017\n\007post_id\030\003 \001(\005\022\017\n"
-    "\007content\030\004 \001(\t\022\027\n\017parent_reply_id\030\005 \001(\003\""
-    "2\n\017CreateReplyResp\022\r\n\005error\030\001 \001(\005\022\020\n\010rep"
-    "ly_id\030\002 \001(\003\">\n\016DeleteReplyReq\022\013\n\003uid\030\001 \001"
-    "(\005\022\r\n\005token\030\002 \001(\t\022\020\n\010reply_id\030\003 \001(\003\" \n\017D"
-    "eleteReplyResp\022\r\n\005error\030\001 \001(\005\"<\n\014LikeRep"
-    "lyReq\022\013\n\003uid\030\001 \001(\005\022\r\n\005token\030\002 \001(\t\022\020\n\010rep"
-    "ly_id\030\003 \001(\003\"\036\n\rLikeReplyResp\022\r\n\005error\030\001 "
-    "\001(\005\"Y\n\tSearchReq\022\017\n\007keyword\030\001 \001(\t\022\014\n\004typ"
-    "e\030\002 \001(\t\022\020\n\010forum_id\030\003 \001(\005\022\014\n\004page\030\004 \001(\005\022"
-    "\r\n\005limit\030\005 \001(\005\"w\n\nSearchResp\022\r\n\005error\030\001 "
-    "\001(\005\022\037\n\005posts\030\002 \003(\0132\020.bbs.PostSummary\022\032\n\006"
-    "forums\030\003 \003(\0132\n.bbs.Forum\022\035\n\005users\030\004 \003(\0132"
-    "\016.bbs.UserBrief\"D\n\tMyListReq\022\013\n\003uid\030\001 \001("
-    "\005\022\r\n\005token\030\002 \001(\t\022\014\n\004page\030\003 \001(\005\022\r\n\005limit\030"
-    "\004 \001(\005\"=\n\013MyPostsResp\022\r\n\005error\030\001 \001(\005\022\037\n\005p"
-    "osts\030\002 \003(\0132\020.bbs.PostSummary\";\n\rMyReplie"
-    "sResp\022\r\n\005error\030\001 \001(\005\022\033\n\007replies\030\002 \003(\0132\n."
-    "bbs.Reply\"C\n\021MyCollectionsResp\022\r\n\005error\030"
-    "\001 \001(\005\022\037\n\005posts\030\002 \003(\0132\020.bbs.PostSummary\";"
-    "\n\013MyUsersResp\022\r\n\005error\030\001 \001(\005\022\035\n\005users\030\002 "
-    "\003(\0132\016.bbs.UserBrief2\266\013\n\nBbsService\022,\n\tGe"
-    "tForums\022\016.bbs.ForumsReq\032\017.bbs.ForumsResp"
-    "\022;\n\016GetForumDetail\022\023.bbs.ForumDetailReq\032"
-    "\024.bbs.ForumDetailResp\0228\n\013FollowForum\022\023.b"
+    "d\030\003 \001(\005\"\035\n\014LikePostResp\022\r\n\005error\030\001 \001(\005\"="
+    "\n\016CollectPostReq\022\013\n\003uid\030\001 \001(\005\022\r\n\005token\030\002"
+    " \001(\t\022\017\n\007post_id\030\003 \001(\005\" \n\017CollectPostResp"
+    "\022\r\n\005error\030\001 \001(\005\"H\n\tSetTopReq\022\013\n\003uid\030\001 \001("
+    "\005\022\r\n\005token\030\002 \001(\t\022\017\n\007post_id\030\003 \001(\005\022\016\n\006is_"
+    "top\030\004 \001(\010\"\033\n\nSetTopResp\022\r\n\005error\030\001 \001(\005\"P"
+    "\n\rSetEssenceReq\022\013\n\003uid\030\001 \001(\005\022\r\n\005token\030\002 "
+    "\001(\t\022\017\n\007post_id\030\003 \001(\005\022\022\n\nis_essence\030\004 \001(\010"
+    "\"\037\n\016SetEssenceResp\022\r\n\005error\030\001 \001(\005\"d\n\nRep"
+    "liesReq\022\017\n\007post_id\030\001 \001(\005\022\014\n\004page\030\002 \001(\005\022\r"
+    "\n\005limit\030\003 \001(\005\022\014\n\004sort\030\004 \001(\t\022\013\n\003uid\030\005 \001(\005"
+    "\022\r\n\005token\030\006 \001(\t\"9\n\013RepliesResp\022\r\n\005error\030"
+    "\001 \001(\005\022\033\n\007replies\030\002 \003(\0132\n.bbs.Reply\"g\n\016Cr"
+    "eateReplyReq\022\013\n\003uid\030\001 \001(\005\022\r\n\005token\030\002 \001(\t"
+    "\022\017\n\007post_id\030\003 \001(\005\022\017\n\007content\030\004 \001(\t\022\027\n\017pa"
+    "rent_reply_id\030\005 \001(\003\"2\n\017CreateReplyResp\022\r"
+    "\n\005error\030\001 \001(\005\022\020\n\010reply_id\030\002 \001(\003\">\n\016Delet"
+    "eReplyReq\022\013\n\003uid\030\001 \001(\005\022\r\n\005token\030\002 \001(\t\022\020\n"
+    "\010reply_id\030\003 \001(\003\" \n\017DeleteReplyResp\022\r\n\005er"
+    "ror\030\001 \001(\005\"<\n\014LikeReplyReq\022\013\n\003uid\030\001 \001(\005\022\r"
+    "\n\005token\030\002 \001(\t\022\020\n\010reply_id\030\003 \001(\003\"\036\n\rLikeR"
+    "eplyResp\022\r\n\005error\030\001 \001(\005\"Y\n\tSearchReq\022\017\n\007"
+    "keyword\030\001 \001(\t\022\014\n\004type\030\002 \001(\t\022\020\n\010forum_id\030"
+    "\003 \001(\005\022\014\n\004page\030\004 \001(\005\022\r\n\005limit\030\005 \001(\005\"w\n\nSe"
+    "archResp\022\r\n\005error\030\001 \001(\005\022\037\n\005posts\030\002 \003(\0132\020"
+    ".bbs.PostSummary\022\032\n\006forums\030\003 \003(\0132\n.bbs.F"
+    "orum\022\035\n\005users\030\004 \003(\0132\016.bbs.UserBrief\"D\n\tM"
+    "yListReq\022\013\n\003uid\030\001 \001(\005\022\r\n\005token\030\002 \001(\t\022\014\n\004"
+    "page\030\003 \001(\005\022\r\n\005limit\030\004 \001(\005\"=\n\013MyPostsResp"
+    "\022\r\n\005error\030\001 \001(\005\022\037\n\005posts\030\002 \003(\0132\020.bbs.Pos"
+    "tSummary\";\n\rMyRepliesResp\022\r\n\005error\030\001 \001(\005"
+    "\022\033\n\007replies\030\002 \003(\0132\n.bbs.Reply\"C\n\021MyColle"
+    "ctionsResp\022\r\n\005error\030\001 \001(\005\022\037\n\005posts\030\002 \003(\013"
+    "2\020.bbs.PostSummary\";\n\013MyUsersResp\022\r\n\005err"
+    "or\030\001 \001(\005\022\035\n\005users\030\002 \003(\0132\016.bbs.UserBrief2"
+    "\266\013\n\nBbsService\022,\n\tGetForums\022\016.bbs.Forums"
+    "Req\032\017.bbs.ForumsResp\022;\n\016GetForumDetail\022\023"
+    ".bbs.ForumDetailReq\032\024.bbs.ForumDetailRes"
+    "p\0228\n\013FollowForum\022\023.bbs.FollowForumReq\032\024."
+    "bbs.FollowForumResp\022:\n\rUnfollowForum\022\023.b"
     "bs.FollowForumReq\032\024.bbs.FollowForumResp\022"
-    ":\n\rUnfollowForum\022\023.bbs.FollowForumReq\032\024."
-    "bbs.FollowForumResp\022D\n\021GetFollowedForums"
-    "\022\026.bbs.FollowedForumsReq\032\027.bbs.FollowedF"
-    "orumsResp\022*\n\tListPosts\022\r.bbs.PostsReq\032\016."
-    "bbs.PostsResp\0228\n\rGetPostDetail\022\022.bbs.Pos"
-    "tDetailReq\032\023.bbs.PostDetailResp\0225\n\nCreat"
-    "ePost\022\022.bbs.CreatePostReq\032\023.bbs.CreatePo"
-    "stResp\0225\n\nUpdatePost\022\022.bbs.UpdatePostReq"
-    "\032\023.bbs.UpdatePostResp\0225\n\nDeletePost\022\022.bb"
-    "s.DeletePostReq\032\023.bbs.DeletePostResp\022/\n\010"
-    "LikePost\022\020.bbs.LikePostReq\032\021.bbs.LikePos"
-    "tResp\0221\n\nUnlikePost\022\020.bbs.LikePostReq\032\021."
-    "bbs.LikePostResp\0228\n\013CollectPost\022\023.bbs.Co"
-    "llectPostReq\032\024.bbs.CollectPostResp\022:\n\rUn"
-    "collectPost\022\023.bbs.CollectPostReq\032\024.bbs.C"
-    "ollectPostResp\022-\n\nSetTopPost\022\016.bbs.SetTo"
-    "pReq\032\017.bbs.SetTopResp\0229\n\016SetEssencePost\022"
-    "\022.bbs.SetEssenceReq\032\023.bbs.SetEssenceResp"
-    "\0220\n\013ListReplies\022\017.bbs.RepliesReq\032\020.bbs.R"
-    "epliesResp\0228\n\013CreateReply\022\023.bbs.CreateRe"
-    "plyReq\032\024.bbs.CreateReplyResp\0228\n\013DeleteRe"
-    "ply\022\023.bbs.DeleteReplyReq\032\024.bbs.DeleteRep"
-    "lyResp\0222\n\tLikeReply\022\021.bbs.LikeReplyReq\032\022"
-    ".bbs.LikeReplyResp\0224\n\013UnlikeReply\022\021.bbs."
-    "LikeReplyReq\032\022.bbs.LikeReplyResp\022)\n\006Sear"
-    "ch\022\016.bbs.SearchReq\032\017.bbs.SearchResp\022+\n\007M"
-    "yPosts\022\016.bbs.MyListReq\032\020.bbs.MyPostsResp"
-    "\022/\n\tMyReplies\022\016.bbs.MyListReq\032\022.bbs.MyRe"
-    "pliesResp\0227\n\rMyCollections\022\016.bbs.MyListR"
-    "eq\032\026.bbs.MyCollectionsResp\022/\n\013MyFollower"
-    "s\022\016.bbs.MyListReq\032\020.bbs.MyUsersResp\022/\n\013M"
-    "yFollowing\022\016.bbs.MyListReq\032\020.bbs.MyUsers"
-    "Respb\006proto3"
+    "D\n\021GetFollowedForums\022\026.bbs.FollowedForum"
+    "sReq\032\027.bbs.FollowedForumsResp\022*\n\tListPos"
+    "ts\022\r.bbs.PostsReq\032\016.bbs.PostsResp\0228\n\rGet"
+    "PostDetail\022\022.bbs.PostDetailReq\032\023.bbs.Pos"
+    "tDetailResp\0225\n\nCreatePost\022\022.bbs.CreatePo"
+    "stReq\032\023.bbs.CreatePostResp\0225\n\nUpdatePost"
+    "\022\022.bbs.UpdatePostReq\032\023.bbs.UpdatePostRes"
+    "p\0225\n\nDeletePost\022\022.bbs.DeletePostReq\032\023.bb"
+    "s.DeletePostResp\022/\n\010LikePost\022\020.bbs.LikeP"
+    "ostReq\032\021.bbs.LikePostResp\0221\n\nUnlikePost\022"
+    "\020.bbs.LikePostReq\032\021.bbs.LikePostResp\0228\n\013"
+    "CollectPost\022\023.bbs.CollectPostReq\032\024.bbs.C"
+    "ollectPostResp\022:\n\rUncollectPost\022\023.bbs.Co"
+    "llectPostReq\032\024.bbs.CollectPostResp\022-\n\nSe"
+    "tTopPost\022\016.bbs.SetTopReq\032\017.bbs.SetTopRes"
+    "p\0229\n\016SetEssencePost\022\022.bbs.SetEssenceReq\032"
+    "\023.bbs.SetEssenceResp\0220\n\013ListReplies\022\017.bb"
+    "s.RepliesReq\032\020.bbs.RepliesResp\0228\n\013Create"
+    "Reply\022\023.bbs.CreateReplyReq\032\024.bbs.CreateR"
+    "eplyResp\0228\n\013DeleteReply\022\023.bbs.DeleteRepl"
+    "yReq\032\024.bbs.DeleteReplyResp\0222\n\tLikeReply\022"
+    "\021.bbs.LikeReplyReq\032\022.bbs.LikeReplyResp\0224"
+    "\n\013UnlikeReply\022\021.bbs.LikeReplyReq\032\022.bbs.L"
+    "ikeReplyResp\022)\n\006Search\022\016.bbs.SearchReq\032\017"
+    ".bbs.SearchResp\022+\n\007MyPosts\022\016.bbs.MyListR"
+    "eq\032\020.bbs.MyPostsResp\022/\n\tMyReplies\022\016.bbs."
+    "MyListReq\032\022.bbs.MyRepliesResp\0227\n\rMyColle"
+    "ctions\022\016.bbs.MyListReq\032\026.bbs.MyCollectio"
+    "nsResp\022/\n\013MyFollowers\022\016.bbs.MyListReq\032\020."
+    "bbs.MyUsersResp\022/\n\013MyFollowing\022\016.bbs.MyL"
+    "istReq\032\020.bbs.MyUsersRespb\006proto3"
 };
 static ::absl::once_flag descriptor_table_bbs_2eproto_once;
 PROTOBUF_CONSTINIT const ::_pbi::DescriptorTable descriptor_table_bbs_2eproto = {
     false,
     false,
-    5092,
+    5112,
     descriptor_table_protodef_bbs_2eproto,
     "bbs.proto",
     &descriptor_table_bbs_2eproto_once,
@@ -4366,7 +4371,8 @@ PROTOBUF_NDEBUG_INLINE Reply::Impl_::Impl_(
         sub_replies_{visibility, arena, from.sub_replies_},
         content_(arena, from.content_),
         created_at_(arena, from.created_at_),
-        author_(arena, from.author_) {}
+        author_(arena, from.author_),
+        post_title_(arena, from.post_title_) {}
 
 Reply::Reply(
     ::google::protobuf::Arena* PROTOBUF_NULLABLE arena,
@@ -4398,7 +4404,8 @@ PROTOBUF_NDEBUG_INLINE Reply::Impl_::Impl_(
         sub_replies_{visibility, arena},
         content_(arena),
         created_at_(arena),
-        author_(arena) {}
+        author_(arena),
+        post_title_(arena) {}
 
 inline void Reply::SharedCtor(::_pb::Arena* PROTOBUF_NULLABLE arena) {
   new (&_impl_) Impl_(internal_visibility(), arena);
@@ -4423,6 +4430,7 @@ inline void Reply::SharedDtor(MessageLite& self) {
   this_._impl_.content_.Destroy();
   this_._impl_.created_at_.Destroy();
   this_._impl_.author_.Destroy();
+  this_._impl_.post_title_.Destroy();
   this_._impl_.~Impl_();
 }
 
@@ -4481,16 +4489,16 @@ Reply::GetClassData() const {
   return Reply_class_data_.base();
 }
 PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1
-const ::_pbi::TcParseTable<4, 12, 1, 49, 2>
+const ::_pbi::TcParseTable<4, 13, 1, 59, 2>
 Reply::_table_ = {
   {
     PROTOBUF_FIELD_OFFSET(Reply, _impl_._has_bits_),
     0, // no _extensions_
-    12, 120,  // max_field_number, fast_idx_mask
+    13, 120,  // max_field_number, fast_idx_mask
     offsetof(decltype(_table_), field_lookup_table),
-    4294963200,  // skipmap
+    4294959104,  // skipmap
     offsetof(decltype(_table_), field_entries),
-    12,  // num_field_entries
+    13,  // num_field_entries
     1,  // num_aux_entries
     offsetof(decltype(_table_), aux_entries),
     Reply_class_data_.base(),
@@ -4502,44 +4510,44 @@ Reply::_table_ = {
   }, {{
     {::_pbi::TcParser::MiniParse, {}},
     // int64 reply_id = 1;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint64_t, offsetof(Reply, _impl_.reply_id_), 4>(),
-     {8, 4, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint64_t, offsetof(Reply, _impl_.reply_id_), 5>(),
+     {8, 5, 0,
       PROTOBUF_FIELD_OFFSET(Reply, _impl_.reply_id_)}},
     // int32 post_id = 2;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(Reply, _impl_.post_id_), 5>(),
-     {16, 5, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(Reply, _impl_.post_id_), 6>(),
+     {16, 6, 0,
       PROTOBUF_FIELD_OFFSET(Reply, _impl_.post_id_)}},
     // int32 uid = 3;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(Reply, _impl_.uid_), 6>(),
-     {24, 6, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(Reply, _impl_.uid_), 7>(),
+     {24, 7, 0,
       PROTOBUF_FIELD_OFFSET(Reply, _impl_.uid_)}},
     // string content = 4;
     {::_pbi::TcParser::FastUS1,
      {34, 1, 0,
       PROTOBUF_FIELD_OFFSET(Reply, _impl_.content_)}},
     // int64 parent_reply_id = 5;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint64_t, offsetof(Reply, _impl_.parent_reply_id_), 7>(),
-     {40, 7, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint64_t, offsetof(Reply, _impl_.parent_reply_id_), 8>(),
+     {40, 8, 0,
       PROTOBUF_FIELD_OFFSET(Reply, _impl_.parent_reply_id_)}},
     // int64 root_reply_id = 6;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint64_t, offsetof(Reply, _impl_.root_reply_id_), 8>(),
-     {48, 8, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint64_t, offsetof(Reply, _impl_.root_reply_id_), 9>(),
+     {48, 9, 0,
       PROTOBUF_FIELD_OFFSET(Reply, _impl_.root_reply_id_)}},
     // int32 floor = 7;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(Reply, _impl_.floor_), 9>(),
-     {56, 9, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(Reply, _impl_.floor_), 10>(),
+     {56, 10, 0,
       PROTOBUF_FIELD_OFFSET(Reply, _impl_.floor_)}},
     // int32 like_count = 8;
-    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(Reply, _impl_.like_count_), 10>(),
-     {64, 10, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<::uint32_t, offsetof(Reply, _impl_.like_count_), 11>(),
+     {64, 11, 0,
       PROTOBUF_FIELD_OFFSET(Reply, _impl_.like_count_)}},
     // string created_at = 9;
     {::_pbi::TcParser::FastUS1,
      {74, 2, 0,
       PROTOBUF_FIELD_OFFSET(Reply, _impl_.created_at_)}},
     // bool is_liked = 10;
-    {::_pbi::TcParser::SingularVarintNoZag1<bool, offsetof(Reply, _impl_.is_liked_), 11>(),
-     {80, 11, 0,
+    {::_pbi::TcParser::SingularVarintNoZag1<bool, offsetof(Reply, _impl_.is_liked_), 12>(),
+     {80, 12, 0,
       PROTOBUF_FIELD_OFFSET(Reply, _impl_.is_liked_)}},
     // string author = 11;
     {::_pbi::TcParser::FastUS1,
@@ -4549,46 +4557,52 @@ Reply::_table_ = {
     {::_pbi::TcParser::FastMtR1,
      {98, 0, 0,
       PROTOBUF_FIELD_OFFSET(Reply, _impl_.sub_replies_)}},
-    {::_pbi::TcParser::MiniParse, {}},
+    // string post_title = 13;
+    {::_pbi::TcParser::FastUS1,
+     {106, 4, 0,
+      PROTOBUF_FIELD_OFFSET(Reply, _impl_.post_title_)}},
     {::_pbi::TcParser::MiniParse, {}},
     {::_pbi::TcParser::MiniParse, {}},
   }}, {{
     65535, 65535
   }}, {{
     // int64 reply_id = 1;
-    {PROTOBUF_FIELD_OFFSET(Reply, _impl_.reply_id_), _Internal::kHasBitsOffset + 4, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt64)},
+    {PROTOBUF_FIELD_OFFSET(Reply, _impl_.reply_id_), _Internal::kHasBitsOffset + 5, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt64)},
     // int32 post_id = 2;
-    {PROTOBUF_FIELD_OFFSET(Reply, _impl_.post_id_), _Internal::kHasBitsOffset + 5, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(Reply, _impl_.post_id_), _Internal::kHasBitsOffset + 6, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // int32 uid = 3;
-    {PROTOBUF_FIELD_OFFSET(Reply, _impl_.uid_), _Internal::kHasBitsOffset + 6, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(Reply, _impl_.uid_), _Internal::kHasBitsOffset + 7, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // string content = 4;
     {PROTOBUF_FIELD_OFFSET(Reply, _impl_.content_), _Internal::kHasBitsOffset + 1, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
     // int64 parent_reply_id = 5;
-    {PROTOBUF_FIELD_OFFSET(Reply, _impl_.parent_reply_id_), _Internal::kHasBitsOffset + 7, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt64)},
+    {PROTOBUF_FIELD_OFFSET(Reply, _impl_.parent_reply_id_), _Internal::kHasBitsOffset + 8, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt64)},
     // int64 root_reply_id = 6;
-    {PROTOBUF_FIELD_OFFSET(Reply, _impl_.root_reply_id_), _Internal::kHasBitsOffset + 8, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt64)},
+    {PROTOBUF_FIELD_OFFSET(Reply, _impl_.root_reply_id_), _Internal::kHasBitsOffset + 9, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt64)},
     // int32 floor = 7;
-    {PROTOBUF_FIELD_OFFSET(Reply, _impl_.floor_), _Internal::kHasBitsOffset + 9, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(Reply, _impl_.floor_), _Internal::kHasBitsOffset + 10, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // int32 like_count = 8;
-    {PROTOBUF_FIELD_OFFSET(Reply, _impl_.like_count_), _Internal::kHasBitsOffset + 10, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
+    {PROTOBUF_FIELD_OFFSET(Reply, _impl_.like_count_), _Internal::kHasBitsOffset + 11, 0, (0 | ::_fl::kFcOptional | ::_fl::kInt32)},
     // string created_at = 9;
     {PROTOBUF_FIELD_OFFSET(Reply, _impl_.created_at_), _Internal::kHasBitsOffset + 2, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
     // bool is_liked = 10;
-    {PROTOBUF_FIELD_OFFSET(Reply, _impl_.is_liked_), _Internal::kHasBitsOffset + 11, 0, (0 | ::_fl::kFcOptional | ::_fl::kBool)},
+    {PROTOBUF_FIELD_OFFSET(Reply, _impl_.is_liked_), _Internal::kHasBitsOffset + 12, 0, (0 | ::_fl::kFcOptional | ::_fl::kBool)},
     // string author = 11;
     {PROTOBUF_FIELD_OFFSET(Reply, _impl_.author_), _Internal::kHasBitsOffset + 3, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
     // repeated .bbs.Reply sub_replies = 12;
     {PROTOBUF_FIELD_OFFSET(Reply, _impl_.sub_replies_), _Internal::kHasBitsOffset + 0, 0, (0 | ::_fl::kFcRepeated | ::_fl::kMessage | ::_fl::kTvTable)},
+    // string post_title = 13;
+    {PROTOBUF_FIELD_OFFSET(Reply, _impl_.post_title_), _Internal::kHasBitsOffset + 4, 0, (0 | ::_fl::kFcOptional | ::_fl::kUtf8String | ::_fl::kRepAString)},
   }},
   {{
       {::_pbi::TcParser::GetTable<::bbs::Reply>()},
   }},
   {{
-    "\11\0\0\0\7\0\0\0\0\12\0\6\0\0\0\0"
+    "\11\0\0\0\7\0\0\0\0\12\0\6\0\12\0\0"
     "bbs.Reply"
     "content"
     "created_at"
     "author"
+    "post_title"
   }},
 };
 PROTOBUF_NOINLINE void Reply::Clear() {
@@ -4599,7 +4613,7 @@ PROTOBUF_NOINLINE void Reply::Clear() {
   (void) cached_has_bits;
 
   cached_has_bits = _impl_._has_bits_[0];
-  if (BatchCheckHasBit(cached_has_bits, 0x0000000fU)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x0000001fU)) {
     if (CheckHasBitForRepeated(cached_has_bits, 0x00000001U)) {
       _impl_.sub_replies_.Clear();
     }
@@ -4612,16 +4626,19 @@ PROTOBUF_NOINLINE void Reply::Clear() {
     if (CheckHasBit(cached_has_bits, 0x00000008U)) {
       _impl_.author_.ClearNonDefaultToEmpty();
     }
+    if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+      _impl_.post_title_.ClearNonDefaultToEmpty();
+    }
   }
-  if (BatchCheckHasBit(cached_has_bits, 0x000000f0U)) {
+  if (BatchCheckHasBit(cached_has_bits, 0x000000e0U)) {
     ::memset(&_impl_.reply_id_, 0, static_cast<::size_t>(
-        reinterpret_cast<char*>(&_impl_.parent_reply_id_) -
-        reinterpret_cast<char*>(&_impl_.reply_id_)) + sizeof(_impl_.parent_reply_id_));
+        reinterpret_cast<char*>(&_impl_.uid_) -
+        reinterpret_cast<char*>(&_impl_.reply_id_)) + sizeof(_impl_.uid_));
   }
-  if (BatchCheckHasBit(cached_has_bits, 0x00000f00U)) {
-    ::memset(&_impl_.root_reply_id_, 0, static_cast<::size_t>(
+  if (BatchCheckHasBit(cached_has_bits, 0x00001f00U)) {
+    ::memset(&_impl_.parent_reply_id_, 0, static_cast<::size_t>(
         reinterpret_cast<char*>(&_impl_.is_liked_) -
-        reinterpret_cast<char*>(&_impl_.root_reply_id_)) + sizeof(_impl_.is_liked_));
+        reinterpret_cast<char*>(&_impl_.parent_reply_id_)) + sizeof(_impl_.is_liked_));
   }
   _impl_._has_bits_.Clear();
   _internal_metadata_.Clear<::google::protobuf::UnknownFieldSet>();
@@ -4647,7 +4664,7 @@ PROTOBUF_NOINLINE void Reply::Clear() {
 
   cached_has_bits = this_._impl_._has_bits_[0];
   // int64 reply_id = 1;
-  if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000020U)) {
     if (this_._internal_reply_id() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt64ToArrayWithField<1>(
@@ -4656,7 +4673,7 @@ PROTOBUF_NOINLINE void Reply::Clear() {
   }
 
   // int32 post_id = 2;
-  if (CheckHasBit(cached_has_bits, 0x00000020U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000040U)) {
     if (this_._internal_post_id() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<2>(
@@ -4665,7 +4682,7 @@ PROTOBUF_NOINLINE void Reply::Clear() {
   }
 
   // int32 uid = 3;
-  if (CheckHasBit(cached_has_bits, 0x00000040U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000080U)) {
     if (this_._internal_uid() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<3>(
@@ -4684,7 +4701,7 @@ PROTOBUF_NOINLINE void Reply::Clear() {
   }
 
   // int64 parent_reply_id = 5;
-  if (CheckHasBit(cached_has_bits, 0x00000080U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000100U)) {
     if (this_._internal_parent_reply_id() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt64ToArrayWithField<5>(
@@ -4693,7 +4710,7 @@ PROTOBUF_NOINLINE void Reply::Clear() {
   }
 
   // int64 root_reply_id = 6;
-  if (CheckHasBit(cached_has_bits, 0x00000100U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000200U)) {
     if (this_._internal_root_reply_id() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt64ToArrayWithField<6>(
@@ -4702,7 +4719,7 @@ PROTOBUF_NOINLINE void Reply::Clear() {
   }
 
   // int32 floor = 7;
-  if (CheckHasBit(cached_has_bits, 0x00000200U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000400U)) {
     if (this_._internal_floor() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<7>(
@@ -4711,7 +4728,7 @@ PROTOBUF_NOINLINE void Reply::Clear() {
   }
 
   // int32 like_count = 8;
-  if (CheckHasBit(cached_has_bits, 0x00000400U)) {
+  if (CheckHasBit(cached_has_bits, 0x00000800U)) {
     if (this_._internal_like_count() != 0) {
       target =
           ::google::protobuf::internal::WireFormatLite::WriteInt32ToArrayWithField<8>(
@@ -4730,7 +4747,7 @@ PROTOBUF_NOINLINE void Reply::Clear() {
   }
 
   // bool is_liked = 10;
-  if (CheckHasBit(cached_has_bits, 0x00000800U)) {
+  if (CheckHasBit(cached_has_bits, 0x00001000U)) {
     if (this_._internal_is_liked() != 0) {
       target = stream->EnsureSpace(target);
       target = ::_pbi::WireFormatLite::WriteBoolToArray(
@@ -4758,6 +4775,16 @@ PROTOBUF_NOINLINE void Reply::Clear() {
           ::google::protobuf::internal::WireFormatLite::InternalWriteMessage(
               12, repfield, repfield.GetCachedSize(),
               target, stream);
+    }
+  }
+
+  // string post_title = 13;
+  if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+    if (!this_._internal_post_title().empty()) {
+      const ::std::string& _s = this_._internal_post_title();
+      ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          _s.data(), static_cast<int>(_s.length()), ::google::protobuf::internal::WireFormatLite::SERIALIZE, "bbs.Reply.post_title");
+      target = stream->WriteStringMaybeAliased(13, _s, target);
     }
   }
 
@@ -4815,59 +4842,66 @@ PROTOBUF_NOINLINE void Reply::Clear() {
                                         this_._internal_author());
       }
     }
-    // int64 reply_id = 1;
+    // string post_title = 13;
     if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+      if (!this_._internal_post_title().empty()) {
+        total_size += 1 + ::google::protobuf::internal::WireFormatLite::StringSize(
+                                        this_._internal_post_title());
+      }
+    }
+    // int64 reply_id = 1;
+    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
       if (this_._internal_reply_id() != 0) {
         total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(
             this_._internal_reply_id());
       }
     }
     // int32 post_id = 2;
-    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000040U)) {
       if (this_._internal_post_id() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_post_id());
       }
     }
     // int32 uid = 3;
-    if (CheckHasBit(cached_has_bits, 0x00000040U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000080U)) {
       if (this_._internal_uid() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_uid());
       }
     }
+  }
+  if (BatchCheckHasBit(cached_has_bits, 0x00001f00U)) {
     // int64 parent_reply_id = 5;
-    if (CheckHasBit(cached_has_bits, 0x00000080U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000100U)) {
       if (this_._internal_parent_reply_id() != 0) {
         total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(
             this_._internal_parent_reply_id());
       }
     }
-  }
-  if (BatchCheckHasBit(cached_has_bits, 0x00000f00U)) {
     // int64 root_reply_id = 6;
-    if (CheckHasBit(cached_has_bits, 0x00000100U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000200U)) {
       if (this_._internal_root_reply_id() != 0) {
         total_size += ::_pbi::WireFormatLite::Int64SizePlusOne(
             this_._internal_root_reply_id());
       }
     }
     // int32 floor = 7;
-    if (CheckHasBit(cached_has_bits, 0x00000200U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000400U)) {
       if (this_._internal_floor() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_floor());
       }
     }
     // int32 like_count = 8;
-    if (CheckHasBit(cached_has_bits, 0x00000400U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000800U)) {
       if (this_._internal_like_count() != 0) {
         total_size += ::_pbi::WireFormatLite::Int32SizePlusOne(
             this_._internal_like_count());
       }
     }
     // bool is_liked = 10;
-    if (CheckHasBit(cached_has_bits, 0x00000800U)) {
+    if (CheckHasBit(cached_has_bits, 0x00001000U)) {
       if (this_._internal_is_liked() != 0) {
         total_size += 2;
       }
@@ -4926,43 +4960,52 @@ void Reply::MergeImpl(::google::protobuf::MessageLite& to_msg,
       }
     }
     if (CheckHasBit(cached_has_bits, 0x00000010U)) {
+      if (!from._internal_post_title().empty()) {
+        _this->_internal_set_post_title(from._internal_post_title());
+      } else {
+        if (_this->_impl_.post_title_.IsDefault()) {
+          _this->_internal_set_post_title("");
+        }
+      }
+    }
+    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
       if (from._internal_reply_id() != 0) {
         _this->_impl_.reply_id_ = from._impl_.reply_id_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00000020U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000040U)) {
       if (from._internal_post_id() != 0) {
         _this->_impl_.post_id_ = from._impl_.post_id_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00000040U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000080U)) {
       if (from._internal_uid() != 0) {
         _this->_impl_.uid_ = from._impl_.uid_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00000080U)) {
+  }
+  if (BatchCheckHasBit(cached_has_bits, 0x00001f00U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000100U)) {
       if (from._internal_parent_reply_id() != 0) {
         _this->_impl_.parent_reply_id_ = from._impl_.parent_reply_id_;
       }
     }
-  }
-  if (BatchCheckHasBit(cached_has_bits, 0x00000f00U)) {
-    if (CheckHasBit(cached_has_bits, 0x00000100U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000200U)) {
       if (from._internal_root_reply_id() != 0) {
         _this->_impl_.root_reply_id_ = from._impl_.root_reply_id_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00000200U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000400U)) {
       if (from._internal_floor() != 0) {
         _this->_impl_.floor_ = from._impl_.floor_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00000400U)) {
+    if (CheckHasBit(cached_has_bits, 0x00000800U)) {
       if (from._internal_like_count() != 0) {
         _this->_impl_.like_count_ = from._impl_.like_count_;
       }
     }
-    if (CheckHasBit(cached_has_bits, 0x00000800U)) {
+    if (CheckHasBit(cached_has_bits, 0x00001000U)) {
       if (from._internal_is_liked() != 0) {
         _this->_impl_.is_liked_ = from._impl_.is_liked_;
       }
@@ -4991,6 +5034,7 @@ void Reply::InternalSwap(Reply* PROTOBUF_RESTRICT PROTOBUF_NONNULL other) {
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.content_, &other->_impl_.content_, arena);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.created_at_, &other->_impl_.created_at_, arena);
   ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.author_, &other->_impl_.author_, arena);
+  ::_pbi::ArenaStringPtr::InternalSwap(&_impl_.post_title_, &other->_impl_.post_title_, arena);
   ::google::protobuf::internal::memswap<
       PROTOBUF_FIELD_OFFSET(Reply, _impl_.is_liked_)
       + sizeof(Reply::_impl_.is_liked_)

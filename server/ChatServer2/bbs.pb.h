@@ -2203,6 +2203,7 @@ class Reply final : public ::google::protobuf::Message
     kContentFieldNumber = 4,
     kCreatedAtFieldNumber = 9,
     kAuthorFieldNumber = 11,
+    kPostTitleFieldNumber = 13,
     kReplyIdFieldNumber = 1,
     kPostIdFieldNumber = 2,
     kUidFieldNumber = 3,
@@ -2272,6 +2273,21 @@ class Reply final : public ::google::protobuf::Message
   const ::std::string& _internal_author() const;
   PROTOBUF_ALWAYS_INLINE void _internal_set_author(const ::std::string& value);
   ::std::string* PROTOBUF_NONNULL _internal_mutable_author();
+
+  public:
+  // string post_title = 13;
+  void clear_post_title() ;
+  const ::std::string& post_title() const;
+  template <typename Arg_ = const ::std::string&, typename... Args_>
+  void set_post_title(Arg_&& arg, Args_... args);
+  ::std::string* PROTOBUF_NONNULL mutable_post_title();
+  [[nodiscard]] ::std::string* PROTOBUF_NULLABLE release_post_title();
+  void set_allocated_post_title(::std::string* PROTOBUF_NULLABLE value);
+
+  private:
+  const ::std::string& _internal_post_title() const;
+  PROTOBUF_ALWAYS_INLINE void _internal_set_post_title(const ::std::string& value);
+  ::std::string* PROTOBUF_NONNULL _internal_mutable_post_title();
 
   public:
   // int64 reply_id = 1;
@@ -2358,8 +2374,8 @@ class Reply final : public ::google::protobuf::Message
  private:
   class _Internal;
   friend class ::google::protobuf::internal::TcParser;
-  static const ::google::protobuf::internal::TcParseTable<4, 12,
-                                   1, 49,
+  static const ::google::protobuf::internal::TcParseTable<4, 13,
+                                   1, 59,
                                    2>
       _table_;
 
@@ -2384,6 +2400,7 @@ class Reply final : public ::google::protobuf::Message
     ::google::protobuf::internal::ArenaStringPtr content_;
     ::google::protobuf::internal::ArenaStringPtr created_at_;
     ::google::protobuf::internal::ArenaStringPtr author_;
+    ::google::protobuf::internal::ArenaStringPtr post_title_;
     ::int64_t reply_id_;
     ::int32_t post_id_;
     ::int32_t uid_;
@@ -12396,7 +12413,7 @@ inline void Reply::clear_reply_id() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.reply_id_ = ::int64_t{0};
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000010U);
+                  0x00000020U);
 }
 inline ::int64_t Reply::reply_id() const {
   // @@protoc_insertion_point(field_get:bbs.Reply.reply_id)
@@ -12404,7 +12421,7 @@ inline ::int64_t Reply::reply_id() const {
 }
 inline void Reply::set_reply_id(::int64_t value) {
   _internal_set_reply_id(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
   // @@protoc_insertion_point(field_set:bbs.Reply.reply_id)
 }
 inline ::int64_t Reply::_internal_reply_id() const {
@@ -12421,7 +12438,7 @@ inline void Reply::clear_post_id() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.post_id_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000020U);
+                  0x00000040U);
 }
 inline ::int32_t Reply::post_id() const {
   // @@protoc_insertion_point(field_get:bbs.Reply.post_id)
@@ -12429,7 +12446,7 @@ inline ::int32_t Reply::post_id() const {
 }
 inline void Reply::set_post_id(::int32_t value) {
   _internal_set_post_id(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000020U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
   // @@protoc_insertion_point(field_set:bbs.Reply.post_id)
 }
 inline ::int32_t Reply::_internal_post_id() const {
@@ -12446,7 +12463,7 @@ inline void Reply::clear_uid() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.uid_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000040U);
+                  0x00000080U);
 }
 inline ::int32_t Reply::uid() const {
   // @@protoc_insertion_point(field_get:bbs.Reply.uid)
@@ -12454,7 +12471,7 @@ inline ::int32_t Reply::uid() const {
 }
 inline void Reply::set_uid(::int32_t value) {
   _internal_set_uid(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000040U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000080U);
   // @@protoc_insertion_point(field_set:bbs.Reply.uid)
 }
 inline ::int32_t Reply::_internal_uid() const {
@@ -12536,7 +12553,7 @@ inline void Reply::clear_parent_reply_id() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.parent_reply_id_ = ::int64_t{0};
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000080U);
+                  0x00000100U);
 }
 inline ::int64_t Reply::parent_reply_id() const {
   // @@protoc_insertion_point(field_get:bbs.Reply.parent_reply_id)
@@ -12544,7 +12561,7 @@ inline ::int64_t Reply::parent_reply_id() const {
 }
 inline void Reply::set_parent_reply_id(::int64_t value) {
   _internal_set_parent_reply_id(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000080U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000100U);
   // @@protoc_insertion_point(field_set:bbs.Reply.parent_reply_id)
 }
 inline ::int64_t Reply::_internal_parent_reply_id() const {
@@ -12561,7 +12578,7 @@ inline void Reply::clear_root_reply_id() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.root_reply_id_ = ::int64_t{0};
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000100U);
+                  0x00000200U);
 }
 inline ::int64_t Reply::root_reply_id() const {
   // @@protoc_insertion_point(field_get:bbs.Reply.root_reply_id)
@@ -12569,7 +12586,7 @@ inline ::int64_t Reply::root_reply_id() const {
 }
 inline void Reply::set_root_reply_id(::int64_t value) {
   _internal_set_root_reply_id(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000100U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000200U);
   // @@protoc_insertion_point(field_set:bbs.Reply.root_reply_id)
 }
 inline ::int64_t Reply::_internal_root_reply_id() const {
@@ -12586,7 +12603,7 @@ inline void Reply::clear_floor() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.floor_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000200U);
+                  0x00000400U);
 }
 inline ::int32_t Reply::floor() const {
   // @@protoc_insertion_point(field_get:bbs.Reply.floor)
@@ -12594,7 +12611,7 @@ inline ::int32_t Reply::floor() const {
 }
 inline void Reply::set_floor(::int32_t value) {
   _internal_set_floor(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000200U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000400U);
   // @@protoc_insertion_point(field_set:bbs.Reply.floor)
 }
 inline ::int32_t Reply::_internal_floor() const {
@@ -12611,7 +12628,7 @@ inline void Reply::clear_like_count() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.like_count_ = 0;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000400U);
+                  0x00000800U);
 }
 inline ::int32_t Reply::like_count() const {
   // @@protoc_insertion_point(field_get:bbs.Reply.like_count)
@@ -12619,7 +12636,7 @@ inline ::int32_t Reply::like_count() const {
 }
 inline void Reply::set_like_count(::int32_t value) {
   _internal_set_like_count(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000400U);
+  SetHasBit(_impl_._has_bits_[0], 0x00000800U);
   // @@protoc_insertion_point(field_set:bbs.Reply.like_count)
 }
 inline ::int32_t Reply::_internal_like_count() const {
@@ -12701,7 +12718,7 @@ inline void Reply::clear_is_liked() {
   ::google::protobuf::internal::TSanWrite(&_impl_);
   _impl_.is_liked_ = false;
   ClearHasBit(_impl_._has_bits_[0],
-                  0x00000800U);
+                  0x00001000U);
 }
 inline bool Reply::is_liked() const {
   // @@protoc_insertion_point(field_get:bbs.Reply.is_liked)
@@ -12709,7 +12726,7 @@ inline bool Reply::is_liked() const {
 }
 inline void Reply::set_is_liked(bool value) {
   _internal_set_is_liked(value);
-  SetHasBit(_impl_._has_bits_[0], 0x00000800U);
+  SetHasBit(_impl_._has_bits_[0], 0x00001000U);
   // @@protoc_insertion_point(field_set:bbs.Reply.is_liked)
 }
 inline bool Reply::_internal_is_liked() const {
@@ -12840,6 +12857,71 @@ inline ::google::protobuf::RepeatedPtrField<::bbs::Reply>* PROTOBUF_NONNULL
 Reply::_internal_mutable_sub_replies() {
   ::google::protobuf::internal::TSanRead(&_impl_);
   return &_impl_.sub_replies_;
+}
+
+// string post_title = 13;
+inline void Reply::clear_post_title() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.post_title_.ClearToEmpty();
+  ClearHasBit(_impl_._has_bits_[0],
+                  0x00000010U);
+}
+inline const ::std::string& Reply::post_title() const
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  // @@protoc_insertion_point(field_get:bbs.Reply.post_title)
+  return _internal_post_title();
+}
+template <typename Arg_, typename... Args_>
+PROTOBUF_ALWAYS_INLINE void Reply::set_post_title(Arg_&& arg, Args_... args) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  _impl_.post_title_.Set(static_cast<Arg_&&>(arg), args..., GetArena());
+  // @@protoc_insertion_point(field_set:bbs.Reply.post_title)
+}
+inline ::std::string* PROTOBUF_NONNULL Reply::mutable_post_title()
+    ABSL_ATTRIBUTE_LIFETIME_BOUND {
+  SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  ::std::string* _s = _internal_mutable_post_title();
+  // @@protoc_insertion_point(field_mutable:bbs.Reply.post_title)
+  return _s;
+}
+inline const ::std::string& Reply::_internal_post_title() const {
+  ::google::protobuf::internal::TSanRead(&_impl_);
+  return _impl_.post_title_.Get();
+}
+inline void Reply::_internal_set_post_title(const ::std::string& value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  _impl_.post_title_.Set(value, GetArena());
+}
+inline ::std::string* PROTOBUF_NONNULL Reply::_internal_mutable_post_title() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  return _impl_.post_title_.Mutable( GetArena());
+}
+inline ::std::string* PROTOBUF_NULLABLE Reply::release_post_title() {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  // @@protoc_insertion_point(field_release:bbs.Reply.post_title)
+  if (!CheckHasBit(_impl_._has_bits_[0], 0x00000010U)) {
+    return nullptr;
+  }
+  ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
+  auto* released = _impl_.post_title_.Release();
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString()) {
+    _impl_.post_title_.Set("", GetArena());
+  }
+  return released;
+}
+inline void Reply::set_allocated_post_title(::std::string* PROTOBUF_NULLABLE value) {
+  ::google::protobuf::internal::TSanWrite(&_impl_);
+  if (value != nullptr) {
+    SetHasBit(_impl_._has_bits_[0], 0x00000010U);
+  } else {
+    ClearHasBit(_impl_._has_bits_[0], 0x00000010U);
+  }
+  _impl_.post_title_.SetAllocated(value, GetArena());
+  if (::google::protobuf::internal::DebugHardenForceCopyDefaultString() && _impl_.post_title_.IsDefault()) {
+    _impl_.post_title_.Set("", GetArena());
+  }
+  // @@protoc_insertion_point(field_set_allocated:bbs.Reply.post_title)
 }
 
 // -------------------------------------------------------------------

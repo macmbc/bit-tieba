@@ -64,6 +64,7 @@ message Reply {
   bool is_liked = 10;
   string author = 11;
   repeated Reply sub_replies = 12;
+  string post_title = 13; // 仅部分场景使用（我的回复）
 }
 
 message UserBrief {
