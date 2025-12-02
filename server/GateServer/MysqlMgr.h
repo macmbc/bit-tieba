@@ -1,11 +1,11 @@
 #pragma once
 #include "const.h"
 #include "MysqlDao.h"
-#include "ForumDao.h"
-#include "PostDao.h"
-#include "ReplyDao.h"
-#include "SearchDao.h"
-#include "UserContentDao.h"
+#include "../common/bbs/ForumDao.h"
+#include "../common/bbs/PostDao.h"
+#include "../common/bbs/ReplyDao.h"
+#include "../common/bbs/SearchDao.h"
+#include "../common/bbs/UserContentDao.h"
 class MysqlMgr: public Singleton<MysqlMgr>
 {
 	friend class Singleton<MysqlMgr>;

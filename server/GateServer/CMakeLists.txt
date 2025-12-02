@@ -7,16 +7,18 @@ set(GATE_SERVER_SOURCES
   LogicSystem.cpp
   MysqlDao.cpp
   MysqlMgr.cpp
-  ForumDao.cpp
-  PostDao.cpp
-  ReplyDao.cpp
-  SearchDao.cpp
-  UserContentDao.cpp
+  ../common/bbs/ForumDao.cpp
+  ../common/bbs/PostDao.cpp
+  ../common/bbs/ReplyDao.cpp
+  ../common/bbs/SearchDao.cpp
+  ../common/bbs/UserContentDao.cpp
   RedisMgr.cpp
   StatusGrpcClient.cpp
   VerifyGrpcClient.cpp
   message.pb.cc
   message.grpc.pb.cc
+  bbs.pb.cc
+  bbs.grpc.pb.cc
 )
 
 add_executable(gateserver ${GATE_SERVER_SOURCES})
@@ -25,6 +27,7 @@ set_target_properties(gateserver PROPERTIES
 )
 target_include_directories(gateserver PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/../common/bbs
   /usr/local/include
 )
 target_link_libraries(gateserver PRIVATE llfc_common)

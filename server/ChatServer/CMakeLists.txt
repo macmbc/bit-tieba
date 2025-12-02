@@ -16,6 +16,8 @@ set(CHAT_SERVER_SOURCES
   UserMgr.cpp
   message.pb.cc
   message.grpc.pb.cc
+  bbs.pb.cc
+  bbs.grpc.pb.cc
 )
 
 add_executable(chatserver1 ${CHAT_SERVER_SOURCES})

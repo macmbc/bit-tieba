@@ -1,0 +1,325 @@
+syntax = "proto3";
+
+package bbs;
+
+// 公用枚举/结构，与 HTTP JSON 字段保持一致
+message CommonResp {
+  int32 error = 1;
+  string message = 2;
+}
+
+message Forum {
+  int32 forum_id = 1;
+  string name = 2;
+  string avatar = 3;
+  string description = 4;
+  int32 follower_count = 5;
+  int32 post_count = 6;
+  bool is_followed = 7;
+}
+
+message PostSummary {
+  int32 post_id = 1;
+  int32 forum_id = 2;
+  int32 uid = 3;
+  string author = 4;
+  string title = 5;
+  string created_at = 6;
+  int32 reply_count = 7;
+  int32 like_count = 8;
+  bool is_top = 9;
+  bool is_essence = 10;
+  string content_preview = 11;
+  string forum_name = 12;
+}
+
+message PostDetail {
+  int32 post_id = 1;
+  int32 forum_id = 2;
+  int32 uid = 3;
+  string author = 4;
+  string title = 5;
+  string content = 6;
+  string created_at = 7;
+  int32 reply_count = 8;
+  int32 like_count = 9;
+  int32 collect_count = 10;
+  bool is_top = 11;
+  bool is_essence = 12;
+  bool is_liked = 13;
+  bool is_collected = 14;
+  string forum_name = 15;
+}
+
+message Reply {
+  int64 reply_id = 1;
+  int32 post_id = 2;
+  int32 uid = 3;
+  string content = 4;
+  int64 parent_reply_id = 5;
+  int64 root_reply_id = 6;
+  int32 floor = 7;
+  int32 like_count = 8;
+  string created_at = 9;
+  bool is_liked = 10;
+  string author = 11;
+  repeated Reply sub_replies = 12;
+}
+
+message UserBrief {
+  int32 uid = 1;
+  string name = 2;
+  string nick = 3;
+  string email = 4;
+  string icon = 5;
+  int32 sex = 6;
+}
+
+// 贴吧
+message ForumsReq {
+  int32 page = 1;
+  int32 limit = 2;
+}
+message ForumsResp {
+  int32 error = 1;
+  repeated Forum forums = 2;
+}
+
+message ForumDetailReq {
+  int32 forum_id = 1;
+  int32 uid = 2;
+  string token = 3;
+}
+message ForumDetailResp {
+  int32 error = 1;
+  Forum forum = 2;
+}
+
+message FollowForumReq {
+  int32 uid = 1;
+  string token = 2;
+  int32 forum_id = 3;
+}
+message FollowForumResp {
+  int32 error = 1;
+}
+
+message FollowedForumsReq {
+  int32 uid = 1;
+  string token = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+message FollowedForumsResp {
+  int32 error = 1;
+  repeated Forum forums = 2;
+}
+
+// 帖子
+message PostsReq {
+  int32 forum_id = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  string sort = 4;
+}
+message PostsResp {
+  int32 error = 1;
+  repeated PostSummary posts = 2;
+}
+
+message PostDetailReq {
+  int32 post_id = 1;
+  int32 uid = 2;
+  string token = 3;
+}
+message PostDetailResp {
+  int32 error = 1;
+  PostDetail post = 2;
+}
+
+message CreatePostReq {
+  int32 uid = 1;
+  string token = 2;
+  int32 forum_id = 3;
+  string title = 4;
+  string content = 5;
+}
+message CreatePostResp {
+  int32 error = 1;
+  int32 post_id = 2;
+}
+
+message UpdatePostReq {
+  int32 uid = 1;
+  string token = 2;
+  int32 post_id = 3;
+  string title = 4;
+  string content = 5;
+}
+message UpdatePostResp {
+  int32 error = 1;
+}
+
+message DeletePostReq {
+  int32 uid = 1;
+  string token = 2;
+  int32 post_id = 3;
+}
+message DeletePostResp {
+  int32 error = 1;
+}
+
+message LikePostReq {
+  int32 uid = 1;
+  string token = 2;
+  int32 post_id = 3;
+}
+message LikePostResp {
+  int32 error = 1;
+}
+
+message CollectPostReq {
+  int32 uid = 1;
+  string token = 2;
+  int32 post_id = 3;
+}
+message CollectPostResp {
+  int32 error = 1;
+}
+
+message SetTopReq {
+  int32 uid = 1;
+  string token = 2;
+  int32 post_id = 3;
+  bool is_top = 4;
+}
+message SetTopResp {
+  int32 error = 1;
+}
+
+message SetEssenceReq {
+  int32 uid = 1;
+  string token = 2;
+  int32 post_id = 3;
+  bool is_essence = 4;
+}
+message SetEssenceResp {
+  int32 error = 1;
+}
+
+// 回复
+message RepliesReq {
+  int32 post_id = 1;
+  int32 page = 2;
+  int32 limit = 3;
+  string sort = 4;
+  int32 uid = 5;
+  string token = 6;
+}
+message RepliesResp {
+  int32 error = 1;
+  repeated Reply replies = 2;
+}
+
+message CreateReplyReq {
+  int32 uid = 1;
+  string token = 2;
+  int32 post_id = 3;
+  string content = 4;
+  int64 parent_reply_id = 5;
+}
+message CreateReplyResp {
+  int32 error = 1;
+  int64 reply_id = 2;
+}
+
+message DeleteReplyReq {
+  int32 uid = 1;
+  string token = 2;
+  int64 reply_id = 3;
+}
+message DeleteReplyResp {
+  int32 error = 1;
+}
+
+message LikeReplyReq {
+  int32 uid = 1;
+  string token = 2;
+  int64 reply_id = 3;
+}
+message LikeReplyResp {
+  int32 error = 1;
+}
+
+// 搜索
+message SearchReq {
+  string keyword = 1;
+  string type = 2; // post|forum|user
+  int32 forum_id = 3;
+  int32 page = 4;
+  int32 limit = 5;
+}
+message SearchResp {
+  int32 error = 1;
+  repeated PostSummary posts = 2;
+  repeated Forum forums = 3;
+  repeated UserBrief users = 4;
+}
+
+// 我的
+message MyListReq {
+  int32 uid = 1;
+  string token = 2;
+  int32 page = 3;
+  int32 limit = 4;
+}
+message MyPostsResp {
+  int32 error = 1;
+  repeated PostSummary posts = 2;
+}
+message MyRepliesResp {
+  int32 error = 1;
+  repeated Reply replies = 2;
+}
+message MyCollectionsResp {
+  int32 error = 1;
+  repeated PostSummary posts = 2;
+}
+message MyUsersResp {
+  int32 error = 1;
+  repeated UserBrief users = 2;
+}
+
+service BbsService {
+  rpc GetForums(ForumsReq) returns (ForumsResp);
+  rpc GetForumDetail(ForumDetailReq) returns (ForumDetailResp);
+  rpc FollowForum(FollowForumReq) returns (FollowForumResp);
+  rpc UnfollowForum(FollowForumReq) returns (FollowForumResp);
+  rpc GetFollowedForums(FollowedForumsReq) returns (FollowedForumsResp);
+
+  rpc ListPosts(PostsReq) returns (PostsResp);
+  rpc GetPostDetail(PostDetailReq) returns (PostDetailResp);
+  rpc CreatePost(CreatePostReq) returns (CreatePostResp);
+  rpc UpdatePost(UpdatePostReq) returns (UpdatePostResp);
+  rpc DeletePost(DeletePostReq) returns (DeletePostResp);
+  rpc LikePost(LikePostReq) returns (LikePostResp);
+  rpc UnlikePost(LikePostReq) returns (LikePostResp);
+  rpc CollectPost(CollectPostReq) returns (CollectPostResp);
+  rpc UncollectPost(CollectPostReq) returns (CollectPostResp);
+  rpc SetTopPost(SetTopReq) returns (SetTopResp);
+  rpc SetEssencePost(SetEssenceReq) returns (SetEssenceResp);
+
+  rpc ListReplies(RepliesReq) returns (RepliesResp);
+  rpc CreateReply(CreateReplyReq) returns (CreateReplyResp);
+  rpc DeleteReply(DeleteReplyReq) returns (DeleteReplyResp);
+  rpc LikeReply(LikeReplyReq) returns (LikeReplyResp);
+  rpc UnlikeReply(LikeReplyReq) returns (LikeReplyResp);
+
+  rpc Search(SearchReq) returns (SearchResp);
+
+  rpc MyPosts(MyListReq) returns (MyPostsResp);
+  rpc MyReplies(MyListReq) returns (MyRepliesResp);
+  rpc MyCollections(MyListReq) returns (MyCollectionsResp);
+  rpc MyFollowers(MyListReq) returns (MyUsersResp);
+  rpc MyFollowing(MyListReq) returns (MyUsersResp);
+}
