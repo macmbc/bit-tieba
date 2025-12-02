@@ -424,6 +424,118 @@ bool TiebaDao::IsTiebaMember(int uid, int tieba_id, int& role) {
 	catch (sql::SQLException& e) {
 		std::cerr << "SQLException in IsTiebaMember: " << e.what() << std::endl;
 		return false;
+	return true;
+}
+
+// 更新贴吧信息
+bool TiebaDao::UpdateTiebaInfo(int uid, int tieba_id, const std::string& desc, const std::string& icon, int new_owner_id) {
+	auto con = pool_->getConnection();
+	if (con == nullptr) {
+		return false;
+	}
+
+	Defer defer([this, &con]() {
+		if (con) {
+			pool_->returnConnection(std::move(con));
+		}
+	});
+
+	try {
+		con->_con->setAutoCommit(false);
+
+		// 检查权限（只有吧主可以修改贴吧信息）
+		int role = 0;
+		bool is_member = IsTiebaMember(uid, tieba_id, role);
+		if (!is_member || role != 2) {  // 只有吧主(role=2)可以修改
+			con->_con->rollback();
+			return false;
+		}
+
+		// 构建更新语句
+		std::string sql = "UPDATE tieba SET ";
+		bool need_comma = false;
+		
+		if (!desc.empty()) {
+			sql += "tieba_desc = ?";
+			need_comma = true;
+		}
+		
+		if (!icon.empty()) {
+			if (need_comma) sql += ", ";
+			sql += "tieba_icon = ?";
+			need_comma = true;
+		}
+		
+		if (new_owner_id > 0) {
+			if (need_comma) sql += ", ";
+			sql += "owner_uid = ?";
+		}
+		
+		sql += " WHERE tieba_id = ?";
+		
+		// 如果没有需要更新的字段，则直接返回成功
+		if (!need_comma && new_owner_id <= 0) {
+			con->_con->commit();
+			return true;
+		}
+
+		std::unique_ptr<sql::PreparedStatement> pstmt(con->_con->prepareStatement(sql));
+		int param_index = 1;
+		
+		if (!desc.empty()) {
+			pstmt->setString(param_index++, desc);
+		}
+		
+		if (!icon.empty()) {
+			pstmt->setString(param_index++, icon);
+		}
+		
+		if (new_owner_id > 0) {
+			pstmt->setInt(param_index++, new_owner_id);
+		}
+		
+		pstmt->setInt(param_index, tieba_id);
+		pstmt->executeUpdate();
+
+		// 如果更换了吧主，需要更新贴吧成员表
+		if (new_owner_id > 0) {
+			// 将原吧主的角色改为普通成员
+			std::unique_ptr<sql::PreparedStatement> pstmt_update_old(con->_con->prepareStatement(
+				"UPDATE tieba_member SET role = 0 WHERE tieba_id = ? AND role = 2"));
+			pstmt_update_old->setInt(1, tieba_id);
+			pstmt_update_old->executeUpdate();
+			
+			// 将新吧主的角色改为吧主（如果已是成员）
+			std::unique_ptr<sql::PreparedStatement> pstmt_update_new(con->_con->prepareStatement(
+				"UPDATE tieba_member SET role = 2 WHERE tieba_id = ? AND uid = ?"));
+			pstmt_update_new->setInt(1, tieba_id);
+			pstmt_update_new->setInt(2, new_owner_id);
+			pstmt_update_new->executeUpdate();
+			
+			// 如果新吧主还不是成员，则添加为吧主
+			std::unique_ptr<sql::PreparedStatement> pstmt_check(con->_con->prepareStatement(
+				"SELECT 1 FROM tieba_member WHERE tieba_id = ? AND uid = ?"));
+			pstmt_check->setInt(1, tieba_id);
+			pstmt_check->setInt(2, new_owner_id);
+			std::unique_ptr<sql::ResultSet> res_check(pstmt_check->executeQuery());
+			if (!res_check->next()) {
+				std::unique_ptr<sql::PreparedStatement> pstmt_insert(con->_con->prepareStatement(
+					"INSERT INTO tieba_member (tieba_id, uid, role) VALUES (?, ?, 2)"));
+				pstmt_insert->setInt(1, tieba_id);
+				pstmt_insert->setInt(2, new_owner_id);
+				pstmt_insert->executeUpdate();
+			}
+		}
+
+		con->_con->commit();
+		return true;
+	}
+	catch (sql::SQLException& e) {
+		if (con) {
+			con->_con->rollback();
+		}
+		std::cerr << "SQLException in UpdateTiebaInfo: " << e.what() << std::endl;
+		return false;
 	}
 }
 

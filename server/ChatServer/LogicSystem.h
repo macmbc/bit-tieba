@@ -51,6 +51,10 @@ private:
 	void GetTiebaInfoHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);
 	void GetMyTiebaListHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);
 	void GetTiebaMemberListHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);
+	void UpdateTiebaHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);
+	void SetFollowedTiebaHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);
+	void GetFollowedTiebaListHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);
+	void SetCollectedPostHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data);
 	
 	// 辅助函数
 	bool isPureDigit(const std::string& str);

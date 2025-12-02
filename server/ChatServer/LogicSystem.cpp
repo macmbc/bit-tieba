@@ -127,6 +127,9 @@ void LogicSystem::RegisterCallBacks() {
 	_fun_callbacks[ID_DELETE_REPLY_REQ] = std::bind(&LogicSystem::DeleteReplyHandler, this,
 		placeholders::_1, placeholders::_2, placeholders::_3);
 	
+	_fun_callbacks[ID_UPDATE_TIEBA_REQ] = std::bind(&LogicSystem::UpdateTiebaHandler, this,
+		placeholders::_1, placeholders::_2, placeholders::_3);
+	
 	_fun_callbacks[ID_LIKE_REQ] = std::bind(&LogicSystem::LikeHandler, this,
 		placeholders::_1, placeholders::_2, placeholders::_3);
 	
@@ -145,8 +148,15 @@ void LogicSystem::RegisterCallBacks() {
 	_fun_callbacks[ID_GET_TIEBA_MEMBER_LIST_REQ] = std::bind(&LogicSystem::GetTiebaMemberListHandler, this,
 		placeholders::_1, placeholders::_2, placeholders::_3);
 	
+	_fun_callbacks[ID_SET_FOLLOWED_TIEBA_REQ] = std::bind(&LogicSystem::SetFollowedTiebaHandler, this,
+		placeholders::_1, placeholders::_2, placeholders::_3);
+	
+	_fun_callbacks[ID_GET_FOLLOWED_TIEBA_LIST_REQ] = std::bind(&LogicSystem::GetFollowedTiebaListHandler, this,
+		placeholders::_1, placeholders::_2, placeholders::_3);
+	
+	_fun_callbacks[ID_SET_COLLECTED_POST_REQ] = std::bind(&LogicSystem::SetCollectedPostHandler, this,
+		placeholders::_1, placeholders::_2, placeholders::_3);
 }
-
 void LogicSystem::LoginHandler(shared_ptr<CSession> session, const short &msg_id, const string &msg_data) {
 	Json::Reader reader;
 	Json::Value root;
@@ -759,64 +769,56 @@ bool LogicSystem::GetFriendList(int self_id, std::vector<std::shared_ptr<UserInf
 
 // 创建贴吧
 void LogicSystem::CreateTiebaHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
-	Json::Reader reader;
-	Json::Value root;
-	reader.parse(msg_data, root);
-	auto uid = root["uid"].asInt();
-	auto tieba_name = root["tieba_name"].asString();
-	auto tieba_desc = root["tieba_desc"].asString();
-	auto tieba_icon = root["tieba_icon"].asString();
+	CreateTiebaReq req;
+	req.ParseFromString(msg_data);
 	
-	std::cout << "CreateTieba: uid=" << uid << ", name=" << tieba_name << std::endl;
+	std::cout << "CreateTieba: uid=" << req.uid() << ", name=" << req.tieba_name() << std::endl;
 	
-	Json::Value rtvalue;
-	
-	Defer defer([this, &rtvalue, session]() {
-		std::string return_str = rtvalue.toStyledString();
+	CreateTiebaRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
 		session->Send(return_str, ID_CREATE_TIEBA_RSP);
 	});
 	
 	// 检查贴吧名称是否有效
-	if (tieba_name.empty() || tieba_name.length() > 50) {
-		rtvalue["error"] = ErrorCodes::TiebaNameInvalid;
+	if (req.tieba_name().empty() || req.tieba_name().length() > 50) {
+		rsp.set_error(ErrorCodes::TiebaNameInvalid);
 		return;
 	}
 	
 	// 创建贴吧
 	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
-	int tieba_id = tieba_dao.CreateTieba(uid, tieba_name, tieba_desc, tieba_icon);
+	int tieba_id = tieba_dao.CreateTieba(req.uid(), req.tieba_name(), req.tieba_desc(), req.tieba_icon());
 	
 	if (tieba_id == 0) {
-		rtvalue["error"] = ErrorCodes::TiebaExist;
+		rsp.set_error(ErrorCodes::TiebaExist);
 		return;
 	} else if (tieba_id < 0) {
-		rtvalue["error"] = ErrorCodes::RPCFailed;
+		rsp.set_error(ErrorCodes::RPCFailed);
 		return;
 	}
 	
-	rtvalue["error"] = ErrorCodes::Success;
-	rtvalue["tieba_id"] = tieba_id;
-	rtvalue["tieba_name"] = tieba_name;
+	rsp.set_error(ErrorCodes::Success);
+	rsp.set_tieba_id(tieba_id);
+	rsp.set_tieba_name(req.tieba_name());
 }
 
 // 搜索贴吧
 void LogicSystem::SearchTiebaHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
-	Json::Reader reader;
-	Json::Value root;
-	reader.parse(msg_data, root);
-	auto keyword = root["keyword"].asString();
-	auto offset = root["offset"].asInt();
-	auto limit = root["limit"].asInt();
+	SearchTiebaReq req;
+	req.ParseFromString(msg_data);
 	
-	std::cout << "SearchTieba: keyword=" << keyword << ", offset=" << offset << ", limit=" << limit << std::endl;
+	std::cout << "SearchTieba: keyword=" << req.keyword() << ", offset=" << req.offset() << ", limit=" << req.limit() << std::endl;
 	
-	Json::Value rtvalue;
-	
-	Defer defer([this, &rtvalue, session]() {
-		std::string return_str = rtvalue.toStyledString();
+	SearchTiebaRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
 		session->Send(return_str, ID_SEARCH_TIEBA_RSP);
 	});
 	
+	int limit = req.limit();
 	if (limit <= 0 || limit > 100) {
 		limit = 20;
 	}
@@ -825,199 +827,177 @@ void LogicSystem::SearchTiebaHandler(std::shared_ptr<CSession> session, const sh
 	int total = 0;
 	
 	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
-	bool success = tieba_dao.SearchTieba(keyword, offset, limit, tieba_list, total);
+	bool success = tieba_dao.SearchTieba(req.keyword(), req.offset(), limit, tieba_list, total);
 	
 	if (!success) {
-		rtvalue["error"] = ErrorCodes::RPCFailed;
+		rsp.set_error(ErrorCodes::RPCFailed);
 		return;
 	}
 	
-	rtvalue["error"] = ErrorCodes::Success;
-	rtvalue["total"] = total;
+	rsp.set_error(ErrorCodes::Success);
+	rsp.set_total(total);
 	
 	for (auto& tieba : tieba_list) {
-		Json::Value tieba_obj;
-		tieba_obj["tieba_id"] = tieba->tieba_id;
-		tieba_obj["tieba_name"] = tieba->tieba_name;
-		tieba_obj["tieba_desc"] = tieba->tieba_desc;
-		tieba_obj["tieba_icon"] = tieba->tieba_icon;
-		tieba_obj["owner_uid"] = tieba->owner_uid;
-		tieba_obj["member_count"] = tieba->member_count;
-		tieba_obj["post_count"] = tieba->post_count;
-		tieba_obj["create_time"] = tieba->create_time;
-		rtvalue["tieba_list"].append(tieba_obj);
+		TiebaInfo* tieba_info = rsp.add_tieba_list();
+		tieba_info->set_tieba_id(tieba->tieba_id);
+		tieba_info->set_tieba_name(tieba->tieba_name);
+		tieba_info->set_tieba_desc(tieba->tieba_desc);
+		tieba_info->set_tieba_icon(tieba->tieba_icon);
+		tieba_info->set_owner_uid(tieba->owner_uid);
+		tieba_info->set_member_count(tieba->member_count);
+		tieba_info->set_post_count(tieba->post_count);
+		tieba_info->set_create_time(tieba->create_time);
 	}
 }
 
 // 加入贴吧
 void LogicSystem::JoinTiebaHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
-	Json::Reader reader;
-	Json::Value root;
-	reader.parse(msg_data, root);
-	auto uid = root["uid"].asInt();
-	auto tieba_id = root["tieba_id"].asInt();
+	JoinTiebaReq req;
+	req.ParseFromString(msg_data);
 	
-	std::cout << "JoinTieba: uid=" << uid << ", tieba_id=" << tieba_id << std::endl;
+	std::cout << "JoinTieba: uid=" << req.uid() << ", tieba_id=" << req.tieba_id() << std::endl;
 	
-	Json::Value rtvalue;
-	
-	Defer defer([this, &rtvalue, session]() {
-		std::string return_str = rtvalue.toStyledString();
+	JoinTiebaRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
 		session->Send(return_str, ID_JOIN_TIEBA_RSP);
 	});
 	
 	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
 	
 	// 检查贴吧是否存在
-	if (!tieba_dao.TiebaExists(tieba_id)) {
-		rtvalue["error"] = ErrorCodes::TiebaNotExist;
+	if (!tieba_dao.TiebaExists(req.tieba_id())) {
+		rsp.set_error(ErrorCodes::TiebaNotExist);
 		return;
 	}
 	
 	// 加入贴吧
-	bool success = tieba_dao.JoinTieba(uid, tieba_id);
+	bool success = tieba_dao.JoinTieba(req.uid(), req.tieba_id());
 	
 	if (!success) {
-		rtvalue["error"] = ErrorCodes::RPCFailed;
+		rsp.set_error(ErrorCodes::RPCFailed);
 		return;
 	}
 	
-	rtvalue["error"] = ErrorCodes::Success;
-	rtvalue["tieba_id"] = tieba_id;
+	rsp.set_error(ErrorCodes::Success);
+	rsp.set_tieba_id(req.tieba_id());
 }
 
 // 退出贴吧
 void LogicSystem::LeaveTiebaHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
-	Json::Reader reader;
-	Json::Value root;
-	reader.parse(msg_data, root);
-	auto uid = root["uid"].asInt();
-	auto tieba_id = root["tieba_id"].asInt();
+	LeaveTiebaReq req;
+	req.ParseFromString(msg_data);
 	
-	std::cout << "LeaveTieba: uid=" << uid << ", tieba_id=" << tieba_id << std::endl;
+	std::cout << "LeaveTieba: uid=" << req.uid() << ", tieba_id=" << req.tieba_id() << std::endl;
 	
-	Json::Value rtvalue;
-	
-	Defer defer([this, &rtvalue, session]() {
-		std::string return_str = rtvalue.toStyledString();
+	LeaveTiebaRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
 		session->Send(return_str, ID_LEAVE_TIEBA_RSP);
 	});
 	
 	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
 	
 	// 退出贴吧
-	bool success = tieba_dao.LeaveTieba(uid, tieba_id);
+	bool success = tieba_dao.LeaveTieba(req.uid(), req.tieba_id());
 	
 	if (!success) {
-		rtvalue["error"] = ErrorCodes::PermissionDenied;
+		rsp.set_error(ErrorCodes::PermissionDenied);
 		return;
 	}
 	
-	rtvalue["error"] = ErrorCodes::Success;
-	rtvalue["tieba_id"] = tieba_id;
+	rsp.set_error(ErrorCodes::Success);
+	rsp.set_tieba_id(req.tieba_id());
 }
 
 // 发帖
 void LogicSystem::CreatePostHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
-	Json::Reader reader;
-	Json::Value root;
-	reader.parse(msg_data, root);
-	auto uid = root["uid"].asInt();
-	auto tieba_id = root["tieba_id"].asInt();
-	auto title = root["title"].asString();
-	auto content = root["content"].asString();
+	CreatePostReq req;
+	req.ParseFromString(msg_data);
 	
-	std::cout << "CreatePost: uid=" << uid << ", tieba_id=" << tieba_id << ", title=" << title << std::endl;
+	std::cout << "CreatePost: uid=" << req.uid() << ", tieba_id=" << req.tieba_id() << ", title=" << req.title() << std::endl;
 	
-	Json::Value rtvalue;
-	
-	Defer defer([this, &rtvalue, session]() {
-		std::string return_str = rtvalue.toStyledString();
+	CreatePostRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
 		session->Send(return_str, ID_CREATE_POST_RSP);
 	});
 	
 	// 检查标题和内容
-	if (title.empty() || title.length() > 200) {
-		rtvalue["error"] = ErrorCodes::Error_Json;
+	if (req.title().empty() || req.title().length() > 200) {
+		rsp.set_error(ErrorCodes::Error_Json);
 		return;
 	}
 	
-	if (content.empty() || content.length() > 10000) {
-		rtvalue["error"] = ErrorCodes::Error_Json;
+	if (req.content().empty() || req.content().length() > 10000) {
+		rsp.set_error(ErrorCodes::Error_Json);
 		return;
 	}
 	
 	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
-	int post_id = tieba_dao.CreatePost(uid, tieba_id, title, content);
+	int post_id = tieba_dao.CreatePost(req.uid(), req.tieba_id(), req.title(), req.content());
 	
 	if (post_id < 0) {
-		rtvalue["error"] = ErrorCodes::NotTiebaMember;
+		rsp.set_error(ErrorCodes::NotTiebaMember);
 		return;
 	}
 	
-	rtvalue["error"] = ErrorCodes::Success;
-	rtvalue["post_id"] = post_id;
-	rtvalue["tieba_id"] = tieba_id;
+	rsp.set_error(ErrorCodes::Success);
+	rsp.set_post_id(post_id);
+	rsp.set_tieba_id(req.tieba_id());
 }
 
 // 回复
 void LogicSystem::CreateReplyHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
-	Json::Reader reader;
-	Json::Value root;
-	reader.parse(msg_data, root);
-	auto uid = root["uid"].asInt();
-	auto post_id = root["post_id"].asInt();
-	auto content = root["content"].asString();
-	auto reply_to_uid = root["reply_to_uid"].asInt();
-	auto reply_to_reply_id = root["reply_to_reply_id"].asInt();
+	CreateReplyReq req;
+	req.ParseFromString(msg_data);
 	
-	std::cout << "CreateReply: uid=" << uid << ", post_id=" << post_id << std::endl;
+	std::cout << "CreateReply: uid=" << req.uid() << ", post_id=" << req.post_id() << std::endl;
 	
-	Json::Value rtvalue;
-	
-	Defer defer([this, &rtvalue, session]() {
-		std::string return_str = rtvalue.toStyledString();
+	CreateReplyRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
 		session->Send(return_str, ID_CREATE_REPLY_RSP);
 	});
 	
 	// 检查内容
-	if (content.empty() || content.length() > 5000) {
-		rtvalue["error"] = ErrorCodes::Error_Json;
+	if (req.content().empty() || req.content().length() > 5000) {
+		rsp.set_error(ErrorCodes::Error_Json);
 		return;
 	}
 	
 	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
-	int reply_id = tieba_dao.CreateReply(uid, post_id, content, reply_to_uid, reply_to_reply_id);
+	int reply_id = tieba_dao.CreateReply(req.uid(), req.post_id(), req.content(), req.reply_to_uid(), req.reply_to_reply_id());
 	
 	if (reply_id < 0) {
-		rtvalue["error"] = ErrorCodes::PostNotExist;
+		rsp.set_error(ErrorCodes::PostNotExist);
 		return;
 	}
 	
-	rtvalue["error"] = ErrorCodes::Success;
-	rtvalue["reply_id"] = reply_id;
-	rtvalue["post_id"] = post_id;
+	rsp.set_error(ErrorCodes::Success);
+	rsp.set_reply_id(reply_id);
+	rsp.set_post_id(req.post_id());
 }
+
 // 获取帖子列表
 void LogicSystem::GetPostListHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
-	Json::Reader reader;
-	Json::Value root;
-	reader.parse(msg_data, root);
-	auto uid = root["uid"].asInt();
-	auto tieba_id = root["tieba_id"].asInt();
-	auto offset = root["offset"].asInt();
-	auto limit = root["limit"].asInt();
-	auto sort_type = root["sort_type"].asInt();
+	GetPostListReq req;
+	req.ParseFromString(msg_data);
 	
-	std::cout << "GetPostList: tieba_id=" << tieba_id << ", offset=" << offset << ", limit=" << limit << std::endl;
+	std::cout << "GetPostList: tieba_id=" << req.tieba_id() << ", offset=" << req.offset() << ", limit=" << req.limit() << std::endl;
 	
-	Json::Value rtvalue;
-	
-	Defer defer([this, &rtvalue, session]() {
-		std::string return_str = rtvalue.toStyledString();
+	GetPostListRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
 		session->Send(return_str, ID_GET_POST_LIST_RSP);
 	});
 	
+	int limit = req.limit();
 	if (limit <= 0 || limit > 100) {
 		limit = 20;
 	}
@@ -1026,54 +1006,49 @@ void LogicSystem::GetPostListHandler(std::shared_ptr<CSession> session, const sh
 	int total = 0;
 	
 	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
-	bool success = tieba_dao.GetPostList(uid, tieba_id, offset, limit, sort_type, post_list, total);
+	bool success = tieba_dao.GetPostList(req.uid(), req.tieba_id(), req.offset(), limit, req.sort_type(), post_list, total);
 	
 	if (!success) {
-		rtvalue["error"] = ErrorCodes::RPCFailed;
+		rsp.set_error(ErrorCodes::RPCFailed);
 		return;
 	}
 	
-	rtvalue["error"] = ErrorCodes::Success;
-	rtvalue["total"] = total;
+	rsp.set_error(ErrorCodes::Success);
+	rsp.set_total(total);
 	
 	for (auto& post : post_list) {
-		Json::Value post_obj;
-		post_obj["post_id"] = post->post_id;
-		post_obj["tieba_id"] = post->tieba_id;
-		post_obj["uid"] = post->uid;
-		post_obj["user_name"] = post->user_name;
-		post_obj["user_icon"] = post->user_icon;
-		post_obj["title"] = post->title;
-		post_obj["content"] = post->content;
-		post_obj["reply_count"] = post->reply_count;
-		post_obj["like_count"] = post->like_count;
-		post_obj["is_top"] = post->is_top;
-		post_obj["is_essence"] = post->is_essence;
-		post_obj["create_time"] = post->create_time;
-		post_obj["is_liked"] = post->is_liked;
-		rtvalue["post_list"].append(post_obj);
+		PostInfo* post_info = rsp.add_post_list();
+		post_info->set_post_id(post->post_id);
+		post_info->set_tieba_id(post->tieba_id);
+		post_info->set_uid(post->uid);
+		post_info->set_user_name(post->user_name);
+		post_info->set_user_icon(post->user_icon);
+		post_info->set_title(post->title);
+		post_info->set_content(post->content);
+		post_info->set_reply_count(post->reply_count);
+		post_info->set_like_count(post->like_count);
+		post_info->set_is_top(post->is_top);
+		post_info->set_is_essence(post->is_essence);
+		post_info->set_create_time(post->create_time);
+		post_info->set_is_liked(post->is_liked);
 	}
 }
 
 // 获取回复列表
 void LogicSystem::GetReplyListHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
-	Json::Reader reader;
-	Json::Value root;
-	reader.parse(msg_data, root);
-	auto uid = root["uid"].asInt();
-	auto post_id = root["post_id"].asInt();
-	auto offset = root["offset"].asInt();
-	auto limit = root["limit"].asInt();
+	GetReplyListReq req;
+	req.ParseFromString(msg_data);
 	
-	std::cout << "GetReplyList: post_id=" << post_id << ", offset=" << offset << ", limit=" << limit << std::endl;
+	std::cout << "GetReplyList: post_id=" << req.post_id() << ", offset=" << req.offset() << ", limit=" << req.limit() << std::endl;
 	
-	Json::Value rtvalue;
-	
-	Defer defer([this, &rtvalue, session]() {
-		std::string return_str = rtvalue.toStyledString();
+	GetReplyListRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
 		session->Send(return_str, ID_GET_REPLY_LIST_RSP);
 	});
 	
+	int limit = req.limit();
 	if (limit <= 0 || limit > 100) {
 		limit = 20;
 	}
@@ -1081,327 +1056,317 @@ void LogicSystem::GetReplyListHandler(std::shared_ptr<CSession> session, const s
 	// 获取帖子信息
 	std::shared_ptr<PostInfo> post_info;
 	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
-	bool b_post = tieba_dao.GetPostInfo(uid, post_id, post_info);
+	bool b_post = tieba_dao.GetPostInfo(req.uid(), req.post_id(), post_info);
 	if (!b_post) {
-		rtvalue["error"] = ErrorCodes::PostNotExist;
+		rsp.set_error(ErrorCodes::PostNotExist);
 		return;
 	}
 	
 	// 获取回复列表
 	std::vector<std::shared_ptr<ReplyInfo>> reply_list;
 	int total = 0;
-	bool success = tieba_dao.GetReplyList(uid, post_id, offset, limit, reply_list, total);
+	bool success = tieba_dao.GetReplyList(req.uid(), req.post_id(), req.offset(), limit, reply_list, total);
 	
 	if (!success) {
-		rtvalue["error"] = ErrorCodes::RPCFailed;
+		rsp.set_error(ErrorCodes::RPCFailed);
 		return;
 	}
 	
-	rtvalue["error"] = ErrorCodes::Success;
-	rtvalue["total"] = total;
+	rsp.set_error(ErrorCodes::Success);
+	rsp.set_total(total);
 	
 	// 添加帖子信息
-	Json::Value post_obj;
-	post_obj["post_id"] = post_info->post_id;
-	post_obj["tieba_id"] = post_info->tieba_id;
-	post_obj["uid"] = post_info->uid;
-	post_obj["user_name"] = post_info->user_name;
-	post_obj["user_icon"] = post_info->user_icon;
-	post_obj["title"] = post_info->title;
-	post_obj["content"] = post_info->content;
-	post_obj["reply_count"] = post_info->reply_count;
-	post_obj["like_count"] = post_info->like_count;
-	post_obj["is_top"] = post_info->is_top;
-	post_obj["is_essence"] = post_info->is_essence;
-	post_obj["create_time"] = post_info->create_time;
-	post_obj["is_liked"] = post_info->is_liked;
-	rtvalue["post_info"] = post_obj;
+	PostInfo* rsp_post_info = rsp.mutable_post_info();
+	rsp_post_info->set_post_id(post_info->post_id);
+	rsp_post_info->set_tieba_id(post_info->tieba_id);
+	rsp_post_info->set_uid(post_info->uid);
+	rsp_post_info->set_user_name(post_info->user_name);
+	rsp_post_info->set_user_icon(post_info->user_icon);
+	rsp_post_info->set_title(post_info->title);
+	rsp_post_info->set_content(post_info->content);
+	rsp_post_info->set_reply_count(post_info->reply_count);
+	rsp_post_info->set_like_count(post_info->like_count);
+	rsp_post_info->set_is_top(post_info->is_top);
+	rsp_post_info->set_is_essence(post_info->is_essence);
+	rsp_post_info->set_create_time(post_info->create_time);
+	rsp_post_info->set_is_liked(post_info->is_liked);
 	
 	// 添加回复列表
 	for (auto& reply : reply_list) {
-		Json::Value reply_obj;
-		reply_obj["reply_id"] = reply->reply_id;
-		reply_obj["post_id"] = reply->post_id;
-		reply_obj["uid"] = reply->uid;
-		reply_obj["user_name"] = reply->user_name;
-		reply_obj["user_icon"] = reply->user_icon;
-		reply_obj["content"] = reply->content;
-		reply_obj["reply_to_uid"] = reply->reply_to_uid;
-		reply_obj["reply_to_user_name"] = reply->reply_to_user_name;
-		reply_obj["reply_to_reply_id"] = reply->reply_to_reply_id;
-		reply_obj["like_count"] = reply->like_count;
-		reply_obj["create_time"] = reply->create_time;
-		reply_obj["is_liked"] = reply->is_liked;
-		rtvalue["reply_list"].append(reply_obj);
+		ReplyInfo* reply_info = rsp.add_reply_list();
+		reply_info->set_reply_id(reply->reply_id);
+		reply_info->set_post_id(reply->post_id);
+		reply_info->set_uid(reply->uid);
+		reply_info->set_user_name(reply->user_name);
+		reply_info->set_user_icon(reply->user_icon);
+		reply_info->set_content(reply->content);
+		reply_info->set_reply_to_uid(reply->reply_to_uid);
+		reply_info->set_reply_to_user_name(reply->reply_to_user_name);
+		reply_info->set_reply_to_reply_id(reply->reply_to_reply_id);
+		reply_info->set_like_count(reply->like_count);
+		reply_info->set_create_time(reply->create_time);
+		reply_info->set_is_liked(reply->is_liked);
 	}
 }
 
 // 删除帖子
 void LogicSystem::DeletePostHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
-	Json::Reader reader;
-	Json::Value root;
-	reader.parse(msg_data, root);
-	auto uid = root["uid"].asInt();
-	auto post_id = root["post_id"].asInt();
-	auto tieba_id = root["tieba_id"].asInt();
+	DeletePostReq req;
+	req.ParseFromString(msg_data);
 	
-	std::cout << "DeletePost: uid=" << uid << ", post_id=" << post_id << ", tieba_id=" << tieba_id << std::endl;
+	std::cout << "DeletePost: uid=" << req.uid() << ", post_id=" << req.post_id() << ", tieba_id=" << req.tieba_id() << std::endl;
 	
-	Json::Value rtvalue;
-	
-	Defer defer([this, &rtvalue, session]() {
-		std::string return_str = rtvalue.toStyledString();
+	DeletePostRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
 		session->Send(return_str, ID_DELETE_POST_RSP);
 	});
 	
 	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
-	bool success = tieba_dao.DeletePost(uid, post_id, tieba_id);
+	bool success = tieba_dao.DeletePost(req.uid(), req.post_id(), req.tieba_id());
 	
 	if (!success) {
-		rtvalue["error"] = ErrorCodes::PermissionDenied;
+		rsp.set_error(ErrorCodes::PermissionDenied);
 		return;
 	}
 	
-	rtvalue["error"] = ErrorCodes::Success;
-	rtvalue["post_id"] = post_id;
+	rsp.set_error(ErrorCodes::Success);
+	rsp.set_post_id(req.post_id());
 }
 
 // 删除回复
 void LogicSystem::DeleteReplyHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
-	Json::Reader reader;
-	Json::Value root;
-	reader.parse(msg_data, root);
-	auto uid = root["uid"].asInt();
-	auto reply_id = root["reply_id"].asInt();
-	auto post_id = root["post_id"].asInt();
+	DeleteReplyReq req;
+	req.ParseFromString(msg_data);
 	
-	std::cout << "DeleteReply: uid=" << uid << ", reply_id=" << reply_id << ", post_id=" << post_id << std::endl;
+	std::cout << "DeleteReply: uid=" << req.uid() << ", reply_id=" << req.reply_id() << ", post_id=" << req.post_id() << std::endl;
 	
-	Json::Value rtvalue;
-	
-	Defer defer([this, &rtvalue, session]() {
-		std::string return_str = rtvalue.toStyledString();
+	DeleteReplyRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
 		session->Send(return_str, ID_DELETE_REPLY_RSP);
 	});
 	
 	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
-	bool success = tieba_dao.DeleteReply(uid, reply_id, post_id);
+	bool success = tieba_dao.DeleteReply(req.uid(), req.reply_id(), req.post_id());
 	
 	if (!success) {
-		rtvalue["error"] = ErrorCodes::PermissionDenied;
+		rsp.set_error(ErrorCodes::PermissionDenied);
 		return;
 	}
 	
-	rtvalue["error"] = ErrorCodes::Success;
-	rtvalue["reply_id"] = reply_id;
+	rsp.set_error(ErrorCodes::Success);
+	rsp.set_reply_id(req.reply_id());
 }
 
 // 点赞/取消点赞
 void LogicSystem::LikeHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
-	Json::Reader reader;
-	Json::Value root;
-	reader.parse(msg_data, root);
-	auto uid = root["uid"].asInt();
-	auto target_type = root["target_type"].asInt();
-	auto target_id = root["target_id"].asInt();
-	auto is_like = root["is_like"].asBool();
+	LikeReq req;
+	req.ParseFromString(msg_data);
 	
-	std::cout << "Like: uid=" << uid << ", target_type=" << target_type << ", target_id=" << target_id << ", is_like=" << is_like << std::endl;
+	std::cout << "Like: uid=" << req.uid() << ", target_type=" << req.target_type() << ", target_id=" << req.target_id() << ", is_like=" << req.is_like() << std::endl;
 	
-	Json::Value rtvalue;
-	
-	Defer defer([this, &rtvalue, session]() {
-		std::string return_str = rtvalue.toStyledString();
+	LikeRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
 		session->Send(return_str, ID_LIKE_RSP);
 	});
 	
 	int like_count = 0;
 	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
-	bool success = tieba_dao.Like(uid, target_type, target_id, is_like, like_count);
+	bool success = tieba_dao.Like(req.uid(), req.target_type(), req.target_id(), req.is_like(), like_count);
 	
 	if (!success) {
-		rtvalue["error"] = ErrorCodes::RPCFailed;
+		rsp.set_error(ErrorCodes::RPCFailed);
 		return;
 	}
 	
-	rtvalue["error"] = ErrorCodes::Success;
-	rtvalue["target_type"] = target_type;
-	rtvalue["target_id"] = target_id;
-	rtvalue["is_like"] = is_like;
-	rtvalue["like_count"] = like_count;
+	rsp.set_error(ErrorCodes::Success);
+	rsp.set_target_type(req.target_type());
+	rsp.set_target_id(req.target_id());
+	rsp.set_is_like(req.is_like());
+	rsp.set_like_count(like_count);
 }
 
 // 置顶
 void LogicSystem::SetTopHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
-	Json::Reader reader;
-	Json::Value root;
-	reader.parse(msg_data, root);
-	auto uid = root["uid"].asInt();
-	auto post_id = root["post_id"].asInt();
-	auto tieba_id = root["tieba_id"].asInt();
-	auto is_top = root["is_top"].asBool();
+	SetTopReq req;
+	req.ParseFromString(msg_data);
 	
-	std::cout << "SetTop: uid=" << uid << ", post_id=" << post_id << ", tieba_id=" << tieba_id << ", is_top=" << is_top << std::endl;
+	std::cout << "SetTop: uid=" << req.uid() << ", post_id=" << req.post_id() << ", tieba_id=" << req.tieba_id() << ", is_top=" << req.is_top() << std::endl;
 	
-	Json::Value rtvalue;
-	
-	Defer defer([this, &rtvalue, session]() {
-		std::string return_str = rtvalue.toStyledString();
+	SetTopRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
 		session->Send(return_str, ID_SET_TOP_RSP);
 	});
 	
 	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
-	bool success = tieba_dao.SetTop(uid, post_id, tieba_id, is_top);
+	bool success = tieba_dao.SetTop(req.uid(), req.post_id(), req.tieba_id(), req.is_top());
 	
 	if (!success) {
-		rtvalue["error"] = ErrorCodes::PermissionDenied;
+		rsp.set_error(ErrorCodes::PermissionDenied);
 		return;
 	}
 	
-	rtvalue["error"] = ErrorCodes::Success;
-	rtvalue["post_id"] = post_id;
-	rtvalue["is_top"] = is_top;
+	rsp.set_error(ErrorCodes::Success);
+	rsp.set_post_id(req.post_id());
+	rsp.set_is_top(req.is_top());
 }
 
 // 加精
 void LogicSystem::SetEssenceHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
-	Json::Reader reader;
-	Json::Value root;
-	reader.parse(msg_data, root);
-	auto uid = root["uid"].asInt();
-	auto post_id = root["post_id"].asInt();
-	auto tieba_id = root["tieba_id"].asInt();
-	auto is_essence = root["is_essence"].asBool();
+	SetEssenceReq req;
+	req.ParseFromString(msg_data);
 	
-	std::cout << "SetEssence: uid=" << uid << ", post_id=" << post_id << ", tieba_id=" << tieba_id << ", is_essence=" << is_essence << std::endl;
+	std::cout << "SetEssence: uid=" << req.uid() << ", post_id=" << req.post_id() << ", tieba_id=" << req.tieba_id() << ", is_essence=" << req.is_essence() << std::endl;
 	
-	Json::Value rtvalue;
-	
-	Defer defer([this, &rtvalue, session]() {
-		std::string return_str = rtvalue.toStyledString();
+	SetEssenceRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
 		session->Send(return_str, ID_SET_ESSENCE_RSP);
 	});
 	
 	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
-	bool success = tieba_dao.SetEssence(uid, post_id, tieba_id, is_essence);
+	bool success = tieba_dao.SetEssence(req.uid(), req.post_id(), req.tieba_id(), req.is_essence());
 	
 	if (!success) {
-		rtvalue["error"] = ErrorCodes::PermissionDenied;
+		rsp.set_error(ErrorCodes::PermissionDenied);
 		return;
 	}
 	
-	rtvalue["error"] = ErrorCodes::Success;
-	rtvalue["post_id"] = post_id;
-	rtvalue["is_essence"] = is_essence;
+	rsp.set_error(ErrorCodes::Success);
+	rsp.set_post_id(req.post_id());
+	rsp.set_is_essence(req.is_essence());
 }
 
 // 获取贴吧信息
 void LogicSystem::GetTiebaInfoHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
-	Json::Reader reader;
-	Json::Value root;
-	reader.parse(msg_data, root);
-	auto uid = root["uid"].asInt();
-	auto tieba_id = root["tieba_id"].asInt();
+	GetTiebaInfoReq req;
+	req.ParseFromString(msg_data);
 	
-	std::cout << "GetTiebaInfo: uid=" << uid << ", tieba_id=" << tieba_id << std::endl;
+	std::cout << "GetTiebaInfo: uid=" << req.uid() << ", tieba_id=" << req.tieba_id() << std::endl;
 	
-	Json::Value rtvalue;
-	
-	Defer defer([this, &rtvalue, session]() {
-		std::string return_str = rtvalue.toStyledString();
+	GetTiebaInfoRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
 		session->Send(return_str, ID_GET_TIEBA_INFO_RSP);
 	});
 	
 	std::shared_ptr<TiebaInfo> tieba_info;
 	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
-	bool success = tieba_dao.GetTiebaInfo(tieba_id, tieba_info);
+	bool success = tieba_dao.GetTiebaInfo(req.tieba_id(), tieba_info);
 	
 	if (!success) {
-		rtvalue["error"] = ErrorCodes::TiebaNotExist;
+		rsp.set_error(ErrorCodes::TiebaNotExist);
 		return;
 	}
 	
-	rtvalue["error"] = ErrorCodes::Success;
+	rsp.set_error(ErrorCodes::Success);
 	
 	// 添加贴吧信息
-	Json::Value tieba_obj;
-	tieba_obj["tieba_id"] = tieba_info->tieba_id;
-	tieba_obj["tieba_name"] = tieba_info->tieba_name;
-	tieba_obj["tieba_desc"] = tieba_info->tieba_desc;
-	tieba_obj["tieba_icon"] = tieba_info->tieba_icon;
-	tieba_obj["owner_uid"] = tieba_info->owner_uid;
-	tieba_obj["member_count"] = tieba_info->member_count;
-	tieba_obj["post_count"] = tieba_info->post_count;
-	tieba_obj["create_time"] = tieba_info->create_time;
-	rtvalue["tieba_info"] = tieba_obj;
+	TiebaInfo* tieba_obj = rsp.mutable_tieba_info();
+	tieba_obj->set_tieba_id(tieba_info->tieba_id);
+	tieba_obj->set_tieba_name(tieba_info->tieba_name);
+	tieba_obj->set_tieba_desc(tieba_info->tieba_desc);
+	tieba_obj->set_tieba_icon(tieba_info->tieba_icon);
+	tieba_obj->set_owner_uid(tieba_info->owner_uid);
+	tieba_obj->set_member_count(tieba_info->member_count);
+	tieba_obj->set_post_count(tieba_info->post_count);
+	tieba_obj->set_create_time(tieba_info->create_time);
 	
 	// 检查用户是否为成员
 	int role = 0;
-	bool is_member = tieba_dao.IsTiebaMember(uid, tieba_id, role);
-	rtvalue["is_member"] = is_member;
-	rtvalue["member_role"] = role;
+	bool is_member = tieba_dao.IsTiebaMember(req.uid(), req.tieba_id(), role);
+	rsp.set_is_member(is_member);
+	rsp.set_member_role(role);
 }
 
 // 获取我的贴吧列表
 void LogicSystem::GetMyTiebaListHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
-	Json::Reader reader;
-	Json::Value root;
-	reader.parse(msg_data, root);
-	auto uid = root["uid"].asInt();
+	GetMyTiebaListReq req;
+	req.ParseFromString(msg_data);
 	
-	std::cout << "GetMyTiebaList: uid=" << uid << std::endl;
+	std::cout << "GetMyTiebaList: uid=" << req.uid() << std::endl;
 	
-	Json::Value rtvalue;
-	
-	Defer defer([this, &rtvalue, session]() {
-		std::string return_str = rtvalue.toStyledString();
+	GetMyTiebaListRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
 		session->Send(return_str, ID_GET_MY_TIEBA_LIST_RSP);
 	});
 	
 	std::vector<std::shared_ptr<TiebaInfo>> tieba_list;
 	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
-	bool success = tieba_dao.GetMyTiebaList(uid, tieba_list);
+	bool success = tieba_dao.GetMyTiebaList(req.uid(), tieba_list);
 	
 	if (!success) {
-		rtvalue["error"] = ErrorCodes::RPCFailed;
+		rsp.set_error(ErrorCodes::RPCFailed);
 		return;
 	}
 	
-	rtvalue["error"] = ErrorCodes::Success;
+	rsp.set_error(ErrorCodes::Success);
 	
 	for (auto& tieba : tieba_list) {
-		Json::Value tieba_obj;
-		tieba_obj["tieba_id"] = tieba->tieba_id;
-		tieba_obj["tieba_name"] = tieba->tieba_name;
-		tieba_obj["tieba_desc"] = tieba->tieba_desc;
-		tieba_obj["tieba_icon"] = tieba->tieba_icon;
-		tieba_obj["owner_uid"] = tieba->owner_uid;
-		tieba_obj["member_count"] = tieba->member_count;
-		tieba_obj["post_count"] = tieba->post_count;
-		tieba_obj["create_time"] = tieba->create_time;
-		rtvalue["tieba_list"].append(tieba_obj);
+		TiebaInfo* tieba_obj = rsp.add_tieba_list();
+		tieba_obj->set_tieba_id(tieba->tieba_id);
+		tieba_obj->set_tieba_name(tieba->tieba_name);
+		tieba_obj->set_tieba_desc(tieba->tieba_desc);
+		tieba_obj->set_tieba_icon(tieba->tieba_icon);
+		tieba_obj->set_owner_uid(tieba->owner_uid);
+		tieba_obj->set_member_count(tieba->member_count);
+		tieba_obj->set_post_count(tieba->post_count);
+		tieba_obj->set_create_time(tieba->create_time);
 	}
+}
+
+// 更新贴吧信息
+void LogicSystem::UpdateTiebaHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
+	UpdateTiebaReq req;
+	req.ParseFromString(msg_data);
+	
+	std::cout << "UpdateTieba: uid=" << req.uid() << ", tieba_id=" << req.tieba_id() << std::endl;
+	
+	UpdateTiebaRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
+		session->Send(return_str, ID_UPDATE_TIEBA_RSP);
+	});
+	
+	// 更新贴吧信息
+	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
+	bool success = tieba_dao.UpdateTiebaInfo(req.uid(), req.tieba_id(), req.desc(), req.icon(), req.new_owner_id());
+	
+	if (!success) {
+		rsp.set_error(ErrorCodes::RPCFailed);
+		return;
+	}
+	
+	rsp.set_error(ErrorCodes::Success);
 }
 
 // 获取贴吧成员列表
 void LogicSystem::GetTiebaMemberListHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
-	Json::Reader reader;
-	Json::Value root;
-	reader.parse(msg_data, root);
-	auto uid = root["uid"].asInt();
-	auto tieba_id = root["tieba_id"].asInt();
-	auto offset = root["offset"].asInt();
-	auto limit = root["limit"].asInt();
+	GetTiebaMemberListReq req;
+	req.ParseFromString(msg_data);
 	
-	std::cout << "GetTiebaMemberList: tieba_id=" << tieba_id << ", offset=" << offset << ", limit=" << limit << std::endl;
+	std::cout << "GetTiebaMemberList: tieba_id=" << req.tieba_id() << ", offset=" << req.offset() << ", limit=" << req.limit() << std::endl;
 	
-	Json::Value rtvalue;
-	
-	Defer defer([this, &rtvalue, session]() {
-		std::string return_str = rtvalue.toStyledString();
+	GetTiebaMemberListRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
 		session->Send(return_str, ID_GET_TIEBA_MEMBER_LIST_RSP);
 	});
 	
+	int limit = req.limit();
 	if (limit <= 0 || limit > 100) {
 		limit = 20;
 	}
@@ -1409,23 +1374,124 @@ void LogicSystem::GetTiebaMemberListHandler(std::shared_ptr<CSession> session, c
 	std::vector<std::shared_ptr<TiebaMemberInfo>> member_list;
 	int total = 0;
 	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
-	bool success = tieba_dao.GetTiebaMemberList(uid, tieba_id, offset, limit, member_list, total);
+	bool success = tieba_dao.GetTiebaMemberList(req.uid(), req.tieba_id(), req.offset(), limit, member_list, total);
 	
 	if (!success) {
-		rtvalue["error"] = ErrorCodes::RPCFailed;
+		rsp.set_error(ErrorCodes::RPCFailed);
 		return;
 	}
 	
-	rtvalue["error"] = ErrorCodes::Success;
-	rtvalue["total"] = total;
+	rsp.set_error(ErrorCodes::Success);
+	rsp.set_total(total);
 	
 	for (auto& member : member_list) {
-		Json::Value member_obj;
-		member_obj["uid"] = member->uid;
-		member_obj["user_name"] = member->user_name;
-		member_obj["user_icon"] = member->user_icon;
-		member_obj["role"] = member->role;
-		member_obj["join_time"] = member->join_time;
-		rtvalue["member_list"].append(member_obj);
+		TiebaMemberInfo* member_obj = rsp.add_member_list();
+		member_obj->set_uid(member->uid);
+		member_obj->set_user_name(member->user_name);
+		member_obj->set_user_icon(member->user_icon);
+		member_obj->set_role(member->role);
+		member_obj->set_join_time(member->join_time);
 	}
+}
+
+// 关注/取关贴吧
+void LogicSystem::SetFollowedTiebaHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
+	SetFollowedTiebaReq req;
+	req.ParseFromString(msg_data);
+	
+	std::cout << "SetFollowedTieba: uid=" << req.uid() << ", tieba_id=" << req.tieba_id() 
+		<< ", is_followed=" << req.is_followed() << std::endl;
+	
+	SetFollowedTiebaRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
+		session->Send(return_str, ID_SET_FOLLOWED_TIEBA_RSP);
+	});
+	
+	// 关注/取关贴吧
+	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
+	bool success = tieba_dao.SetFollowedTieba(req.uid(), req.tieba_id(), req.is_followed());
+	
+	if (!success) {
+		rsp.set_error(ErrorCodes::RPCFailed);
+		return;
+	}
+	
+	rsp.set_error(ErrorCodes::Success);
+}
+
+// 获取用户关注的贴吧列表
+void LogicSystem::GetFollowedTiebaListHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
+	GetFollowedTiebaListReq req;
+	req.ParseFromString(msg_data);
+	
+	std::cout << "GetFollowedTiebaList: uid=" << req.uid() << ", offset=" << req.offset() 
+		<< ", limit=" << req.limit() << std::endl;
+	
+	GetFollowedTiebaListRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
+		session->Send(return_str, ID_GET_FOLLOWED_TIEBA_LIST_RSP);
+	});
+	
+	if (req.limit() <= 0 || req.limit() > 100) {
+		// 使用默认值
+		const_cast<GetFollowedTiebaListReq*>(&req)->set_limit(20);
+	}
+	
+	std::vector<std::shared_ptr<TiebaInfo>> tieba_list;
+	int total = 0;
+	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
+	bool success = tieba_dao.GetFollowedTiebaList(req.uid(), req.offset(), req.limit(), tieba_list, total);
+	
+	if (!success) {
+		rsp.set_error(ErrorCodes::RPCFailed);
+		return;
+	}
+	
+	rsp.set_error(ErrorCodes::Success);
+	rsp.set_total(total);
+	
+	for (auto& tieba : tieba_list) {
+		TiebaInfo* tieba_info = rsp.add_tieba_list();
+		tieba_info->set_tieba_id(tieba->tieba_id);
+		tieba_info->set_tieba_name(tieba->tieba_name);
+		tieba_info->set_tieba_desc(tieba->tieba_desc);
+		tieba_info->set_tieba_icon(tieba->tieba_icon);
+		tieba_info->set_owner_uid(tieba->owner_uid);
+		tieba_info->set_member_count(tieba->member_count);
+		tieba_info->set_post_count(tieba->post_count);
+		tieba_info->set_create_time(tieba->create_time);
+	}
+}
+
+// 收藏/取消收藏帖子
+void LogicSystem::SetCollectedPostHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
+	SetCollectedPostReq req;
+	req.ParseFromString(msg_data);
+	
+	std::cout << "SetCollectedPost: uid=" << req.uid() << ", post_id=" << req.post_id() 
+		<< ", is_collected=" << req.is_collected() << std::endl;
+	
+	SetCollectedPostRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
+		session->Send(return_str, ID_SET_COLLECTED_POST_RSP);
+	});
+	
+	// 收藏/取消收藏帖子
+	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
+	bool success = tieba_dao.SetCollectedPost(req.uid(), req.post_id(), req.is_collected());
+	
+	if (!success) {
+		rsp.set_error(ErrorCodes::RPCFailed);
+		return;
+	}
+	
+	rsp.set_error(ErrorCodes::Success);
+	rsp.set_post_id(req.post_id());
+	rsp.set_is_collected(req.is_collected());
 }

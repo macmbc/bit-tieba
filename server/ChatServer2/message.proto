@@ -396,3 +396,16 @@ message GetTiebaMemberListRsp {
 	repeated TiebaMemberInfo member_list = 2;
 	int32 total = 3;
 }
+
+// 更新贴吧信息请求/响应
+message UpdateTiebaReq {
+	int32 uid = 1;
+	int32 tieba_id = 2;
+	string desc = 3;
+	string icon = 4;
+	int32 new_owner_id = 5;
+}
+
+message UpdateTiebaRsp {
+	int32 error = 1;
+}

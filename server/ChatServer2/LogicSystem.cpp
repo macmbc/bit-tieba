@@ -127,6 +127,9 @@ void LogicSystem::RegisterCallBacks() {
 	_fun_callbacks[ID_DELETE_REPLY_REQ] = std::bind(&LogicSystem::DeleteReplyHandler, this,
 		placeholders::_1, placeholders::_2, placeholders::_3);
 	
+	_fun_callbacks[ID_UPDATE_TIEBA_REQ] = std::bind(&LogicSystem::UpdateTiebaHandler, this,
+		placeholders::_1, placeholders::_2, placeholders::_3);
+	
 	_fun_callbacks[ID_LIKE_REQ] = std::bind(&LogicSystem::LikeHandler, this,
 		placeholders::_1, placeholders::_2, placeholders::_3);
 	
@@ -1381,6 +1384,32 @@ void LogicSystem::GetMyTiebaListHandler(std::shared_ptr<CSession> session, const
 		tieba_obj["create_time"] = tieba->create_time;
 		rtvalue["tieba_list"].append(tieba_obj);
 	}
+}
+
+// 更新贴吧信息
+void LogicSystem::UpdateTiebaHandler(std::shared_ptr<CSession> session, const short& msg_id, const string& msg_data) {
+	UpdateTiebaReq req;
+	req.ParseFromString(msg_data);
+	
+	std::cout << "UpdateTieba: uid=" << req.uid() << ", tieba_id=" << req.tieba_id() << std::endl;
+	
+	UpdateTiebaRsp rsp;
+	Defer defer([this, &rsp, session]() {
+		std::string return_str;
+		rsp.SerializeToString(&return_str);
+		session->Send(return_str, ID_UPDATE_TIEBA_RSP);
+	});
+	
+	// 更新贴吧信息
+	auto& tieba_dao = MysqlMgr::GetInstance()->GetTiebaDao();
+	bool success = tieba_dao.UpdateTiebaInfo(req.uid(), req.tieba_id(), req.desc(), req.icon(), req.new_owner_id());
+	
+	if (!success) {
+		rsp.set_error(ErrorCodes::RPCFailed);
+		return;
+	}
+	
+	rsp.set_error(ErrorCodes::Success);
 }
 
 // 获取贴吧成员列表

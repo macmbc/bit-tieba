@@ -32,6 +32,9 @@ public:
 	// 检查是否为贴吧成员
 	bool IsTiebaMember(int uid, int tieba_id, int& role);  // role: 0-非成员, 1-普通成员, 2-小吧主, 3-吧主
 
+	// 更新贴吧信息
+	bool UpdateTiebaInfo(int uid, int tieba_id, const std::string& desc, const std::string& icon, int new_owner_id);
+
 	// 发帖
 	int CreatePost(int uid, int tieba_id, const std::string& title, const std::string& content);
 
@@ -73,6 +76,18 @@ public:
 
 	// 获取贴吧成员列表
 	bool GetTiebaMemberList(int uid, int tieba_id, int offset, int limit, std::vector<std::shared_ptr<TiebaMemberInfo>>& member_list, int& total);
+	
+	// 关注/取关贴吧
+	bool SetFollowedTieba(int uid, int tieba_id, bool is_followed);
+	
+	// 获取用户关注的贴吧列表
+	bool GetFollowedTiebaList(int uid, int offset, int limit, std::vector<std::shared_ptr<TiebaInfo>>& tieba_list, int& total);
+	
+	// 收藏/取消收藏帖子
+	bool SetCollectedPost(int uid, int post_id, bool is_collected);
+	
+	// 检查是否收藏帖子
+	bool IsCollected(int uid, int post_id);
 
 private:
 	std::unique_ptr<MySqlPool> pool_;

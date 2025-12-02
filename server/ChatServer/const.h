@@ -101,6 +101,14 @@ enum MSG_IDS {
     ID_GET_TIEBA_MEMBER_LIST_RSP = 1054, // 获取贴吧成员列表响应
     ID_DELETE_REPLY_REQ = 1055,        // 删除回复请求
     ID_DELETE_REPLY_RSP = 1056,        // 删除回复响应
+    ID_UPDATE_TIEBA_REQ = 1057,        // 更新贴吧信息请求
+    ID_UPDATE_TIEBA_RSP = 1058,        // 更新贴吧信息响应
+    ID_SET_FOLLOWED_TIEBA_REQ = 1059,  // 关注/取关贴吧请求
+    ID_SET_FOLLOWED_TIEBA_RSP = 1060,  // 关注/取关贴吧响应
+    ID_GET_FOLLOWED_TIEBA_LIST_REQ = 1061, // 获取关注的贴吧列表请求
+    ID_GET_FOLLOWED_TIEBA_LIST_RSP = 1062, // 获取关注的贴吧列表响应
+    ID_SET_COLLECTED_POST_REQ = 1063,      // 收藏/取消收藏帖子请求
+    ID_SET_COLLECTED_POST_RSP = 1064,      // 收藏/取消收藏帖子响应
 };
 
 #define USERIPPREFIX  "uip_"

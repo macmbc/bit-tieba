@@ -396,3 +396,53 @@ message GetTiebaMemberListRsp {
 	repeated TiebaMemberInfo member_list = 2;
 	int32 total = 3;
 }
+
+// 更新贴吧信息请求/响应
+message UpdateTiebaReq {
+	int32 uid = 1;
+	int32 tieba_id = 2;
+	string desc = 3;
+	string icon = 4;
+	int32 new_owner_id = 5;
+}
+
+message UpdateTiebaRsp {
+	int32 error = 1;
+}
+
+// 关注/取关贴吧请求/响应
+message SetFollowedTiebaReq {
+	int32 uid = 1;
+	int32 tieba_id = 2;
+	bool is_followed = 3;
+}
+
+message SetFollowedTiebaRsp {
+	int32 error = 1;
+}
+
+// 获取关注的贴吧列表请求/响应
+message GetFollowedTiebaListReq {
+	int32 uid = 1;
+	int32 offset = 2;
+	int32 limit = 3;
+}
+
+message GetFollowedTiebaListRsp {
+	int32 error = 1;
+	repeated TiebaInfo tieba_list = 2;
+	int32 total = 3;
+}
+
+// 收藏/取消收藏帖子请求/响应
+message SetCollectedPostReq {
+	int32 uid = 1;
+	int32 post_id = 2;
+	bool is_collected = 3;
+}
+
+message SetCollectedPostRsp {
+	int32 error = 1;
+	int32 post_id = 2;
+	bool is_collected = 3;
+}

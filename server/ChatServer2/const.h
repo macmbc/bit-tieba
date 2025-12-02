@@ -101,6 +101,8 @@ enum MSG_IDS {
     ID_GET_TIEBA_MEMBER_LIST_RSP = 1054, // 获取贴吧成员列表响应
     ID_DELETE_REPLY_REQ = 1055,        // 删除回复请求
     ID_DELETE_REPLY_RSP = 1056,        // 删除回复响应
+    ID_UPDATE_TIEBA_REQ = 1057,        // 更新贴吧信息请求
+    ID_UPDATE_TIEBA_RSP = 1058,        // 更新贴吧信息响应
 };
 
 #define USERIPPREFIX  "uip_"

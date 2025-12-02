@@ -32,6 +32,9 @@ public:
 	// 检查是否为贴吧成员
 	bool IsTiebaMember(int uid, int tieba_id, int& role);  // role: 0-非成员, 1-普通成员, 2-小吧主, 3-吧主
 
+	// 更新贴吧信息
+	bool UpdateTiebaInfo(int uid, int tieba_id, const std::string& desc, const std::string& icon, int new_owner_id);
+
 	// 发帖
 	int CreatePost(int uid, int tieba_id, const std::string& title, const std::string& content);
 
