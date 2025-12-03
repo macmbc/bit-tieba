@@ -232,6 +232,8 @@ onMounted(async () => {
       getForum(forumId.value),
       getForumPosts(forumId.value, page.value),
     ])
+
+    console.log("postdata:",postData)
     forum.value = forumData
     posts.value = postData
     hasMore.value = postData.length === REPLY_CONSTANTS.POST_LIST_PAGE_SIZE
