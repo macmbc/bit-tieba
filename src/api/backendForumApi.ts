@@ -141,7 +141,7 @@ export interface GetPostsParams {
 export const getPosts = async (params: GetPostsParams): Promise<{ error: number; posts: Post[] }> => {
   console.log(params)
   const response: any = await api.get('/posts', { params })
-  console.log("posts:",response)
+  // console.log("posts:",response)
   return {
     error: response.error,
     posts: (response.posts || []).map(transformPost),
