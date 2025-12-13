@@ -1,0 +1,4 @@
+"forum_id"	"name"	"avatar"	"description"	"owner_uid"	"follower_cnt"	"post_cnt"	"created_at"	"updated_at"
+"1"	"科技讨论吧"	"/res/forum_tech.jpg"	"聊硬件/AI/后端"	"1054"	"2"	"28"	"23/11/2025 23:35:39"	"3/12/2025 14:53:18"
+"2"	"摄影交流吧"	"/res/forum_photo.jpg"	"器材、后期与旅拍分享"	"1055"	"3"	"3"	"23/11/2025 23:35:39"	"3/12/2025 00:38:13"
+"3"	"游戏组队吧"	"/res/forum_game.jpg"	"开黑、攻略与联机约战"	"1056"	"1"	"6"	"23/11/2025 23:35:39"	"3/12/2025 13:59:25"

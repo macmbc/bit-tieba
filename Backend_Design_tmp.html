@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Backend_Design.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="%E5%90%8E%E7%AB%AF%E6%A6%82%E8%A6%81%E4%B8%8E%E8%AF%A6%E7%BB%86%E8%AE%BE%E8%AE%A1%E8%AF%B4%E6%98%8E%E4%B9%A6">后端概要与详细设计说明书</h1>
+<p>本文基于 <code>server/</code> 目录的全部代码、现有文档（<code>README.md</code>、<code>API_DIFF.md</code>、<code>BACKEND_INTEGRATION.md</code>、<code>RequirementsAnalysis.md</code> 等）及架构图（<code>pic/</code>，核心流程图见 <code>pic/Gemini_Generated_Image_v0f943v0f943v0f9.png</code>）编写，覆盖论坛与即时通信后端的概要设计、详细设计与数据库设计。</p>
+<h2 id="1-%E5%BC%95%E8%A8%80">1. 引言</h2>
+<ul>
+<li><strong>目标</strong>：指导开发/测试/运维理解后端架构、模块职责、关键流程与实现细节，为迭代与联调提供设计依据。</li>
+<li><strong>范围</strong>：GateServer、StatusServer、ChatServer/ChatServer2、VarifyServer 及公共组件（common/、databaseD/）。</li>
+<li><strong>读者</strong>：后端/前端工程师、测试、运维、架构师。</li>
+<li><strong>参考</strong>：server 内全部代码与文档，数据库导出 <code>databaseD/*</code> 与架构图。</li>
+</ul>
+<h2 id="2-%E7%B3%BB%E7%BB%9F%E6%80%BB%E4%BD%93%E8%AE%BE%E8%AE%A1%E6%A6%82%E8%A6%81">2. 系统总体设计（概要）</h2>
+<h3 id="21-%E6%9E%B6%E6%9E%84%E8%A7%86%E5%9B%BE">2.1 架构视图</h3>
+<ul>
+<li><strong>整体形态</strong>：前端仅对接 GateServer（HTTP/JSON），内部通过 gRPC 调度（验证码/节点分配/跨节点聊天）和 TCP 长连承载聊天数据平面，数据与缓存落地在 MySQL/Redis。</li>
+<li><strong>核心流程图</strong>：<img src="file:///Volumes/EX_1T/code/bitsb/bit-tieba/pic/Gemini_Generated_Image_v0f943v0f943v0f9.png" alt="论坛核心功能流程图"></li>
+<li><strong>部署/端口</strong>：GateServer:8080；VarifyServer gRPC:50051；StatusServer:50052；ChatServer TCP:8090/8091，gRPC:50055/50056；ChatServer 节点可按需水平扩展，通过配置加入 StatusServer 池。</li>
+<li><strong>数据流向</strong>：
+<ul>
+<li>写操作：前端 → GateServer → Redis 校验 token → MySQL 事务/计数 → 返回错误码。</li>
+<li>验证码/登录：GateServer → VarifyServer/StatusServer gRPC → Redis 写 <code>code_/utoken_</code> → 前端获得 token+节点。</li>
+<li>聊天：前端 TCP → ChatServer → Redis 校验 token → 本地/跨节点推送（gRPC）→ 终端。</li>
+</ul>
+</li>
+<li><strong>控制/数据平面分离</strong>：HTTP/gRPC 主要控制面，TCP 承载即时消息，便于独立扩缩与限流。</li>
+</ul>
+<h3 id="22-%E7%BB%84%E4%BB%B6%E8%81%8C%E8%B4%A3">2.2 组件职责</h3>
+<ul>
+<li><strong>GateServer（C++/Boost.Beast）</strong>：唯一 HTTP 入口；承载论坛 CRUD、鉴权、验证码转发、登录、搜索、“我的”接口；调用 Redis/MySQL/gRPC。</li>
+<li><strong>StatusServer（C++/gRPC）</strong>：维护 ChatServer 节点列表，分配聊天节点并生成 token，写 Redis 路由。</li>
+<li><strong>ChatServer/ChatServer2（C++/TCP+gRPC）</strong>：聊天长连、好友/申请、消息转发、心跳；节点间 gRPC 互通。</li>
+<li><strong>VarifyServer（Node.js+gRPC）</strong>：生成/发送邮件验证码，写入 Redis。</li>
+<li><strong>公共依赖</strong>：MySQL（业务数据）、Redis（token/验证码/缓存/分布式锁）。</li>
+<li><strong>责任边界</strong>：
+<ul>
+<li>GateServer 不存储长连状态；仅做 HTTP 聚合、鉴权和数据库读写。</li>
+<li>StatusServer 只负责节点分配与 token 生命周期，不落业务数据。</li>
+<li>ChatServer 维护在线态、好友/消息逻辑，不直接暴露 HTTP。</li>
+</ul>
+</li>
+</ul>
+<h3 id="23-%E8%BF%90%E8%A1%8C%E4%B8%8E%E9%85%8D%E7%BD%AE">2.3 运行与配置</h3>
+<ul>
+<li>关键配置：<code>GateServer/config.ini</code>、<code>StatusServer/config.ini</code>、<code>ChatServer/config.ini</code>、<code>ChatServer2/config.ini</code>、<code>VarifyServer/config.json</code>；含端口、依赖地址、账号、SMTP。</li>
+<li>依赖：CMake + Boost + gRPC + protobuf + MySQL Connector/C++，Redis，Node.js ≥16。</li>
+<li>可用性基线：MySQL/Redis/VarifyServer/StatusServer/任一 ChatServer 必须可用；单个 ChatServer 故障可通过多节点冗余规避。</li>
+<li>扩展/降级：GateServer/ChatServer 可横向扩容；验证码与聊天分区独立，可独立部署与重启。</li>
+</ul>
+<h3 id="24-%E5%85%B3%E9%94%AE%E4%B8%9A%E5%8A%A1%E6%B5%81%E7%A8%8B">2.4 关键业务流程</h3>
+<ul>
+<li><strong>验证码获取</strong>：前端 POST <code>/get_varifycode</code> → GateServer JSON 校验 → gRPC 调 VarifyServer 生成 4 位码 → Redis <code>code_&lt;email&gt;</code>（600s）→ 返回错误码；异常透传 <code>RPCFailed/VarifyExpired/VarifyCodeErr</code>。</li>
+<li><strong>注册</strong>：前端 POST <code>/user_register</code>（email/user/passwd/confirm/icon/varifycode）→ GateServer 校验 JSON、两次密码、Redis 验证码 → MySQL 存储过程 <code>reg_user</code>（更新 <code>user_id</code>、插入 <code>user</code>，异常回滚）→ 返回 <code>uid/user/email</code>。</li>
+<li><strong>重置密码</strong>：前端 POST <code>/reset_pwd</code> → GateServer 验证验证码 → 校验用户名与邮箱匹配（<code>MysqlMgr::CheckEmail</code>）→ 更新密码（<code>MysqlMgr::UpdatePwd</code>）→ 返回错误码。</li>
+<li><strong>登录与节点分配</strong>：前端 POST <code>/user_login</code> → GateServer 校验邮箱/密码 → gRPC 调 StatusServer <code>GetChatServer</code> 分配节点 → Redis 写 <code>utoken_&lt;uid&gt;</code> → 返回 <code>{uid,token,host,port,servername}</code>；若 StatusServer 不可用返回 <code>RPCFailed</code>。</li>
+<li><strong>贴吧列表/详情</strong>：GET <code>/forums</code>、<code>/forum/detail</code> → 校验分页/ID → DAO 读取 forum 与 follow 计数；若带 <code>uid/token</code> 返回 <code>is_followed</code>，token 校验失败返回 <code>TokenInvalid</code>。</li>
+<li><strong>关注/取关贴吧</strong>：POST <code>/follow_forum</code>/<code>/unfollow_forum</code>（需 <code>uid/token/forum_id</code>）→ Redis 校验 token → DAO 写 <code>forum_follow</code> 与计数（去重检查 <code>AlreadyFollowed/NotFollowed</code>）。</li>
+<li><strong>帖子列表/排序</strong>：GET <code>/posts</code>（<code>forum_id/page/limit/sort</code>）→ <code>PostDao::ListPosts</code> 按 <code>time|hot|reply</code> 排序、过滤 <code>status=1</code>，返回预览字段。</li>
+<li><strong>帖子详情/状态位</strong>：GET <code>/post/detail</code>（<code>post_id</code> 可带 <code>uid/token</code>）→ 查询帖子+作者+贴吧名，过滤软删；如带 token，附 <code>is_liked/is_collected</code>。</li>
+<li><strong>发帖/编辑/删除</strong>：POST <code>/post/create</code>、<code>/post/update</code>、<code>/post/delete</code>（需 <code>uid/token</code>）→ token 校验 → 事务插入/更新/软删 <code>status=0</code>，并同步 forum 计数；权限：作者或吧主可删。</li>
+<li><strong>帖子点赞/收藏/置顶/加精</strong>：POST <code>/like_post</code>/<code>/unlike_post</code>/<code>/collect_post</code>/<code>/uncollect_post</code>/<code>/set_top_post</code>/<code>/set_essence_post</code>（需 <code>uid/token/post_id</code>）→ 校验是否存在/权限 → 更新计数与记录，去重校验 <code>AlreadyLiked/AlreadyCollected</code> 等。</li>
+<li><strong>回复列表与楼中楼</strong>：GET <code>/post/replies</code>（<code>post_id/page/limit/sort</code>，可带 <code>uid/token</code>）→ <code>ReplyDao::ListTopReplies</code>+<code>ListChildReplies</code> 构建 <code>replies</code> + <code>sub_replies</code>，过滤软删，支持 <code>time|hot</code>。</li>
+<li><strong>回复增删与点赞</strong>：POST <code>/reply</code>（<code>uid/token/post_id/content/parent_reply_id</code>）插入回复、更新计数、返 <code>reply_id</code>；<code>/reply/delete</code> 软删，权限=作者/帖主/吧主；<code>/like_reply</code>/<code>/unlike_reply</code> 更新计数，去重校验。</li>
+<li><strong>搜索</strong>：GET <code>/search</code>（<code>keyword/type=post|forum|user/page/limit/(forum_id)</code>）→ 根据 type 走 <code>SearchDao</code>（LIKE 模糊，支持 forum_id 过滤帖子）→ 返回对应字段子集。</li>
+<li><strong>我的内容</strong>：GET <code>/my/posts|/my/replies|/my/collections|/my/followers|/my/following</code>（需 <code>uid/token/page/limit</code>）→ 校验 token → 分页查询帖子/回复（含 <code>post_title</code>）/收藏/粉丝/关注列表。</li>
+<li><strong>聊天登录</strong>：客户端持 <code>{uid,token,host,port}</code> 建立 TCP → 发送 <code>MSG_CHAT_LOGIN</code> → ChatServer 校验 Redis <code>utoken_&lt;uid&gt;</code>，写 <code>uip_&lt;uid&gt;</code>/<code>usession_&lt;uid&gt;</code>，如发现旧会话则发 <code>NotifyOffline</code> 踢下线 → 返回用户档案、好友列表、申请列表。</li>
+<li><strong>好友申请/审批</strong>：<code>ID_ADD_FRIEND_REQ</code> 写 <code>friend_apply</code>，若对方在本节点直接推送 <code>NotifyAddFriend</code>，否则 gRPC 转发；<code>ID_AUTH_FRIEND_REQ</code> 同意后插入双向 <code>friend</code>，推送 <code>NotifyAuthFriend</code> 给申请方。</li>
+<li><strong>文本消息收发</strong>：<code>ID_TEXT_CHAT_MSG_REQ</code>（含 <code>text_array</code>）→ 本节点在线直接推送 <code>NotifyTextChatMsg</code>，跨节点通过 gRPC；同时回 ACK <code>ID_TEXT_CHAT_MSG_RSP</code>，离线也返回成功，前端需结合在线状态。</li>
+<li><strong>心跳与会话清理</strong>：客户端 10s 发送 <code>ID_HEART_BEAT_REQ</code>；服务端 &gt;20s 未收到则清理 session 并可能踢下线；异地登录或服务端踢出会发 <code>ID_NOTIFY_OFF_LINE_REQ</code>。</li>
+</ul>
+<h2 id="3-%E8%AF%A6%E7%BB%86%E8%AE%BE%E8%AE%A1">3. 详细设计</h2>
+<h3 id="31-%E7%9B%AE%E5%BD%95%E4%B8%8E%E6%A8%A1%E5%9D%97">3.1 目录与模块</h3>
+<pre class="hljs"><code><div>server/
+├─ GateServer/       # HTTP 网关
+├─ StatusServer/     # 聊天节点分配 gRPC
+├─ ChatServer/       # 聊天节点模板1
+├─ ChatServer2/      # 聊天节点模板2
+├─ VarifyServer/     # Node 验证码 gRPC
+├─ common/           # BBS 公共 DAO
+└─ databaseD/        # SQL/导出数据
+</div></code></pre>
+<h3 id="32-gateserver-%E8%AE%BE%E8%AE%A1">3.2 GateServer 设计</h3>
+<ul>
+<li><strong>入口/启动</strong>：<code>GateServer.cpp</code> 读取 <code>config.ini</code>，初始化 <code>ConfigMgr</code>、<code>MysqlMgr</code>（连接池）、<code>RedisMgr</code>，构建 <code>LogicSystem</code>，注册 HTTP 路由，启动 <code>CServer</code> 监听 8080。连接由 <code>HttpConnection</code> 封装，使用 Boost.Beast 处理 request/response 与 query/body。</li>
+<li><strong>路由与业务调度</strong>：<code>LogicSystem.cpp</code> 通过 <code>RegGet/RegPost</code> 注册路径到 lambda，覆盖验证码、注册、登录、论坛 CRUD、搜索、“我的”接口；统一使用 Json::Reader 解析，错误码来自 <code>const.h</code>；所有写操作先校验 token（<code>CheckTokenValid</code> 访问 Redis）。</li>
+<li><strong>鉴权与异常处理</strong>：校验失败直接返回 <code>{error: TokenInvalid/UidInvalid}</code>；JSON 解析失败返回 <code>Error_Json</code>；gRPC 调用失败返回 <code>RPCFailed</code>，不抛异常中断。</li>
+<li><strong>DAO 层</strong>：<code>MysqlMgr</code> 提供连接池（jdbc driver）；<code>MysqlDao</code> 汇集事务逻辑；具体表操作在 <code>ForumDao/PostDao/ReplyDao/SearchDao/UserContentDao</code>，全部使用预编译 SQL，软删过滤 <code>status=1</code>，帖子/回复计数更新在事务内。</li>
+<li><strong>缓存层</strong>：<code>RedisMgr</code> 封装 redis-cpp 客户端，提供 KV Get/Set/Exists；验证码前缀 <code>code_</code>，token 前缀 <code>utoken_</code>。</li>
+<li><strong>外部调用</strong>：<code>VerifyGrpcClient</code> 调 VarifyServer 获取验证码；<code>StatusGrpcClient</code> 调 StatusServer 分配 ChatServer 与 token；<code>ChatGrpcClient</code> 预留给内部聊天通知（当前论坛接口未使用）。</li>
+<li><strong>线程模型/资源</strong>：<code>AsioIOServicePool</code> 管理多个 io_context 供 HTTP 处理；<code>CServer</code> 负责 accept，<code>HttpConnection</code> 负责生命周期与回调，确保高并发下非阻塞。</li>
+<li><strong>配置项</strong>：<code>config.ini</code> 中 GateServer 端口、VarifyServer/StatusServer 地址、MySQL/Redis 连接信息；启动时必读。</li>
+</ul>
+<h3 id="33-statusserver-%E8%AE%BE%E8%AE%A1">3.3 StatusServer 设计</h3>
+<ul>
+<li><strong>入口/启动</strong>：<code>StatusServer.cpp</code> 加载 <code>config.ini</code>（服务端口、ChatServer 列表、MySQL/Redis），初始化 <code>MysqlMgr</code>、<code>RedisMgr</code>、<code>ConfigMgr</code>，启动 gRPC 服务监听 50052。</li>
+<li><strong>服务实现</strong>：<code>StatusServiceImpl</code> 仅暴露 <code>GetChatServer</code>。选择策略可按配置轮询/随机，当前从节点列表中选择，返回 host/port/servername。</li>
+<li><strong>Token 生成与写入</strong>：为登录用户生成随机 token（Boost UUID），写入 Redis <code>utoken_&lt;uid&gt;</code>，并回传 GateServer/前端；失败返回 <code>RPCFailed/UidInvalid</code>。</li>
+<li><strong>状态/路由存储</strong>：可选写入 <code>uip_&lt;uid&gt;</code> 路由；负责维护 ChatServer 名称与地址映射（由 <code>ConfigMgr</code> 解析 <code>[chatservers]</code> 与子段）。</li>
+<li><strong>并发与锁</strong>：使用 <code>AsioIOServicePool</code> 处理 gRPC；<code>DistLock</code> 防止同一 uid 高并发分配冲突。</li>
+<li><strong>故障处理</strong>：若 Redis/MySQL/配置缺失或节点不可用，返回错误码并记录日志；不持久化业务表数据。</li>
+</ul>
+<h3 id="34-chatserverchatserver2-%E8%AE%BE%E8%AE%A1">3.4 ChatServer/ChatServer2 设计</h3>
+<ul>
+<li><strong>入口/启动</strong>：<code>ChatServer.cpp</code> 读取 <code>config.ini</code>（Self/Peer 节点、TCP 端口、gRPC 端口、MySQL/Redis），初始化 <code>MysqlMgr</code>、<code>RedisMgr</code>、<code>ConfigMgr</code>、<code>AsioIOServicePool</code>，启动 TCP 监听与 gRPC 服务。</li>
+<li><strong>连接与协议</strong>：<code>CServer</code> 监听 TCP（8090/8091）；<code>CSession</code> 代表单连接，按 2B 消息 ID + 2B 长度 + JSON 解帧，封装发送/接收队列，维护心跳时间。</li>
+<li><strong>消息分发</strong>：<code>LogicSystem</code> 注册 handler（登录、搜索用户、加好友、审批、文本消息、心跳）；消息 ID 定义见 <code>const.h</code>/<code>LogicSystem.cpp</code>。收到消息后校验字段 → 调用 DAO/Redis → 生成响应与推送。</li>
+<li><strong>gRPC 服务与客户端</strong>：<code>ChatServiceImpl</code> 提供跨节点通知（AddFriend/AuthFriend/TextChat/Offline）；<code>ChatGrpcClient</code> 用于调用其他 ChatServer；<code>BbsServiceImpl</code> 预留。</li>
+<li><strong>业务流程</strong>：
+<ul>
+<li>登录：校验 Redis token 与 uid 一致；写 <code>uip_&lt;uid&gt;</code>（路由）与 <code>usession_&lt;uid&gt;</code>（会话 ID）；如有旧 session，通过 gRPC/本地推送 <code>NotifyOffline</code>。</li>
+<li>好友/申请：DAO 访问 MySQL（<code>friend_apply</code>/<code>friend</code>），成功后尝试本地 session 推送，不在本节点则 gRPC 转发。</li>
+<li>文本消息：入参包含 <code>text_array</code>，本节点在线则直接 <code>NotifyTextChatMsg</code>；不在线或在其他节点则 gRPC 转发；无论对方在线与否都会回 ACK。</li>
+<li>心跳：<code>ID_HEART_BEAT_REQ</code> 更新 session 时间；定时任务清理 &gt;20s 未心跳的会话。</li>
+</ul>
+</li>
+<li><strong>存储与缓存</strong>：<code>MysqlDao</code> 处理好友表/申请表等；<code>RedisMgr</code> 负责 token 校验、路由、分布式锁；<code>DistLock</code> 防并发登录/清理。</li>
+<li><strong>扩展/容错</strong>：节点列表来自配置 <code>[PeerServer]</code>；新节点加入需更新配置并重启；跨节点失败不影响本节点 ACK，但会记录日志。</li>
+</ul>
+<h3 id="35-varifyserver-%E8%AE%BE%E8%AE%A1">3.5 VarifyServer 设计</h3>
+<ul>
+<li><strong>入口/启动</strong>：<code>server.js</code> 读取 <code>config.json</code>（SMTP、Redis、gRPC 端口），创建 gRPC 服务监听 50051。</li>
+<li><strong>职责</strong>：接受 <code>GetVarifyCode(email)</code> 请求 → 生成 4 位验证码（<code>const.js</code> 可配置）→ <code>redis.js</code> 写入 <code>code_&lt;email&gt;</code>（TTL 600s）→ <code>email.js</code> 通过 SMTP 发送邮件 → 返回 <code>{error,email}</code>。</li>
+<li><strong>依赖与容错</strong>：Redis 不可用/超时报错返回 <code>VarifyExpired</code>；SMTP 失败返回 <code>RPCFailed</code>；日志输出到 stdout。</li>
+<li><strong>协议</strong>：消息结构在 <code>message.proto</code>/<code>proto.js</code>，与 GateServer 的 <code>VerifyGrpcClient</code> 对应。</li>
+</ul>
+<h3 id="36-%E5%85%AC%E5%85%B1-daocommonbbs">3.6 公共 DAO（common/bbs）</h3>
+<ul>
+<li><strong>封装原则</strong>：每个 DAO 只负责单一表/聚合查询；使用 <code>MySqlPool</code> 连接池；<code>Defer</code> 归还连接；所有写操作使用预编译语句和必要事务。</li>
+<li><strong>ForumDao</strong>：查询贴吧列表/详情，更新关注/帖子计数，校验贴吧存在；关联 <code>forum_admin</code> 支持吧主权限。</li>
+<li><strong>PostDao</strong>：帖子列表/详情，支持排序 <code>time|hot|reply</code>，过滤软删；创建/更新/软删帖子的事务；点赞/收藏/置顶/加精更新计数并去重校验；获取帖子所有者用于权限判断。</li>
+<li><strong>ReplyDao</strong>：楼中楼查询（顶层+子回复），按 <code>time|hot</code> 排序；创建回复时写 floor/root_reply_id，更新帖子/回复计数；软删回复；点赞/取消点赞。</li>
+<li><strong>SearchDao</strong>：根据 type=post|forum|user 分别模糊查询标题/描述/用户名或邮箱，支持 forum_id 过滤帖子。</li>
+<li><strong>UserContentDao</strong>：我的帖子/回复/收藏/粉丝/关注，JOIN 用户与帖子获取必要展示字段（如 <code>post_title</code>）。</li>
+<li><strong>事务策略</strong>：发帖/删帖/回复/计数更新统一放在 DAO 内部事务，异常回滚。</li>
+</ul>
+<h3 id="37-%E9%85%8D%E7%BD%AE%E8%BF%90%E8%A1%8C%E6%97%B6">3.7 配置/运行时</h3>
+<ul>
+<li><strong>配置文件</strong>：<code>config.ini</code>（C++ 服务）、<code>config.json</code>（Node）；包含服务端口、MySQL/Redis 地址账号、ChatServer 节点列表、SMTP。</li>
+<li><strong>运行路径与依赖</strong>：构建时写入 RPATH 指向 OpenSSL/MySQL Connector；若路径变更需在 CMake 传入 <code>CMAKE_PREFIX_PATH/MYSQLCPPCONN_ROOT</code>。</li>
+<li><strong>初始化顺序</strong>：读取配置 → 初始化日志/连接池/线程池 → 注册路由或 gRPC/TCP 服务 → 启动监听。</li>
+<li><strong>环境假设</strong>：UTF-8 源码与日志；Redis/MySQL 需可访问且权限正确；Node.js 版本满足 VarifyServer 依赖。</li>
+</ul>
+<h2 id="4-%E6%8E%A5%E5%8F%A3%E4%B8%8E%E5%8D%8F%E8%AE%AE%E8%AE%BE%E8%AE%A1">4. 接口与协议设计</h2>
+<h3 id="41-httpgateserver">4.1 HTTP（GateServer）</h3>
+<ul>
+<li><strong>风格</strong>：HTTP/1.1 + JSON，统一 <code>error</code> 字段；更新/删除多用 POST，路径参数以 query 方式实现；<code>Content-Type: application/json</code>。</li>
+<li><strong>鉴权</strong>：所有写操作及“我的*”需 <code>uid+token</code>；Redis 校验 <code>utoken_&lt;uid&gt;</code>，失败返回 <code>TokenInvalid/UidInvalid</code>。</li>
+<li><strong>账户/安全</strong>：
+<ul>
+<li><code>POST /get_varifycode</code> <code>{email}</code> → <code>{error,email}</code></li>
+<li><code>POST /user_register</code> <code>{email,user,passwd,confirm,icon,varifycode}</code> → <code>{error,uid,user,email}</code></li>
+<li><code>POST /reset_pwd</code> <code>{email,user,passwd,varifycode}</code> → <code>{error}</code></li>
+<li><code>POST /user_login</code> <code>{email,passwd}</code> → <code>{error,uid,token,host,port,email}</code></li>
+</ul>
+</li>
+<li><strong>贴吧</strong>：
+<ul>
+<li><code>GET /forums?page&amp;limit</code> → <code>{error,forums:[...follower_count,post_count...]}</code></li>
+<li><code>GET /forum/detail?forum_id[&amp;uid&amp;token]</code> → <code>{error,forum:{...,is_followed}}</code></li>
+<li><code>POST /follow_forum</code> / <code>/unfollow_forum</code> <code>{uid,token,forum_id}</code> → <code>{error}</code></li>
+<li><code>GET /followed_forums?uid&amp;token&amp;page&amp;limit</code> → <code>{error,forums:[...]}</code></li>
+</ul>
+</li>
+<li><strong>帖子</strong>：
+<ul>
+<li><code>GET /posts?forum_id&amp;page&amp;limit&amp;sort</code> (<code>time|hot|reply</code>) → <code>{error,posts:[...content_preview...]}</code></li>
+<li><code>GET /post/detail?post_id[&amp;uid&amp;token]</code> → <code>{error,post:{...,is_liked,is_collected}}</code></li>
+<li><code>POST /post/create</code> <code>{uid,token,forum_id,title,content}</code> → <code>{error,post_id}</code></li>
+<li><code>POST /post/update</code> <code>{uid,token,post_id,title,content}</code> → <code>{error}</code></li>
+<li><code>POST /post/delete</code> <code>{uid,token,post_id}</code> → <code>{error}</code> (软删)</li>
+<li><code>POST /like_post</code> / <code>/unlike_post</code> <code>{uid,token,post_id}</code> → <code>{error}</code></li>
+<li><code>POST /collect_post</code> / <code>/uncollect_post</code> <code>{uid,token,post_id}</code> → <code>{error}</code></li>
+<li><code>POST /set_top_post</code> <code>{uid,token,post_id,is_top}</code> / <code>/set_essence_post</code> <code>{uid,token,post_id,is_essence}</code> → <code>{error}</code></li>
+</ul>
+</li>
+<li><strong>回复</strong>：
+<ul>
+<li><code>GET /post/replies?post_id&amp;page&amp;limit&amp;sort[&amp;uid&amp;token]</code> → <code>{error,replies:[{...,sub_replies:[...] }]}</code></li>
+<li><code>POST /reply</code> <code>{uid,token,post_id,content,parent_reply_id}</code> → <code>{error,reply_id}</code></li>
+<li><code>POST /reply/delete</code> <code>{uid,token,reply_id}</code> → <code>{error}</code> (软删)</li>
+<li><code>POST /like_reply</code> / <code>/unlike_reply</code> <code>{uid,token,reply_id}</code> → <code>{error}</code></li>
+</ul>
+</li>
+<li><strong>搜索</strong>：<code>GET /search?keyword&amp;type=post|forum|user&amp;forum_id&amp;page&amp;limit</code> → <code>{error,results:[...]}</code>（字段随 type 变化）。</li>
+<li><strong>我的</strong>：
+<ul>
+<li><code>GET /my/posts|/my/replies|/my/collections?uid&amp;token&amp;page&amp;limit</code> → 对应列表（回复含 <code>post_title</code>）</li>
+<li><code>GET /my/followers|/my/following?uid&amp;token&amp;page&amp;limit</code> → <code>{error,users:[...]}</code></li>
+</ul>
+</li>
+<li><strong>约定</strong>：所有接口返回 <code>error</code>，成功为 0；软删数据不在列表与详情出现；JSON 解析失败返回 <code>Error_Json</code>。</li>
+</ul>
+<h3 id="42-grpc">4.2 gRPC</h3>
+<ul>
+<li><strong>协议文件</strong>：<code>server/*/message.proto</code>（各服务拷贝一致）。</li>
+<li><strong>VarifyService</strong>（VarifyServer）：<code>GetVarifyCode(GetVarifyReq{email}) → GetVarifyRsp{error,email,code}</code>；由 GateServer 调用。</li>
+<li><strong>StatusService</strong>（StatusServer）：
+<ul>
+<li><code>GetChatServer(GetChatServerReq{uid}) → GetChatServerRsp{error,host,port,token}</code>（必写 Redis <code>utoken_&lt;uid&gt;</code>）</li>
+<li><code>Login(LoginReq{uid,token}) → LoginRsp{error,uid,token}</code>（预留，当前主要用 GetChatServer）</li>
+</ul>
+</li>
+<li><strong>ChatService</strong>（ChatServer 间互调）：
+<ul>
+<li><code>NotifyAddFriend(AddFriendReq{applyuid,name,desc,icon,nick,sex,touid}) → AddFriendRsp{error,applyuid,touid}</code></li>
+<li><code>RplyAddFriend(RplyFriendReq{rplyuid,agree,touid}) → RplyFriendRsp{error,...}</code></li>
+<li><code>NotifyAuthFriend(AuthFriendReq{fromuid,touid}) → AuthFriendRsp{error,...}</code></li>
+<li><code>NotifyTextChatMsg(TextChatMsgReq{fromuid,touid,textmsgs[msgid,msgcontent]}) → TextChatMsgRsp{error,...}</code></li>
+<li><code>SendChatMsg(SendChatMsgReq{fromuid,touid,message}) → SendChatMsgRsp{error,...}</code>（文本消息老版本接口）</li>
+<li><code>NotifyKickUser(KickUserReq{uid}) → KickUserRsp{error,uid}</code></li>
+</ul>
+</li>
+<li><strong>BbsService</strong>：在 ChatServer 中预留 <code>BbsServiceImpl</code>（当前未暴露额外方法，保持 proto 同步）。</li>
+<li><strong>错误透传</strong>：gRPC 返回的 <code>error</code> 与 GateServer/ChatServer 错误码一致；RPC 失败由调用侧包装 <code>RPCFailed</code>。</li>
+</ul>
+<h3 id="43-tcp-%E6%B6%88%E6%81%AFchatserver">4.3 TCP 消息（ChatServer）</h3>
+<ul>
+<li><strong>封包格式</strong>：2 字节消息 ID (big-endian) + 2 字节正文长度 + JSON 正文；最大 2 KB。</li>
+<li><strong>消息 ID 与含义</strong>（见 <code>ChatServer/const.h</code>）：
+<ul>
+<li>1005 <code>MSG_CHAT_LOGIN</code> / 1006 <code>MSG_CHAT_LOGIN_RSP</code>：登录/响应，携带 <code>uid/token</code>，返回档案、好友、申请列表。</li>
+<li>1007 <code>ID_SEARCH_USER_REQ</code> / 1008 <code>ID_SEARCH_USER_RSP</code>：按 uid 或用户名搜索。</li>
+<li>1009 <code>ID_ADD_FRIEND_REQ</code> / 1010 <code>ID_ADD_FRIEND_RSP</code>：发起好友申请。</li>
+<li>1011 <code>ID_NOTIFY_ADD_FRIEND_REQ</code>：被申请方实时通知。</li>
+<li>1013 <code>ID_AUTH_FRIEND_REQ</code> / 1014 <code>ID_AUTH_FRIEND_RSP</code>：审批好友；</li>
+<li>1015 <code>ID_NOTIFY_AUTH_FRIEND_REQ</code>：申请方收到审批结果。</li>
+<li>1017 <code>ID_TEXT_CHAT_MSG_REQ</code> / 1018 <code>ID_TEXT_CHAT_MSG_RSP</code>：文本消息请求/ACK，含 <code>text_array</code>。</li>
+<li>1019 <code>ID_NOTIFY_TEXT_CHAT_MSG_REQ</code>：文本消息推送给接收方。</li>
+<li>1021 <code>ID_NOTIFY_OFF_LINE_REQ</code>：异地登录/踢下线通知。</li>
+<li>1023 <code>ID_HEART_BEAT_REQ</code> / 1024 <code>ID_HEARTBEAT_RSP</code>：心跳。</li>
+</ul>
+</li>
+<li><strong>链路约定</strong>：客户端登录成功后每 ~10s 发送心跳；&gt;20s 未心跳服务端清理并可下发下线通知；消息体均为 UTF-8 JSON。</li>
+</ul>
+<h2 id="5-%E6%95%B0%E6%8D%AE%E5%BA%93%E8%AE%BE%E8%AE%A1">5. 数据库设计</h2>
+<h3 id="51-%E9%80%BB%E8%BE%91%E6%A8%A1%E5%9E%8B%E8%AE%BA%E5%9D%9B--%E7%A4%BE%E4%BA%A4">5.1 逻辑模型（论坛 + 社交）</h3>
+<ul>
+<li>用户：<code>user(uid,name,email,pwd,nick,desc,sex,icon)</code>；<code>user_id</code> 自增表 + <code>reg_user</code> 存储过程生成 uid。</li>
+<li>贴吧：<code>forum(forum_id,name,avatar,description,owner_uid,follower_cnt,post_cnt,created_at,updated_at)</code>；<code>forum_admin(forum_id,uid,role)</code>。</li>
+<li>关注：<code>forum_follow(forum_id,uid,created_at)</code>；用户关注 <code>user_follow(uid,target_uid,created_at)</code>。</li>
+<li>帖子：<code>post(post_id,forum_id,uid,title,content,is_top,is_essence,like_cnt,collect_cnt,reply_cnt,status,created_at,updated_at,last_reply_at)</code>。</li>
+<li>点赞/收藏：<code>post_like(post_id,uid,created_at)</code>、<code>post_collect(post_id,uid,created_at)</code>；回复点赞 <code>reply_like(reply_id,uid,created_at)</code>。</li>
+<li>回复：<code>reply(reply_id,post_id,uid,content,parent_reply_id,root_reply_id,floor,like_cnt,status,created_at)</code>。</li>
+<li>社交：<code>friend(self_id,friend_id,back)</code>，<code>friend_apply(from_uid,to_uid,status)</code>。</li>
+<li><strong>软删</strong>：帖子/回复使用 <code>status</code> 过滤（1=有效，0=删除）。</li>
+</ul>
+<h3 id="52-%E7%BA%A6%E6%9D%9F%E4%B8%8E%E7%B4%A2%E5%BC%95">5.2 约束与索引</h3>
+<ul>
+<li>唯一：<code>user.email</code>、<code>user.uid</code>、<code>forum_admin(forum_id,uid)</code>、<code>forum_follow(forum_id,uid)</code>、<code>post_like(post_id,uid)</code>、<code>post_collect(post_id,uid)</code>、<code>reply_like(reply_id,uid)</code>、<code>friend(self_id,friend_id)</code>、<code>friend_apply(from_uid,to_uid)</code>。</li>
+<li>索引：<code>user.name</code>、<code>post.forum_id</code>、<code>reply.post_id</code>；可根据实际加全文索引以优化搜索。</li>
+</ul>
+<h3 id="53-%E4%BA%8B%E5%8A%A1%E4%B8%8E%E8%AE%A1%E6%95%B0">5.3 事务与计数</h3>
+<ul>
+<li>发帖/删帖/回复/点赞/收藏/关注均在 DAO 内处理计数更新（forum/post 计数）并使用事务保证一致性，异常回滚。</li>
+</ul>
+<h3 id="54-redis-%E8%AE%BE%E8%AE%A1">5.4 Redis 设计</h3>
+<ul>
+<li>Token：<code>utoken_&lt;uid&gt;</code>；路由：<code>uip_&lt;uid&gt;</code>；会话：<code>usession_&lt;uid&gt;</code>。</li>
+<li>验证码：<code>code_&lt;email&gt;</code>（600s）。</li>
+<li>用户缓存：<code>ubaseinfo_&lt;uid&gt;</code>、<code>nameinfo_&lt;name&gt;</code>；在线统计：<code>logincount</code>（Hash）。</li>
+<li>分布式锁：<code>lock_&lt;uid&gt;</code>、<code>lockcount</code>。</li>
+</ul>
+<h3 id="55-%E8%A1%A8%E7%BA%A7%E8%AF%A6%E7%BB%86%E8%AE%BE%E8%AE%A1">5.5 表级详细设计</h3>
+<ul>
+<li><strong>user</strong>（用户基础表）
+<ul>
+<li>字段：<code>id</code> PK 自增；<code>uid</code> 唯一业务 ID；<code>name</code>（索引）；<code>email</code> 唯一；<code>pwd</code>；<code>nick</code>；<code>desc</code>；<code>sex</code> int；<code>icon</code>。</li>
+<li>约束：UNIQUE(<code>uid</code>), UNIQUE(<code>email</code>), INDEX(<code>name</code>)；字符集 utf8mb4_unicode_ci。</li>
+</ul>
+</li>
+<li><strong>user_id</strong>（uid 序列表）
+<ul>
+<li>字段：<code>id</code> PK；存储当前 uid 序列。</li>
+<li>用途：存储过程 <code>reg_user</code> 递增后生成新 uid。</li>
+</ul>
+</li>
+<li><strong>forum</strong>（贴吧）
+<ul>
+<li>字段：<code>forum_id</code> PK；<code>name</code>；<code>avatar</code>；<code>description</code>；<code>owner_uid</code>；<code>follower_cnt</code>；<code>post_cnt</code>；时间戳 <code>created_at/updated_at</code>。</li>
+<li>用途：列表/详情/权限（owner/吧主）；计数用于排序展示。</li>
+</ul>
+</li>
+<li><strong>forum_admin</strong>（贴吧管理员/吧主）
+<ul>
+<li>字段：<code>id</code> PK；<code>forum_id</code>；<code>uid</code>；<code>role</code>（1=owner/吧主）。</li>
+<li>约束：UNIQUE(<code>forum_id</code>,<code>uid</code>)。</li>
+<li>用途：置顶/加精/删帖权限校验。</li>
+</ul>
+</li>
+<li><strong>forum_follow</strong>（贴吧关注关系）
+<ul>
+<li>字段：<code>id</code> PK；<code>forum_id</code>；<code>uid</code>；<code>created_at</code>。</li>
+<li>约束：UNIQUE(<code>forum_id</code>,<code>uid</code>)。</li>
+<li>用途：关注/取消关注、关注列表、计数更新。</li>
+</ul>
+</li>
+<li><strong>post</strong>（帖子）
+<ul>
+<li>字段：<code>post_id</code> PK；<code>forum_id</code>；<code>uid</code>；<code>title</code>；<code>content</code>；<code>is_top</code>；<code>is_essence</code>；<code>like_cnt</code>；<code>collect_cnt</code>；<code>reply_cnt</code>；<code>status</code>（软删）；<code>created_at</code>；<code>updated_at</code>；<code>last_reply_at</code>。</li>
+<li>约束：INDEX(<code>forum_id</code>)；业务层过滤 <code>status=1</code>。</li>
+<li>用途：列表/详情/权限/计数/排序。</li>
+</ul>
+</li>
+<li><strong>post_like</strong>（帖子点赞）
+<ul>
+<li>字段：<code>id</code> PK；<code>post_id</code>；<code>uid</code>；<code>created_at</code>。</li>
+<li>约束：UNIQUE(<code>post_id</code>,<code>uid</code>)。</li>
+<li>用途：点赞/取消点赞、计数。</li>
+</ul>
+</li>
+<li><strong>post_collect</strong>（帖子收藏）
+<ul>
+<li>字段：<code>id</code> PK；<code>post_id</code>；<code>uid</code>；<code>created_at</code>。</li>
+<li>约束：UNIQUE(<code>post_id</code>,<code>uid</code>)。</li>
+<li>用途：收藏/取消收藏、计数。</li>
+</ul>
+</li>
+<li><strong>reply</strong>（回复/楼中楼）
+<ul>
+<li>字段：<code>reply_id</code> PK；<code>post_id</code>；<code>uid</code>；<code>content</code>；<code>parent_reply_id</code>；<code>root_reply_id</code>；<code>floor</code>；<code>like_cnt</code>；<code>status</code>（软删）；<code>created_at</code>。</li>
+<li>约束：INDEX(<code>post_id</code>)；楼层/父子结构由业务维护。</li>
+<li>用途：回复列表/楼中楼、计数、权限。</li>
+</ul>
+</li>
+<li><strong>reply_like</strong>（回复点赞）
+<ul>
+<li>字段：<code>id</code> PK；<code>reply_id</code>；<code>uid</code>；<code>created_at</code>。</li>
+<li>约束：UNIQUE(<code>reply_id</code>,<code>uid</code>)。</li>
+<li>用途：回复点赞/取消点赞、计数。</li>
+</ul>
+</li>
+<li><strong>user_follow</strong>（用户关注/粉丝）
+<ul>
+<li>字段：<code>id</code> PK；<code>uid</code>；<code>target_uid</code>；<code>created_at</code>。</li>
+<li>约束：UNIQUE(<code>uid</code>,<code>target_uid</code>)。</li>
+<li>用途：我的关注/粉丝；可用于社交扩展。</li>
+</ul>
+</li>
+<li><strong>friend</strong>（聊天好友关系）
+<ul>
+<li>字段：<code>id</code> PK；<code>self_id</code>；<code>friend_id</code>；<code>back</code>（备注）。</li>
+<li>约束：UNIQUE(<code>self_id</code>,<code>friend_id</code>)。</li>
+<li>用途：聊天好友列表；备注存储在 <code>back</code>。</li>
+</ul>
+</li>
+<li><strong>friend_apply</strong>（好友申请）
+<ul>
+<li>字段：<code>id</code> PK；<code>from_uid</code>；<code>to_uid</code>；<code>status</code>（0 待处理，1 同意）。</li>
+<li>约束：UNIQUE(<code>from_uid</code>,<code>to_uid</code>)。</li>
+<li>用途：好友申请/审批流程，推送通知。</li>
+</ul>
+</li>
+<li><strong>存储过程 <code>reg_user</code></strong>
+<ul>
+<li>输入：<code>new_name</code>、<code>new_email</code>、<code>new_pwd</code>；输出 <code>result</code>。</li>
+<li>逻辑：检查用户名/邮箱唯一 → 自增 <code>user_id</code> → 插入 <code>user</code> → 成功返回新 uid，已存在返回 0，异常回滚返回 -1。</li>
+</ul>
+</li>
+</ul>
+<h2 id="6-%E6%A8%A1%E5%9D%97%E7%BA%A7%E8%AF%A6%E7%BB%86%E8%AE%BE%E8%AE%A1">6. 模块级详细设计</h2>
+<h3 id="61-gateserver-%E4%B8%BB%E8%A6%81%E7%B1%BB%E6%96%87%E4%BB%B6%E5%90%AB%E6%A0%B8%E5%BF%83%E6%96%B9%E6%B3%95">6.1 GateServer 主要类/文件（含核心方法）</h3>
+<ul>
+<li><code>GateServer.cpp</code>：入口，读取 <code>config.ini</code> → 初始化单例 <code>ConfigMgr::Inst()</code>、<code>MysqlMgr::GetInstance()</code>、<code>RedisMgr::GetInstance()</code> → 构造 <code>LogicSystem</code> → <code>CServer</code> 监听 8080，线程池由 <code>AsioIOServicePool</code> 提供。</li>
+<li><code>CServer</code>（GateServer/CServer.{h,cpp}）：封装 accept/启动，内部持有 <code>AsioIOServicePool _io_service_pool</code>，每个连接生成 <code>HttpConnection</code> 并绑定 <code>LogicSystem</code> 回调。</li>
+<li><code>AsioIOServicePool</code>：<code>run()</code> 启动若干工作线程；<code>get_io_service()</code> 轮询返回 io_context；用于 HTTP 读写与 gRPC 客户端异步。</li>
+<li><code>HttpConnection</code>：在 <code>do_read()</code> 中使用 Beast 解析请求；<code>_get_params</code> 保存 query；<code>_request.body()</code> 传递给 <code>LogicSystem</code>；<code>_response</code> 由 handler 填充后 async write。</li>
+<li><code>LogicSystem</code>（构造函数内 <code>RegGet/RegPost</code> 注册路由）：
+<ul>
+<li>账户相关：<code>/get_varifycode</code> 调 <code>VerifyGrpcClient::GetVarifyCode</code>；<code>/user_register</code> 校验密码/验证码 → <code>MysqlMgr::RegUser</code>；<code>/reset_pwd</code> 校验验证码 → <code>MysqlMgr::UpdatePwd</code>；<code>/user_login</code> 校验密码 → <code>StatusGrpcClient::GetChatServer</code>。</li>
+<li>贴吧：<code>/forums</code> → <code>ForumDao::ListForums</code>；<code>/forum/detail</code> → <code>ForumDao::GetForum</code>; 关注/取关 → <code>ForumDao::Follow/Unfollow</code> + Redis token 校验；<code>/followed_forums</code> → <code>ForumDao::ListFollowedForums</code>。</li>
+<li>帖子：<code>/posts</code> → <code>PostDao::ListPosts</code>（排序 normalize）；<code>/post/detail</code> → <code>PostDao::GetPostDetail</code> + like/collect 状态；创建/更新/删除 → <code>PostDao::CreatePost/UpdatePost/DeletePost</code>（事务，软删）；点赞/收藏/置顶/加精 → 对应 DAO 方法（幂等校验）。</li>
+<li>回复：<code>/post/replies</code> → <code>ReplyDao::ListTopReplies</code> + <code>ListChildReplies</code> 组装楼中楼；<code>/reply</code> → <code>ReplyDao::CreateReply</code>（写 floor/root，回填 reply_id）；<code>/reply/delete</code> 软删；<code>/like_reply</code>/<code>/unlike_reply</code> → <code>ReplyDao::Like/Unlike</code>.</li>
+<li>搜索/我的：<code>/search</code> → <code>SearchDao::SearchPosts/Forums/Users</code>；<code>/my/*</code> → <code>UserContentDao::ListMyPosts/ListMyReplies/ListMyCollections/ListMyFollowers/ListMyFollowing</code>。</li>
+<li>共通：<code>CheckTokenValid</code>（静态）读取 Redis <code>utoken_&lt;uid&gt;</code>；解析失败返回 <code>Error_Json</code>；所有响应统一 <code>error</code> 字段。</li>
+</ul>
+</li>
+<li><code>RedisMgr</code>：<code>Get/Set/Exists</code>、分布式锁辅助；键前缀 <code>CODEPREFIX/USERTOKENPREFIX</code>。</li>
+<li><code>MysqlMgr</code>：封装 JDBC 连接池；提供高阶方法 <code>RegUser</code>（调用存储过程 <code>reg_user</code>）、<code>CheckPwd</code>、<code>CheckEmail</code>、<code>UpdatePwd</code> 等；底层连接获取/归还是 <code>MysqlDao</code>。</li>
+<li><code>ForumDao/PostDao/ReplyDao/SearchDao/UserContentDao</code>（common/bbs）：各自提供 List/Detail/Create/Update/Delete、计数更新与权限校验；全部使用预编译 SQL，发帖/删帖/回复使用事务保证计数一致。</li>
+<li>gRPC 客户端：
+<ul>
+<li><code>VerifyGrpcClient</code>：封装 <code>GetVarifyCode</code> 调用，失败映射 <code>RPCFailed</code>。</li>
+<li><code>StatusGrpcClient</code>：封装 <code>GetChatServer</code>，解析返回 host/port/token；连接失败返回 <code>RPCFailed</code>。</li>
+<li><code>ChatGrpcClient</code>：预留聊天通知调用。</li>
+</ul>
+</li>
+<li>常量与工具：<code>const.h</code>（错误码、前缀、Defer RAII）；<code>Defer</code> 用于自动提交/归还资源。</li>
+</ul>
+<h3 id="62-statusserver%E7%B1%BB%E4%B8%8E%E6%96%B9%E6%B3%95">6.2 StatusServer（类与方法）</h3>
+<ul>
+<li><code>StatusServer.cpp</code>：读取 <code>config.ini</code>（含 <code>[chatservers]</code> 列表、DB/Redis 配置），初始化 <code>ConfigMgr</code>、<code>RedisMgr</code>、<code>MysqlMgr</code>、<code>AsioIOServicePool</code>，启动 gRPC。</li>
+<li><code>StatusServiceImpl</code>：
+<ul>
+<li><code>GetChatServer</code>：生成 UUID token，调用 <code>RedisMgr::Set(utoken_&lt;uid&gt;, token)</code>；通过 <code>ConfigMgr</code> 读取 ChatServer 名称/地址（<code>[chatserver1]...</code>），选择节点返回 host/port/token/服务器名。</li>
+<li><code>Login</code>（预留）：校验 Redis token 与 uid。</li>
+<li>异常捕获后返回 <code>RPCFailed</code>，并写日志。</li>
+</ul>
+</li>
+<li><code>ConfigMgr</code>：封装 INI 读取，提供 <code>operator[]</code> 访问段/键，用于节点配置和数据库/Redis 参数。</li>
+<li><code>RedisMgr</code>：与 GateServer 同步实现，负责 token 写入与读取。</li>
+<li><code>MysqlMgr</code>/<code>MysqlDao</code>：供校验扩展使用（当前主要依赖 Redis）。</li>
+<li><code>ChatGrpcClient</code>：可调用 ChatServer 的 <code>NotifyKickUser</code> 等（踢掉旧连接）。</li>
+<li><code>DistLock</code>：Redis 锁，用于序列化分配或路由写操作（超时由 <code>LOCK_TIME_OUT/ACQUIRE_TIME_OUT</code> 控制）。</li>
+<li><code>AsioIOServicePool</code>：为 gRPC 提供线程池。</li>
+</ul>
+<h3 id="63-chatserver%E7%B1%BB%E4%B8%8E%E6%96%B9%E6%B3%95">6.3 ChatServer*（类与方法）</h3>
+<ul>
+<li><code>ChatServer.cpp</code>：加载配置（Self/Peer、TCP/gRPC、DB/Redis），初始化 <code>ConfigMgr</code>、<code>MysqlMgr</code>、<code>RedisMgr</code>、<code>AsioIOServicePool</code>；启动 <code>CServer</code>(TCP) 与 gRPC 服务（<code>ChatServiceImpl</code>，<code>BbsServiceImpl</code>）。</li>
+<li>TCP 层：
+<ul>
+<li><code>CServer</code>：监听 8090/8091；接受连接并创建 <code>CSession</code>；维护 <code>_session_map</code> 以便按 session_id 管理。</li>
+<li><code>CSession</code>：保存 socket、session_id、uid；<code>Start()</code> 开始读循环；<code>Send(std::string,id)</code> 发送帧（2B id + 2B 长度 + JSON）；<code>NotifyOffline</code> 发送下线通知并关闭；记录心跳时间。</li>
+<li><code>MsgNode</code>：队列节点，包含待处理消息和 session。</li>
+</ul>
+</li>
+<li>消息分发核心 <code>LogicSystem</code>：
+<ul>
+<li><code>RegisterCallBacks</code> 将 <code>MSG_CHAT_LOGIN/ID_SEARCH_USER_REQ/ID_ADD_FRIEND_REQ/ID_AUTH_FRIEND_REQ/ID_TEXT_CHAT_MSG_REQ/ID_HEART_BEAT_REQ</code> 绑定到对应 handler。</li>
+<li><code>LoginHandler</code>：解析 <code>uid/token</code> → Redis 校验 <code>utoken_&lt;uid&gt;</code> → 加载用户档案 <code>GetBaseInfo</code>（优先 Redis 缓存，落库）→ 获取好友申请列表 <code>GetFriendApplyInfo</code>、好友列表 <code>GetFriendList</code> → 分布式锁 <code>acquireLock(lock_key)</code> 互斥登录 → 若已有 session，则本节点调用 <code>NotifyOffline</code> 或 gRPC <code>NotifyKickUser</code> 踢旧连接 → 更新 Redis <code>uip_&lt;uid&gt;</code>、<code>usession_&lt;uid&gt;</code>，<code>UserMgr::SetUserSession</code> 绑定 session。</li>
+<li><code>SearchInfo</code>：判断 <code>uid</code> 是否纯数字，调用 <code>GetUserByUid</code> 或 <code>GetUserByName</code>（查 Redis 缓存或 DB），返回用户档案。</li>
+<li><code>AddFriendApply</code>：写 MySQL <code>MysqlMgr::AddFriendApply(uid,touid)</code>；查 <code>uip_&lt;touid&gt;</code>，同节点则直接 <code>session-&gt;Send(ID_NOTIFY_ADD_FRIEND_REQ)</code>，跨节点构造 <code>AddFriendReq</code> 走 gRPC <code>NotifyAddFriend</code>。</li>
+<li><code>AuthFriendApply</code>：<code>MysqlMgr::AuthFriendApply</code> 更新申请；<code>AddFriend</code> 双向插入；查 <code>uip_&lt;touid&gt;</code>，同节点推送 <code>ID_NOTIFY_AUTH_FRIEND_REQ</code>，否则 gRPC <code>NotifyAuthFriend</code>。</li>
+<li><code>DealChatTextMsg</code>：ACK <code>ID_TEXT_CHAT_MSG_RSP</code> 回传 <code>text_array</code>；查 <code>uip_&lt;touid&gt;</code>，同节点直接推送 <code>ID_NOTIFY_TEXT_CHAT_MSG_REQ</code>，跨节点构造 <code>TextChatMsgReq</code> 由 <code>ChatGrpcClient::NotifyTextChatMsg</code> 转发。</li>
+<li><code>HeartBeatHandler</code>：回 <code>ID_HEARTBEAT_RSP</code>，供会话保活；定时器在 <code>CServer</code> 清理超时 session。</li>
+<li>工具：<code>isPureDigit</code>、<code>GetUserByUid/GetUserByName</code>、<code>GetBaseInfo</code> 等辅助 Redis+MySQL 查询。</li>
+</ul>
+</li>
+<li>gRPC 层：
+<ul>
+<li><code>ChatServiceImpl</code>：实现 <code>NotifyAddFriend</code>/<code>RplyAddFriend</code>/<code>NotifyAuthFriend</code>/<code>NotifyTextChatMsg</code>/<code>SendChatMsg</code>/<code>NotifyKickUser</code>，在目标节点内查找 session 并发送对应 TCP 消息。</li>
+<li><code>ChatGrpcClient</code>：封装向其他 ChatServer 的上述调用。</li>
+<li><code>BbsServiceImpl</code>：预留扩展占位（当前未使用）。</li>
+</ul>
+</li>
+<li>存储与缓存：
+<ul>
+<li><code>MysqlMgr</code> 提供好友/申请查询与写入；<code>MysqlDao</code> 为连接池。</li>
+<li><code>RedisMgr</code>：token 校验、路由、会话、锁；键前缀 <code>USERTOKENPREFIX/USERIPPREFIX/USER_SESSION_PREFIX</code> 等。</li>
+<li><code>UserMgr</code>：管理 uid→session 映射，便于实时推送与踢人。</li>
+<li><code>DistLock</code>：确保同一 uid 登录互斥（<code>acquireLock/releaseLock</code>）。</li>
+<li><code>ConfigMgr</code>：读取自节点与 peers 配置。</li>
+</ul>
+</li>
+</ul>
+<h3 id="64-varifyserver%E7%B1%BB%E6%96%87%E4%BB%B6%E4%B8%8E%E5%AE%9E%E7%8E%B0">6.4 VarifyServer（类/文件与实现）</h3>
+<ul>
+<li><code>server.js</code>：使用 gRPC 绑定 <code>VarifyService.GetVarifyCode</code>；读取 <code>config.json</code>（包含 Redis/SMTP/端口）；启动服务监听 50051。</li>
+<li><code>proto.js</code>：从 <code>message.proto</code> 生成的 gRPC stub，导出 <code>VarifyService</code>.</li>
+<li><code>email.js</code>：通过 SMTP 发送验证码邮件；捕获发送异常并返回错误。</li>
+<li><code>redis.js</code>：封装 Redis 客户端，<code>setCode/getCode</code> 对键 <code>code_&lt;email&gt;</code> 读写，TTL 600s。</li>
+<li><code>const.js</code>：验证码长度等常量。</li>
+<li>处理流程：接收 <code>GetVarifyCode</code> → 生成 4 位验证码 → <code>redis.js.setCode</code> 写入 → <code>email.js</code> 发送 → 返回 <code>{error,email}</code>；Redis/邮件异常映射到 <code>VarifyExpired/RPCFailed</code>，日志输出到 stdout。</li>
+</ul>
+<h2 id="7-%E5%85%B3%E9%94%AE%E5%AE%9E%E7%8E%B0%E4%B8%8E%E6%B5%81%E7%A8%8B%E7%BB%86%E8%8A%82%E5%90%AB%E6%BA%90%E7%A0%81%E5%AE%9A%E4%BD%8D">7. 关键实现与流程细节（含源码定位）</h2>
+<ul>
+<li><strong>验证码获取（GateServer → VarifyServer）</strong>：<code>GateServer/LogicSystem.cpp</code> 中 <code>/get_varifycode</code> handler 解析 JSON → 校验 <code>email</code> → <code>VerifyGrpcClient::GetVarifyCode</code>（调用 VarifyService.GetVarifyCode，见 <code>VarifyServer/proto.js</code> 与 <code>server/ChatServer/message.proto</code>）→ Redis 写 <code>code_&lt;email&gt;</code>，失败返回 <code>RPCFailed/VarifyExpired/VarifyCodeErr</code>。VarifyServer 侧 <code>server.js</code> 生成 4 位码（<code>const.js</code>）→ <code>redis.js.setCode</code> → <code>email.js</code> 发送。</li>
+<li><strong>注册流程</strong>：<code>/user_register</code>（<code>GateServer/LogicSystem.cpp</code>）校验 <code>passwd==confirm</code>、Redis 验证码 → <code>MysqlMgr::RegUser</code> 触发存储过程 <code>reg_user</code>（<code>databaseD/llfc.sql</code>）自增 <code>user_id</code> 并插入 <code>user</code>，返回 uid；失败返回 <code>UserExist</code>；结果统一 JSON 响应。</li>
+<li><strong>重置密码</strong>：<code>/reset_pwd</code> 校验验证码（Redis <code>code_&lt;email&gt;</code>）→ <code>MysqlMgr::CheckEmail</code> 验证用户名/邮箱匹配 → <code>MysqlMgr::UpdatePwd</code> 更新密码；错误映射 <code>EmailNotMatch/VarifyExpired/VarifyCodeErr/PasswdUpFailed</code>。</li>
+<li><strong>登录与节点分配</strong>：<code>/user_login</code> 校验邮箱+密码（<code>MysqlMgr::CheckPwd</code>，预编译 SQL）→ <code>StatusGrpcClient::GetChatServer</code> gRPC 返回 host/port/token → Redis 写 <code>utoken_&lt;uid&gt;</code>；响应中带聊天节点与 token（由 StatusServiceImpl 生成 UUID，<code>StatusServer/StatusServiceImpl.cpp</code>）。</li>
+<li><strong>贴吧列表/详情</strong>：<code>/forums</code> → <code>ForumDao::ListForums</code>（预编译 SQL，分页）；<code>/forum/detail</code> → <code>ForumDao::GetForum</code>，若传 <code>uid/token</code> 则 <code>CheckTokenValid</code> 后附加 <code>is_followed</code>（查 <code>forum_follow</code>）。</li>
+<li><strong>关注/取关贴吧</strong>：<code>/follow_forum</code> <code>/unfollow_forum</code> 需 <code>uid/token</code>，<code>ForumDao::Follow/Unfollow</code> 写 <code>forum_follow</code> 表并更新 <code>forum.follower_cnt</code>，已关注返回 <code>AlreadyFollowed/NotFollowed</code>。</li>
+<li><strong>帖子列表/排序</strong>：<code>/posts</code> 调 <code>PostDao::ListPosts</code>（<code>GateServer/PostDao.cpp</code>，NormalizeSort 支持 time/hot/reply；SQL 计算 <code>(reply_cnt*2+like_cnt)</code> 作为 hot，过滤 <code>status=1</code>，截取内容预览）。</li>
+<li><strong>帖子详情</strong>：<code>/post/detail</code> 调 <code>PostDao::GetPostDetail</code>（JOIN user/forum，过滤软删）；若带 token，附加 <code>is_liked/is_collected</code>（查 like/collect 表）。</li>
+<li><strong>发帖/编辑/删除</strong>：<code>/post/create</code> → <code>PostDao::CreatePost</code> 事务插入 post、回填 <code>post_id</code>、更新 <code>forum.post_cnt</code>；<code>/post/update</code> 更新标题/内容（权限=作者或吧主）；<code>/post/delete</code> 软删 <code>status=0</code> 并减计数，均需 <code>uid/token</code>。</li>
+<li><strong>帖子点赞/收藏/置顶/加精</strong>：<code>/like_post</code>/<code>/unlike_post</code>/<code>/collect_post</code>/<code>/uncollect_post</code> 调 <code>PostDao</code> 去重校验并更新计数；<code>/set_top_post</code>/<code>/set_essence_post</code> 校验贴吧 owner 权限（<code>forum_admin.role=1</code>），更新布尔标记。</li>
+<li><strong>回复列表与楼中楼</strong>：<code>/post/replies</code> 调 <code>ReplyDao::ListTopReplies</code> + <code>ListChildReplies</code> 组装 <code>sub_replies</code>（按 <code>parent_reply_id/root_reply_id</code>）；支持 <code>sort=time|hot</code>，过滤软删。</li>
+<li><strong>回复发布/删除/点赞</strong>：<code>/reply</code> → <code>ReplyDao::CreateReply</code>（写 <code>floor</code>、<code>root_reply_id</code>，更新帖子 <code>reply_cnt</code>）；<code>/reply/delete</code> 软删，权限=作者/帖主/吧主；<code>/like_reply</code>/<code>/unlike_reply</code> 更新计数，去重校验 <code>AlreadyLikedReply/NotLikedReply</code>。</li>
+<li><strong>搜索</strong>：<code>/search</code> 调 <code>SearchDao::SearchPosts/Forums/Users</code>（LIKE 模糊；可按 <code>forum_id</code> 过滤帖子）；结果字段按 type 裁剪。</li>
+<li><strong>我的内容</strong>：<code>/my/posts|replies|collections</code>、<code>/my/followers|following</code> 调 <code>UserContentDao</code>，JOIN 用户/帖子获取展示字段（回复含 <code>post_title</code>）；均需 <code>uid/token</code>。</li>
+<li><strong>聊天登录（TCP）</strong>：<code>ChatServer/LogicSystem.cpp::LoginHandler</code> 解析 <code>uid/token</code> → Redis 校验 <code>utoken_&lt;uid&gt;</code> → 加载用户档案 <code>GetBaseInfo</code>（优先 Redis <code>ubaseinfo_&lt;uid&gt;</code>，未命中查 DB）→ 加载申请列表 <code>GetFriendApplyInfo</code>、好友列表 <code>GetFriendList</code> → 分布式锁 <code>lock_&lt;uid&gt;</code> 避免并发登录 → 若已登录：同节点调用 <code>CSession::NotifyOffline</code> 并 <code>CServer::ClearSession</code>；跨节点通过 gRPC <code>NotifyKickUser</code> → 更新 Redis <code>uip_&lt;uid&gt;</code>/<code>usession_&lt;uid&gt;</code>，<code>UserMgr::SetUserSession</code> 绑定 session → 返回 <code>MSG_CHAT_LOGIN_RSP</code>。</li>
+<li><strong>搜索用户（聊天）</strong>：<code>LogicSystem::SearchInfo</code> 判断 uid 是否纯数字（<code>isPureDigit</code>），调用 <code>GetUserByUid/GetUserByName</code>（优先 Redis <code>nameinfo_&lt;name&gt;</code>，否则 DB），返回档案通过 <code>ID_SEARCH_USER_RSP</code>。</li>
+<li><strong>好友申请</strong>：<code>LogicSystem::AddFriendApply</code> 写 MySQL（<code>MysqlMgr::AddFriendApply</code>）→ 查 Redis <code>uip_&lt;touid&gt;</code>；同节点直接通过 <code>session-&gt;Send(ID_NOTIFY_ADD_FRIEND_REQ)</code> 推送，跨节点构造 <code>AddFriendReq</code> 调 gRPC <code>ChatGrpcClient::NotifyAddFriend</code>。</li>
+<li><strong>好友审批</strong>：<code>LogicSystem::AuthFriendApply</code> 更新申请状态、插入双向好友（<code>MysqlMgr::AuthFriendApply</code>+<code>AddFriend</code>）；查 <code>uip_&lt;touid&gt;</code>，同节点推 <code>ID_NOTIFY_AUTH_FRIEND_REQ</code>，跨节点走 <code>NotifyAuthFriend</code>。</li>
+<li><strong>文本消息收发</strong>：<code>LogicSystem::DealChatTextMsg</code> ACK <code>ID_TEXT_CHAT_MSG_RSP</code> 回原 sender；查 <code>uip_&lt;touid&gt;</code>，同节点直接 <code>session-&gt;Send(ID_NOTIFY_TEXT_CHAT_MSG_REQ)</code>，跨节点构造 <code>TextChatMsgReq</code> 由 <code>ChatGrpcClient::NotifyTextChatMsg</code> 转发；消息体 <code>text_array</code> 逐条拷贝（<code>msgid/content</code>）。</li>
+<li><strong>心跳与下线</strong>：<code>HeartBeatHandler</code> 回 <code>ID_HEARTBEAT_RSP</code>；<code>CServer</code> 定时清理 &gt;20s 未心跳会话；异地登录或锁冲突时发送 <code>ID_NOTIFY_OFF_LINE_REQ</code>（同节点直接推送，跨节点用 <code>NotifyKickUser</code>）。</li>
+<li><strong>跨节点 gRPC 通知</strong>：<code>ChatServiceImpl</code> 接收 <code>NotifyAddFriend/NotifyAuthFriend/NotifyTextChatMsg/NotifyKickUser</code>，在目标节点内查 <code>UserMgr</code> 找到 session 并转发 TCP 消息；<code>ChatGrpcClient</code> 封装 stub 调用，失败仅记录日志不影响调用方 ACK。</li>
+</ul>
+<h3 id="71-%E8%A1%A5%E5%85%85%E6%BA%90%E7%A0%81%E7%BB%86%E8%8A%82%E4%B8%8E%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B%E6%8B%86%E8%A7%A3">7.1 补充源码细节与完整流程拆解</h3>
+<ul>
+<li><strong>GateServer 账户链路代码细节</strong>
+<ul>
+<li><code>/get_varifycode</code>：<code>LogicSystem.cpp</code> 234 行左右，使用 <code>Json::Reader reader; reader.parse(body_str, src_root);</code> 解析，缺字段返回 <code>Error_Json</code>，gRPC 调用结果写回 <code>root[&quot;error&quot;]=rsp.error(); root[&quot;email&quot;]=email;</code> 并通过 <code>beast::ostream(connection-&gt;_response.body())</code> 写响应。</li>
+<li><code>/user_register</code>：验证两次密码后，Redis <code>Get(CODEPREFIX+email, varify_code)</code>，不匹配时 <code>root[&quot;error&quot;]=VarifyCodeErr</code>。成功后 <code>MysqlMgr::RegUser</code>，返回值 0 或 -1 判为 <code>UserExist</code>，成功时回显所有输入字段。</li>
+<li><code>/reset_pwd</code>：同样 Redis 校验验证码，<code>MysqlMgr::CheckEmail</code> 不通过返回 <code>EmailNotMatch</code>，更新密码失败返回 <code>PasswdUpFailed</code>。</li>
+<li><code>/user_login</code>：<code>MysqlMgr::CheckPwd</code> 校验，失败返回 <code>PasswdInvalid</code>；成功后 <code>StatusGrpcClient::GetChatServer</code>，解析 rsp 的 <code>host/port/token</code>；若 gRPC 异常则 <code>root[&quot;error&quot;]=RPCFailed</code>。</li>
+</ul>
+</li>
+<li><strong>GateServer 论坛链路代码细节</strong>
+<ul>
+<li><code>/posts</code>：<code>PostDao::ListPosts</code> 中 <code>NormalizeSort</code> 转小写比较，hot 排序使用 <code>(p.reply_cnt * 2 + p.like_cnt)</code>；预览用 <code>SUBSTRING(p.content,1,120)</code>；分页 offset=<code>(page-1)*limit</code>。</li>
+<li><code>/post/detail</code>：<code>GetPostDetail</code> JOIN user/forum，检查 <code>status!=1</code> 返回 false；填充 author、forum_name、like/collect 计数。</li>
+<li><code>/post/create</code>：事务里 INSERT 帖子 → <code>SELECT LAST_INSERT_ID()</code> → 更新 <code>forum.post_cnt</code>，异常 catch 回滚并 setAutoCommit(true)。</li>
+<li><code>/reply</code>：<code>ReplyDao::CreateReply</code> 写 floor/root_reply_id，更新帖子 reply_cnt；<code>ListChildReplies</code> 依据 parent/root 组装 <code>sub_replies</code>。</li>
+<li>点赞/收藏：所有 Like/Collect 接口前置 <code>CheckTokenValid</code>，DAO 内做 UNIQUE 校验，不满足返回 <code>AlreadyLiked/AlreadyCollected</code>。</li>
+<li>权限：删除/置顶/加精前通过 <code>ForumDao</code> 获取 owner/管理员校验，否则返回 <code>NoPermission</code>。</li>
+</ul>
+</li>
+<li><strong>Search/My 链路代码细节</strong>
+<ul>
+<li><code>SearchDao</code>：根据 type 构造不同 SQL，post 支持 <code>forum_id</code> 过滤；LIKE 使用 <code>%keyword%</code>。</li>
+<li><code>UserContentDao</code>：<code>ListMyReplies</code> JOIN post 取 <code>post.title</code> 作为 <code>post_title</code>；其余列表均分页+token 校验。</li>
+</ul>
+</li>
+<li><strong>ChatServer 登录与会话（源码片段）</strong>
+<ul>
+<li><code>LoginHandler</code> 开头：<pre class="hljs"><code><div>reader.parse(msg_data, root);
+<span class="hljs-keyword">auto</span> uid = root[<span class="hljs-string">"uid"</span>].asInt();
+<span class="hljs-keyword">auto</span> token = root[<span class="hljs-string">"token"</span>].asString();
+RedisMgr::GetInstance()-&gt;Get(USERTOKENPREFIX+uid_str, token_value);
+<span class="hljs-keyword">if</span> (token_value != token) { rtvalue[<span class="hljs-string">"error"</span>]=TokenInvalid; <span class="hljs-keyword">return</span>; }
+</div></code></pre>
+</li>
+<li>分布式锁：<pre class="hljs"><code><div><span class="hljs-keyword">auto</span> lock_key = LOCK_PREFIX + uid_str;
+<span class="hljs-keyword">auto</span> identifier = RedisMgr::GetInstance()-&gt;acquireLock(lock_key, LOCK_TIME_OUT, ACQUIRE_TIME_OUT);
+<span class="hljs-function">Defer <span class="hljs-title">defer2</span><span class="hljs-params">([<span class="hljs-keyword">this</span>, identifier, lock_key](){ RedisMgr::GetInstance()-&gt;releaseLock(lock_key, identifier); })</span></span>;
+</div></code></pre>
+</li>
+<li>异地登录踢人：根据 <code>USERIPPREFIX+uid</code> 取路由，如果等于 self 则获取旧 <code>CSession</code> 调 <code>NotifyOffline</code>，否则构造 <code>KickUserReq</code> 走 <code>ChatGrpcClient::NotifyKickUser(to_ip_value, req)</code>。</li>
+</ul>
+</li>
+<li><strong>ChatServer 好友/消息处理（源码片段）</strong>
+<ul>
+<li><code>AddFriendApply</code>：DB <code>AddFriendApply</code> 后查 <code>uip_&lt;touid&gt;</code>，同节点推送：<pre class="hljs"><code><div>notify[<span class="hljs-string">"applyuid"</span>]=uid; notify[<span class="hljs-string">"name"</span>]=applyname; session-&gt;Send(notify_str, ID_NOTIFY_ADD_FRIEND_REQ);
+</div></code></pre>
+跨节点：填充 <code>AddFriendReq</code> 的 <code>icon/sex/nick</code> 并调用 <code>NotifyAddFriend</code>。</li>
+<li><code>AuthFriendApply</code>：更新申请 + 插入双向好友，查 <code>uip_&lt;touid&gt;</code>，同节点推 <code>ID_NOTIFY_AUTH_FRIEND_REQ</code>，否则 gRPC <code>NotifyAuthFriend</code>。</li>
+<li><code>DealChatTextMsg</code>：构建 ACK，查路由，同节点直接 <code>Send(ID_NOTIFY_TEXT_CHAT_MSG_REQ)</code>；跨节点遍历 <code>text_array</code>：<pre class="hljs"><code><div><span class="hljs-keyword">auto</span> *text_msg = text_msg_req.add_textmsgs();
+text_msg-&gt;set_msgid(msgid); text_msg-&gt;set_msgcontent(content);
+ChatGrpcClient::GetInstance()-&gt;NotifyTextChatMsg(to_ip_value, text_msg_req, rtvalue);
+</div></code></pre>
+</li>
+</ul>
+</li>
+<li><strong>心跳与清理</strong>
+<ul>
+<li><code>HeartBeatHandler</code> 简单回包；<code>CServer</code> 内定时器清理超时 session 并调用 <code>NotifyOffline</code>（跨节点用 <code>NotifyKickUser</code>）。</li>
+<li>Redis <code>usession_&lt;uid&gt;</code> 保存 session_id，便于跨节点踢人。</li>
+</ul>
+</li>
+<li><strong>跨节点 gRPC 处理</strong>
+<ul>
+<li><code>ChatServiceImpl</code>：<code>NotifyAddFriend/NotifyAuthFriend/NotifyTextChatMsg/NotifyKickUser</code> 均在目标节点查 <code>UserMgr::GetSession</code>，若存在则构造对应 JSON 并 <code>Send</code>。找不到 session 也返回 <code>error=Success</code>，避免调用方失败。</li>
+<li><code>ChatGrpcClient</code>：封装 stub，异常仅日志，不影响本地 ACK。</li>
+</ul>
+</li>
+</ul>
+<h2 id="8-%E9%9D%9E%E5%8A%9F%E8%83%BD%E4%B8%8E%E8%B4%A8%E9%87%8F">8. 非功能与质量</h2>
+<ul>
+<li><strong>性能</strong>：分页必填；Redis 缓存降低 DB 压力；心跳清理闲置连接。</li>
+<li><strong>可靠性</strong>：关键写操作事务回滚；异常记录日志到 stdout。</li>
+<li><strong>可扩展性</strong>：ChatServer 可水平扩展；StatusServer 通过配置新增节点；gRPC/HTTP 解耦。</li>
+<li><strong>安全</strong>：Redis token 鉴权；SQL 预编译；建议生产部署启用 TLS（反向代理层）。</li>
+</ul>
+<h2 id="9-%E6%B5%8B%E8%AF%95%E4%B8%8E%E9%AA%8C%E6%94%B6%E8%A6%81%E7%82%B9">9. 测试与验收要点</h2>
+<ul>
+<li>HTTP 接口按 <code>API_DIFF.md</code> 约定的路径/字段/错误码返回。</li>
+<li>Token 校验严格，软删数据不出现在列表。</li>
+<li>聊天：登录后返回好友/申请列表；心跳异常被清理；异地登录可收到下线通知；跨节点消息可达。</li>
+<li>数据库计数与记录一致（发帖/删帖/点赞/收藏/关注/回复）。</li>
+</ul>
+<h2 id="10-%E7%89%88%E6%9C%AC%E4%B8%8E%E7%BB%B4%E6%8A%A4">10. 版本与维护</h2>
+<ul>
+<li>设计文档需随代码变更更新（接口、表结构、配置项、端口、错误码）。</li>
+<li>新增节点/接口时同步更新：配置文件、架构图引用、接口章节与数据库章节。</li>
+</ul>
+<h2 id="11-%E5%9B%BE%E7%A4%BA%E5%8F%82%E8%80%83%E5%85%A8%E9%87%8F-15-%E5%BC%A0">11. 图示参考（全量 15 张）</h2>
+<ul>
+<li>登录/分配/长连概览：<img src="file:///Volumes/EX_1T/code/bitsb/bit-tieba/pic/Gemini_Generated_Image_v0f943v0f943v0f9.png" alt="核心流程概览"></li>
+<li>网关与 gRPC 交互：<img src="file:///Volumes/EX_1T/code/bitsb/bit-tieba/pic/Gemini_Generated_Image_1vuw5w1vuw5w1vuw.png" alt="网关转发与状态分配"></li>
+<li>论坛 CRUD 视图：<img src="file:///Volumes/EX_1T/code/bitsb/bit-tieba/pic/Gemini_Generated_Image_2nvyw22nvyw22nvy.png" alt="论坛接口覆盖"></li>
+<li>帖子流与计数：<img src="file:///Volumes/EX_1T/code/bitsb/bit-tieba/pic/Gemini_Generated_Image_2xdlmf2xdlmf2xdl.png" alt="帖子生命周期"></li>
+<li>回复与楼中楼：<img src="file:///Volumes/EX_1T/code/bitsb/bit-tieba/pic/Gemini_Generated_Image_6k9gqx6k9gqx6k9g.png" alt="回复层级与排序"></li>
+<li>搜索与聚合：<img src="file:///Volumes/EX_1T/code/bitsb/bit-tieba/pic/Gemini_Generated_Image_6tw7h16tw7h16tw7 (1).png" alt="搜索流程"></li>
+<li>我的内容与权限：<img src="file:///Volumes/EX_1T/code/bitsb/bit-tieba/pic/Gemini_Generated_Image_9sub1d9sub1d9sub.png" alt="我的内容视图"></li>
+<li>鉴权与 token：<img src="file:///Volumes/EX_1T/code/bitsb/bit-tieba/pic/Gemini_Generated_Image_bbljvmbbljvmbblj.png" alt="鉴权与 Redis"></li>
+<li>ChatServer 节点通信：<img src="file:///Volumes/EX_1T/code/bitsb/bit-tieba/pic/Gemini_Generated_Image_f7u2f7u2f7u2f7u2.png" alt="聊天节点互通"></li>
+<li>好友/申请流程：<img src="file:///Volumes/EX_1T/code/bitsb/bit-tieba/pic/Gemini_Generated_Image_i2biivi2biivi2bi.png" alt="好友申请/审批"></li>
+<li>文本消息路由：<img src="file:///Volumes/EX_1T/code/bitsb/bit-tieba/pic/Gemini_Generated_Image_idgbuhidgbuhidgb (1).png" alt="消息转发"></li>
+<li>部署与端口示意：<img src="file:///Volumes/EX_1T/code/bitsb/bit-tieba/pic/Gemini_Generated_Image_ipqvj4ipqvj4ipqv.png" alt="部署视图"></li>
+<li>数据库关系示意：<img src="file:///Volumes/EX_1T/code/bitsb/bit-tieba/pic/Gemini_Generated_Image_lcukfblcukfblcuk (1).png" alt="数据库关系"></li>
+<li>错误码与回调提示：<img src="file:///Volumes/EX_1T/code/bitsb/bit-tieba/pic/Gemini_Generated_Image_nulmy2nulmy2nulm.png" alt="错误码提示流"></li>
+<li>测试/运维关注：<img src="file:///Volumes/EX_1T/code/bitsb/bit-tieba/pic/Gemini_Generated_Image_sohnl6sohnl6sohn.png" alt="运维监控视图"></li>
+</ul>
+
+</body>
+</html>
